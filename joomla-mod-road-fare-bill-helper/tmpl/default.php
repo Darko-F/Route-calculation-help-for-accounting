@@ -16,22 +16,22 @@ use Joomla\CMS\Session\Session;
 use Joomla\CMS\Language\Text;
 
 $document = Factory::getApplication()->getDocument();
-$calculatorUrl = Uri::root(true) . '/modules/mod_road_fare_bill_helper/media/calculator.html?v=1.2.15';
+$calculatorUrl = Uri::root(true) . '/modules/mod_road_fare_bill_helper/media/calculator.html?v=1.2.16';
 $ajaxUrl = Route::_('index.php?option=com_ajax&module=road_fare_bill_helper&format=json', false);
 $tokenName = Session::getFormToken();
 $tokenValue = '1';
 $frontendConfig = [
     'googleMapsApiKey' => (string) $params->get('google_maps_api_key', ''),
     'company' => [
-        'name' => (string) $params->get('company_name', 'TUAM d.o.o.'),
-        'address' => (string) $params->get('company_address', 'Vojkova ulica 15'),
-        'postcodeCity' => (string) $params->get('company_postcode_city', '5270 Ajdovscina'),
-        'taxNumber' => (string) $params->get('company_tax_number', 'SI96392126'),
-        'registrationNumber' => (string) $params->get('company_registration_number', '6127860000'),
-        'iban' => (string) $params->get('company_iban', 'SI56101000050570266'),
-        'email' => (string) $params->get('company_email', 'transfer@tuam.si'),
-        'phone' => (string) $params->get('company_phone', '+38640805763'),
-        'issueCity' => (string) $params->get('company_issue_city', 'Ajdovscina'),
+        'name' => (string) $params->get('company_name', 'Example Transfer Ltd.'),
+        'address' => (string) $params->get('company_address', 'Example Street 1'),
+        'postcodeCity' => (string) $params->get('company_postcode_city', '1000 Example City'),
+        'taxNumber' => (string) $params->get('company_tax_number', 'EX12345678'),
+        'registrationNumber' => (string) $params->get('company_registration_number', '1234567890'),
+        'iban' => (string) $params->get('company_iban', 'EX001234567890123456'),
+        'email' => (string) $params->get('company_email', 'office@example.com'),
+        'phone' => (string) $params->get('company_phone', '+386 00 000 000'),
+        'issueCity' => (string) $params->get('company_issue_city', 'Example City'),
     ],
     'revenueAccounts' => [
         'slovenia' => (string) $params->get('revenue_account_slovenia', '7601'),

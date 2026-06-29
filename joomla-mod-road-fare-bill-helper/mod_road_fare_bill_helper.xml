@@ -7,7 +7,7 @@
   <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
   <authorEmail>info@topoweryou.com</authorEmail>
   <authorUrl>https://topoweryou.com</authorUrl>
-  <version>1.2.15</version>
+  <version>1.2.16</version>
   <description>MOD_ROAD_FARE_BILL_HELPER_XML_DESCRIPTION</description>
   <files>
     <filename module="mod_road_fare_bill_helper">mod_road_fare_bill_helper.php</filename>
@@ -43,15 +43,15 @@
           filter="raw"
         />
         <field type="spacer" label="MOD_ROAD_FARE_BILL_HELPER_SPACER_COMPANY_DETAILS" />
-        <field name="company_name" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_NAME_LABEL" default="TUAM d.o.o." />
-        <field name="company_address" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_ADDRESS_LABEL" default="Vojkova ulica 15" />
-        <field name="company_postcode_city" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_POSTCODE_CITY_LABEL" default="5270 Ajdovscina" />
-        <field name="company_tax_number" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_TAX_NUMBER_LABEL" default="SI96392126" />
-        <field name="company_registration_number" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_REGISTRATION_NUMBER_LABEL" default="6127860000" />
-        <field name="company_iban" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_IBAN_LABEL" default="SI56101000050570266" />
-        <field name="company_email" type="email" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_EMAIL_LABEL" default="transfer@tuam.si" />
-        <field name="company_phone" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_PHONE_LABEL" default="+38640805763" />
-        <field name="company_issue_city" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_ISSUE_CITY_LABEL" default="Ajdovscina" />
+        <field name="company_name" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_NAME_LABEL" default="Example Transfer Ltd." />
+        <field name="company_address" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_ADDRESS_LABEL" default="Example Street 1" />
+        <field name="company_postcode_city" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_POSTCODE_CITY_LABEL" default="1000 Example City" />
+        <field name="company_tax_number" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_TAX_NUMBER_LABEL" default="EX12345678" />
+        <field name="company_registration_number" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_REGISTRATION_NUMBER_LABEL" default="1234567890" />
+        <field name="company_iban" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_IBAN_LABEL" default="EX001234567890123456" />
+        <field name="company_email" type="email" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_EMAIL_LABEL" default="office@example.com" />
+        <field name="company_phone" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_PHONE_LABEL" default="+386 00 000 000" />
+        <field name="company_issue_city" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_COMPANY_ISSUE_CITY_LABEL" default="Example City" />
         <field type="spacer" label="MOD_ROAD_FARE_BILL_HELPER_SPACER_REVENUE_ACCOUNTS" />
         <field name="revenue_account_slovenia" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_REVENUE_ACCOUNT_SLOVENIA_LABEL" default="7601" />
         <field name="revenue_account_italy" type="text" label="MOD_ROAD_FARE_BILL_HELPER_FIELD_REVENUE_ACCOUNT_ITALY_LABEL" default="7602" />
