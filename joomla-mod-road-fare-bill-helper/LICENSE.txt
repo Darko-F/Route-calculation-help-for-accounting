@@ -1,0 +1,10 @@
+GNU GENERAL PUBLIC LICENSE
+Version 2, June 1991
+
+This Joomla extension is distributed under the GNU General Public License
+version 2 or later.
+
+The complete GPL v2 license text is available from:
+https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
+
+Copyright (C) 2026 topoweryou.com
