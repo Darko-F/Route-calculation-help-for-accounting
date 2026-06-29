@@ -1,0 +1,11 @@
+# Package/build output
+*.zip
+
+# Local test/prototype files
+test.html
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
