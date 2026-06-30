@@ -15,7 +15,7 @@ Route calculation help for accounting is a Joomla 6 site module for taxi and pas
 
 ## Demo
 
-Demo: https://builder.topoweryou.com/roadbillfarehelper/
+Demo: https://builder.topoweryou.com/routecalculationhelp/
 
 ## Requirements
 
