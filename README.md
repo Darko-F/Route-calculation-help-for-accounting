@@ -1,6 +1,6 @@
-# Road Fare Bill Helper
+# Route calculation help for accounting
 
-Road Fare Bill Helper is a Joomla 6 site module for taxi and passenger transfer invoicing. It calculates route distance, estimates the split between the country of origin and foreign countries, prepares invoice text, and exports invoice data for PDF and Minimax XML workflows.
+Route calculation help for accounting is a Joomla 6 site module for taxi and passenger transfer invoicing. It calculates route distance, estimates the split between the country of origin and foreign countries, prepares invoice text, and exports invoice data for PDF and Minimax XML workflows.
 
 ## Features
 
@@ -41,7 +41,7 @@ Install the ZIP package in Joomla:
 2. Open System -> Install -> Extensions.
 3. Upload the module ZIP package.
 4. Open Content -> Site Modules.
-5. Create or open Road Fare Bill Helper.
+5. Create or open Route calculation help for accounting.
 6. Enter the Google Maps API key and company settings.
 7. Publish the module in the desired position.
 
@@ -50,10 +50,14 @@ Install the ZIP package in Joomla:
 The source code is in:
 
 ```text
-joomla-mod-road-fare-bill-helper/
+route-calculation-help-for-accounting/
 ```
 
-The installable ZIP package is distributed separately.
+The installable ZIP package is distributed separately as:
+
+```text
+Route_Calculation_Help_For_Accounting_vx.x.xxx_Joomla6.zip
+```
 
 ## Security
 
@@ -61,6 +65,6 @@ Do not commit real Google API keys. Configure the key in the Joomla module optio
 
 ## License
 
-GNU General Public License version 2 or later. See `joomla-mod-road-fare-bill-helper/LICENSE.txt`.
+GNU General Public License version 2 or later. See `route-calculation-help-for-accounting/LICENSE.txt`.
 
 Copyright (C) 2026 topoweryou.com

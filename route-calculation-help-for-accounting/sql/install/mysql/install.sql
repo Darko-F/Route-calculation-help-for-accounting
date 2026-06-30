@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS `#__road_fare_bill_helper_customers` (
+CREATE TABLE IF NOT EXISTS `#__route_calculation_help_for_accounting_customers` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `customer_code` varchar(64) NOT NULL,
   `customer_name` varchar(255) NOT NULL DEFAULT '',
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS `#__road_fare_bill_helper_customers` (
   KEY `idx_created_by` (`created_by`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `#__road_fare_bill_helper_invoices` (
+CREATE TABLE IF NOT EXISTS `#__route_calculation_help_for_accounting_invoices` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `customer_id` int unsigned NOT NULL,
   `customer_code` varchar(64) NOT NULL,

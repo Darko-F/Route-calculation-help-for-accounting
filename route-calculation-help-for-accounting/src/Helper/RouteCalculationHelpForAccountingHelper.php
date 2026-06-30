@@ -1,13 +1,13 @@
 <?php
 /**
  * @package     Joomla.Site
- * @subpackage  mod_road_fare_bill_helper
+ * @subpackage  mod_route_calculation_help_for_accounting
  *
  * @copyright   Copyright (C) 2026 topoweryou.com
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
-namespace Joomla\Module\RoadFareBillHelper\Site\Helper;
+namespace Joomla\Module\RouteCalculationHelpForAccounting\Site\Helper;
 
 defined('_JEXEC') or die;
 
@@ -16,7 +16,7 @@ use Joomla\CMS\Session\Session;
 use Joomla\Database\DatabaseInterface;
 use RuntimeException;
 
-class RoadFareBillHelperHelper
+class RouteCalculationHelpForAccountingHelper
 {
     public function saveCustomerAjax()
     {
@@ -83,7 +83,7 @@ class RoadFareBillHelperHelper
         ];
 
         $query = $db->getQuery(true)
-            ->insert($db->quoteName('#__road_fare_bill_helper_invoices'))
+            ->insert($db->quoteName('#__route_calculation_help_for_accounting_invoices'))
             ->columns($db->quoteName($columns))
             ->values(implode(',', $values));
         $db->setQuery($query)->execute();
@@ -123,7 +123,7 @@ class RoadFareBillHelperHelper
         ];
         $query = $db->getQuery(true)
             ->select($db->quoteName($columns))
-            ->from($db->quoteName('#__road_fare_bill_helper_customers'))
+            ->from($db->quoteName('#__route_calculation_help_for_accounting_customers'))
             ->where($db->quoteName('customer_code') . ' = ' . $db->quote($customerCode));
         $customer = $db->setQuery($query)->loadAssoc();
 
@@ -143,7 +143,7 @@ class RoadFareBillHelperHelper
         self::ensureCustomerAddressColumn();
         $query = $db->getQuery(true)
             ->select($db->quoteName(['customer_code', 'customer_name']))
-            ->from($db->quoteName('#__road_fare_bill_helper_customers'));
+            ->from($db->quoteName('#__route_calculation_help_for_accounting_customers'));
 
         if ($search !== '') {
             $like = $db->quote('%' . $search . '%');
@@ -188,7 +188,7 @@ class RoadFareBillHelperHelper
 
         $query = $db->getQuery(true)
             ->select($db->quoteName(['customer_code', 'customer_name', 'customer_address', 'vat_id', 'invoice_number', 'total_amount', 'payload_json', 'created_at']))
-            ->from($db->quoteName('#__road_fare_bill_helper_invoices'))
+            ->from($db->quoteName('#__route_calculation_help_for_accounting_invoices'))
             ->where('(' . implode(' OR ', $filters) . ')')
             ->order($db->quoteName('created_at') . ' DESC')
             ->setLimit(25);
@@ -235,7 +235,7 @@ class RoadFareBillHelperHelper
             }
 
             $query = $db->getQuery(true)
-                ->update($db->quoteName('#__road_fare_bill_helper_customers'))
+                ->update($db->quoteName('#__route_calculation_help_for_accounting_customers'))
                 ->set($sets)
                 ->where($db->quoteName('id') . ' = ' . (int) $existingId);
             $db->setQuery($query)->execute();
@@ -257,7 +257,7 @@ class RoadFareBillHelperHelper
                 $db->quote($now),
             ];
             $query = $db->getQuery(true)
-                ->insert($db->quoteName('#__road_fare_bill_helper_customers'))
+                ->insert($db->quoteName('#__route_calculation_help_for_accounting_customers'))
                 ->columns($db->quoteName($columns))
                 ->values(implode(',', $values));
             $db->setQuery($query)->execute();
@@ -272,7 +272,7 @@ class RoadFareBillHelperHelper
         $db = self::db();
         $query = $db->getQuery(true)
             ->select($db->quoteName('id'))
-            ->from($db->quoteName('#__road_fare_bill_helper_customers'))
+            ->from($db->quoteName('#__route_calculation_help_for_accounting_customers'))
             ->where($db->quoteName('customer_code') . ' = ' . $db->quote($customerCode));
 
         return (int) $db->setQuery($query)->loadResult();
@@ -283,7 +283,7 @@ class RoadFareBillHelperHelper
         $db = self::db();
         $query = $db->getQuery(true)
             ->select('COUNT(*)')
-            ->from($db->quoteName('#__road_fare_bill_helper_invoices'))
+            ->from($db->quoteName('#__route_calculation_help_for_accounting_invoices'))
             ->where($db->quoteName('invoice_number') . ' = ' . $db->quote($invoiceNumber));
 
         return (int) $db->setQuery($query)->loadResult() > 0;
@@ -293,7 +293,7 @@ class RoadFareBillHelperHelper
     {
         self::ensureTables();
         $db = self::db();
-        $table = $db->replacePrefix('#__road_fare_bill_helper_customers');
+        $table = $db->replacePrefix('#__route_calculation_help_for_accounting_customers');
         $db->setQuery('SHOW COLUMNS FROM ' . $db->quoteName($table) . ' LIKE ' . $db->quote('customer_address'));
 
         if ($db->loadResult()) {
@@ -311,7 +311,7 @@ class RoadFareBillHelperHelper
     {
         self::ensureTables();
         $db = self::db();
-        $table = $db->replacePrefix('#__road_fare_bill_helper_invoices');
+        $table = $db->replacePrefix('#__route_calculation_help_for_accounting_invoices');
         $columns = [
             'customer_name' => [
                 'definition' => "varchar(255) NOT NULL DEFAULT ''",
@@ -352,7 +352,7 @@ class RoadFareBillHelperHelper
 
         $db = self::db();
         $db->setQuery(
-            "CREATE TABLE IF NOT EXISTS " . $db->quoteName('#__road_fare_bill_helper_customers') . " (
+            "CREATE TABLE IF NOT EXISTS " . $db->quoteName('#__route_calculation_help_for_accounting_customers') . " (
               " . $db->quoteName('id') . " int unsigned NOT NULL AUTO_INCREMENT,
               " . $db->quoteName('customer_code') . " varchar(64) NOT NULL,
               " . $db->quoteName('customer_name') . " varchar(255) NOT NULL DEFAULT '',
@@ -373,7 +373,7 @@ class RoadFareBillHelperHelper
         )->execute();
 
         $db->setQuery(
-            "CREATE TABLE IF NOT EXISTS " . $db->quoteName('#__road_fare_bill_helper_invoices') . " (
+            "CREATE TABLE IF NOT EXISTS " . $db->quoteName('#__route_calculation_help_for_accounting_invoices') . " (
               " . $db->quoteName('id') . " int unsigned NOT NULL AUTO_INCREMENT,
               " . $db->quoteName('customer_id') . " int unsigned NOT NULL,
               " . $db->quoteName('customer_code') . " varchar(64) NOT NULL,

@@ -1,7 +1,7 @@
 <?php
 /**
  * @package     Joomla.Site
- * @subpackage  mod_road_fare_bill_helper
+ * @subpackage  mod_route_calculation_help_for_accounting
  *
  * @copyright   Copyright (C) 2026 topoweryou.com
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
@@ -11,13 +11,13 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Uri\Uri;
-use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Language\Text;
 
 $document = Factory::getApplication()->getDocument();
-$calculatorUrl = Uri::root(true) . '/modules/mod_road_fare_bill_helper/media/calculator.html?v=1.2.16';
-$ajaxUrl = Route::_('index.php?option=com_ajax&module=road_fare_bill_helper&format=json', false);
+$languageTag = Factory::getApplication()->getLanguage()->getTag();
+$calculatorUrl = Uri::root(true) . '/modules/mod_route_calculation_help_for_accounting/media/calculator.html?v=1.2.19';
+$ajaxUrl = Uri::root() . 'index.php?option=com_ajax&module=route_calculation_help_for_accounting&format=json';
 $tokenName = Session::getFormToken();
 $tokenValue = '1';
 $frontendConfig = [
@@ -46,15 +46,16 @@ $frameConfig = [
     'ajaxUrl' => $ajaxUrl,
     'tokenName' => $tokenName,
     'tokenValue' => $tokenValue,
+    'languageTag' => $languageTag,
     'config' => $frontendConfig,
 ];
 $frameName = json_encode($frameConfig, $jsonFlags);
-$frameId = 'road_fare_bill_helper_frame_' . (int) $module->id;
+$frameId = 'route_calculation_help_for_accounting_frame_' . (int) $module->id;
 ?>
 <iframe
   id="<?php echo htmlspecialchars($frameId, ENT_QUOTES, 'UTF-8'); ?>"
-  class="road_fare_bill_helper-frame"
-  title="<?php echo htmlspecialchars(Text::_('MOD_ROAD_FARE_BILL_HELPER'), ENT_QUOTES, 'UTF-8'); ?>"
+  class="route_calculation_help_for_accounting-frame"
+  title="<?php echo htmlspecialchars(Text::_('MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING'), ENT_QUOTES, 'UTF-8'); ?>"
   src="<?php echo htmlspecialchars($calculatorUrl, ENT_QUOTES, 'UTF-8'); ?>"
   name="<?php echo htmlspecialchars($frameName, ENT_QUOTES, 'UTF-8'); ?>"
   scrolling="no"
@@ -68,7 +69,7 @@ $frameId = 'road_fare_bill_helper_frame_' . (int) $module->id;
   window.addEventListener('message', function (event) {
     if (event.source !== frame.contentWindow) return;
     var data = event.data || {};
-    if (data.type !== 'roadFareBillHelperHeight') return;
+    if (data.type !== 'routeCalculationHelpForAccountingHeight') return;
     var height = Number(data.height);
     if (!height || height < 600) return;
     frame.style.height = Math.ceil(height) + 'px';

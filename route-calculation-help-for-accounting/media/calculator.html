@@ -23,7 +23,7 @@
 <body>
 <nav class="navbar navbar-expand-lg bg-dark navbar-dark">
   <div class="container">
-    <span class="navbar-brand mb-0 h1">Road Fare Bill Helper</span>
+    <span class="navbar-brand mb-0 h1">Route calculation help for accounting</span>
     <span class="navbar-text d-none d-md-inline">Fast Slovenia route split</span>
   </div>
 </nav>
@@ -248,8 +248,159 @@ window.ROADFARE_CONFIG = window.ROADFARE_CONFIG || ROADFARE_FRAME_CONFIG.config 
 window.ROADFARE_JOOMLA_AJAX_URL = window.ROADFARE_JOOMLA_AJAX_URL || ROADFARE_FRAME_CONFIG.ajaxUrl || '';
 window.ROADFARE_JOOMLA_TOKEN_NAME = window.ROADFARE_JOOMLA_TOKEN_NAME || ROADFARE_FRAME_CONFIG.tokenName || '';
 window.ROADFARE_JOOMLA_TOKEN_VALUE = window.ROADFARE_JOOMLA_TOKEN_VALUE || ROADFARE_FRAME_CONFIG.tokenValue || '1';
+window.ROADFARE_LANGUAGE_TAG = window.ROADFARE_LANGUAGE_TAG || ROADFARE_FRAME_CONFIG.languageTag || document.documentElement.lang || 'en-GB';
 
 const ROADFARE_CONFIG = window.ROADFARE_CONFIG || {};
+const ROADFARE_LANGUAGE_TAG = String(window.ROADFARE_LANGUAGE_TAG || 'en-GB');
+const ROADFARE_TRANSLATIONS = ROADFARE_LANGUAGE_TAG.toLowerCase().startsWith('sl') ? {
+  'Taxi Transfer VAT Route Calculator': 'Kalkulator DDV za taxi prevoze',
+  'Route calculation help for accounting': 'Pomočnik za obračun prevozov',
+  'Fast Slovenia route split': 'Hitra delitev poti po Sloveniji',
+  'Calculates route distance, Slovenia km, outside-Slovenia km, gross price, net price, Slovenian VAT and invoice text.': 'Izračuna razdaljo poti, kilometre po Sloveniji, kilometre izven Slovenije, bruto ceno, neto ceno, slovenski DDV in besedilo računa.',
+  'Google Maps status': 'Stanje Google Maps',
+  'Loading Google Maps...': 'Nalaganje Google Maps...',
+  'The Google Maps API key is configured in the module Options tab.': 'Google Maps API ključ nastavite v zavihku Možnosti modula.',
+  'Transfer details': 'Podatki prevoza',
+  'Pickup': 'Prevzem',
+  'Drop-off': 'Cilj',
+  'Additional places': 'Dodatni postanki',
+  'Add place': 'Dodaj postanek',
+  'Return trip to pickup': 'Povratna vožnja na prevzem',
+  'Additional costs (deduct from gross price)': 'Dodatni stroški (odštejejo se od bruto cene)',
+  'Add cost': 'Dodaj strošek',
+  'Clear': 'Počisti',
+  'Total deductions:': 'Skupni odbitki:',
+  'Price with VAT / final customer price (€)': 'Cena z DDV / končna cena za stranko (€)',
+  'Enter final price charged to the customer. Price without VAT is calculated automatically.': 'Vnesite končno ceno, zaračunano stranki. Cena brez DDV se izračuna samodejno.',
+  'Calculated price without VAT (€)': 'Izračunana cena brez DDV (€)',
+  'Slovenian VAT rate (%)': 'Slovenska stopnja DDV (%)',
+  'Outside Slovenia country': 'Država izven Slovenije',
+  'Italy': 'Italija',
+  'Croatia / Zagreb': 'Hrvaška / Zagreb',
+  'Austria': 'Avstrija',
+  'Germany': 'Nemčija',
+  'Other / custom': 'Drugo / po meri',
+  'Outside Slovenia VAT rate (%)': 'Stopnja DDV izven Slovenije (%)',
+  'Country defaults are editable before recalculation.': 'Privzete vrednosti države lahko uredite pred ponovnim izračunom.',
+  'Outside SifraKonta': 'SifraKonta izven Slovenije',
+  'Revenue account used for the outside-Slovenia XML line.': 'Konto prihodka za XML vrstico izven Slovenije.',
+  'Custom country name': 'Ime države po meri',
+  'Country split method': 'Način delitve po državah',
+  'Fast: embedded Slovenia border polygon': 'Hitro: vgrajen poligon meje Slovenije',
+  'Slower: Google reverse geocoding': 'Počasneje: Google povratno geokodiranje',
+  'Manual Slovenia km only': 'Samo ročni kilometri po Sloveniji',
+  'Fast method is instant. Manual override is still possible.': 'Hitra metoda je takojšnja. Ročni popravek je še vedno možen.',
+  'Sampling accuracy': 'Natančnost vzorčenja',
+  'Fast / rough: every 10 km': 'Hitro / grobo: vsakih 10 km',
+  'Normal: every 5 km': 'Običajno: vsakih 5 km',
+  'Accurate and fast: every 2 km': 'Natančno in hitro: vsaka 2 km',
+  'Very accurate: every 1 km': 'Zelo natančno: vsak 1 km',
+  'High: every 500 m': 'Visoko: vsakih 500 m',
+  'Manual Slovenia km override': 'Ročni popravek kilometrov po Sloveniji',
+  'If entered, this value can be used to recalculate the invoice exactly.': 'Če je vneseno, se ta vrednost uporabi za natančen ponovni izračun računa.',
+  'Waiting for Google Maps...': 'Čakanje na Google Maps...',
+  'Actions': 'Dejanja',
+  'Calculate route and VAT split': 'Izračunaj pot in delitev DDV',
+  'Recalculate with manual Slovenia km': 'Preračunaj z ročnimi km po Sloveniji',
+  'Map': 'Zemljevid',
+  'Driving route': 'Vozna pot',
+  'Results': 'Rezultati',
+  'Total route distance': 'Skupna razdalja poti',
+  'Estimated km in Slovenia': 'Ocenjeni km po Sloveniji',
+  'Estimated km outside Slovenia': 'Ocenjeni km izven Slovenije',
+  'Total price without VAT': 'Skupna cena brez DDV',
+  'Slovenian taxable base': 'Slovenska davčna osnova',
+  'Outside Slovenia part': 'Del izven Slovenije',
+  'Slovenian VAT': 'Slovenski DDV',
+  'Outside Slovenia VAT': 'DDV izven Slovenije',
+  'Total invoice amount': 'Skupni znesek računa',
+  'Invoice / Customer': 'Račun / Stranka',
+  'Invoice no': 'Št. računa',
+  'Sifra Stranke': 'Šifra stranke',
+  'Customer name': 'Naziv stranke',
+  'Address, post': 'Naslov, pošta',
+  'ID za DDV kupca: SIxxxx': 'ID za DDV kupca: SIxxxx',
+  'Save details': 'Shrani podatke',
+  'Save invoice history': 'Shrani zgodovino računa',
+  'Load history': 'Naloži zgodovino',
+  'Auto generated invoice text': 'Samodejno ustvarjeno besedilo računa',
+  'English': 'Angleško',
+  'Slovenian': 'Slovensko',
+  'Generate PDF': 'Ustvari PDF',
+  'Export minimax XML': 'Izvozi Minimax XML',
+  'Load saved customer': 'Naloži shranjeno stranko',
+  'Close': 'Zapri',
+  'Search by customer name or code': 'Išči po nazivu ali šifri stranke',
+  'Start typing...': 'Začnite tipkati...',
+  'e.g. Ljubljana Airport': 'npr. Letališče Ljubljana',
+  'e.g. Venice Airport': 'npr. Letališče Benetke',
+  'Used when Other / custom is selected': 'Uporabi se pri izbiri Drugo / po meri',
+  'Optional, e.g. 94.5': 'Neobvezno, npr. 94.5',
+  'Invoice no (e.g. 26-0007)': 'Št. računa (npr. 26-0007)',
+  'Customer code (Sifra)': 'Šifra stranke',
+  'Generated file name (e.g. racun_2026_2026-06-18)': 'Ime ustvarjene datoteke (npr. racun_2026_2026-06-18)',
+  'Custom invoice message (optional)': 'Sporočilo na računu po meri (neobvezno)',
+  'Add stop or place': 'Dodaj postanek ali kraj',
+  'Remove': 'Odstrani',
+  'Description (e.g. parking)': 'Opis (npr. parkirnina)',
+  'Google Maps API key is missing. Enter it in the module Options tab.': 'Google Maps API ključ manjka. Vnesite ga v zavihku Možnosti modula.',
+  'Map cannot load until the module API key is configured.': 'Zemljevid se ne more naložiti, dokler API ključ modula ni nastavljen.',
+  'Google Maps loaded successfully.': 'Google Maps je uspešno naložen.',
+  'Google Maps loaded. Enter pickup and drop-off, then calculate.': 'Google Maps je naložen. Vnesite prevzem in cilj ter izračunajte.',
+  'Google Maps failed to load. Check API key, billing and enabled APIs.': 'Google Maps se ni naložil. Preverite API ključ, plačevanje in omogočene API-je.',
+  'Google Maps Routes library failed to load. Enable Routes API for this key.': 'Knjižnica Google Maps Routes se ni naložila. Za ta ključ omogočite Routes API.',
+  'Google Maps Routes library failed to load. Check API key, billing and enabled APIs.': 'Knjižnica Google Maps Routes se ni naložila. Preverite API ključ, plačevanje in omogočene API-je.',
+  'Google Maps Routes library is not loaded yet.': 'Knjižnica Google Maps Routes še ni naložena.',
+  'Pickup and drop-off are required.': 'Prevzem in cilj sta obvezna.',
+  'Routes API supports a maximum of 25 additional places.': 'Routes API podpira največ 25 dodatnih postankov.',
+  'Enter a valid gross price.': 'Vnesite veljavno bruto ceno.',
+  'Calculating route...': 'Izračun poti...',
+  'Route error: no route found.': 'Napaka poti: pot ni najdena.',
+  'Domestic Slovenia route detected. Outside Slovenia set to 0 km.': 'Zaznana je domača pot po Sloveniji. Del izven Slovenije je nastavljen na 0 km.',
+  'Route calculated. Enter manual Slovenia km and click “Recalculate with manual Slovenia km”.': 'Pot je izračunana. Vnesite ročne kilometre po Sloveniji in kliknite »Preračunaj z ročnimi km po Sloveniji«.',
+  'Manual Slovenia km used.': 'Uporabljeni so ročni kilometri po Sloveniji.',
+  'Done. Fast Slovenia border polygon split used.': 'Končano. Uporabljena je hitra delitev po poligonu meje Slovenije.',
+  'Using slower Google reverse geocoding method...': 'Uporablja se počasnejša metoda Google povratnega geokodiranja...',
+  'Done. Google reverse geocoding split used.': 'Končano. Uporabljena je delitev z Google povratnim geokodiranjem.',
+  'Calculate the route first, then enter manual Slovenia km.': 'Najprej izračunajte pot, nato vnesite ročne kilometre po Sloveniji.',
+  'Enter a valid Slovenia km number.': 'Vnesite veljavno število kilometrov po Sloveniji.',
+  'VAT rate changed. Totals recalculated.': 'Stopnja DDV je spremenjena. Skupni zneski so preračunani.',
+  'Database save is available only inside the Joomla module package.': 'Shranjevanje v bazo je na voljo samo znotraj Joomla modula.',
+  'Joomla database request failed.': 'Zahteva do Joomla baze ni uspela.',
+  'Sifra Stranke is required.': 'Šifra stranke je obvezna.',
+  'Customer name is required.': 'Naziv stranke je obvezen.',
+  'Saving customer details...': 'Shranjevanje podatkov stranke...',
+  'Loading saved customers...': 'Nalaganje shranjenih strank...',
+  'No saved customers found.': 'Ni shranjenih strank.',
+  'No matching customers found.': 'Ni najdenih ustreznih strank.',
+  'Enter Sifra Stranke to load a customer.': 'Vnesite šifro stranke za nalaganje stranke.',
+  'Loading customer details...': 'Nalaganje podatkov stranke...',
+  'Customer details loaded.': 'Podatki stranke so naloženi.',
+  'Calculate a route before saving invoice history.': 'Pred shranjevanjem zgodovine računa izračunajte pot.',
+  'Invoice number is required.': 'Številka računa je obvezna.',
+  'Saving invoice history...': 'Shranjevanje zgodovine računa...',
+  'Invoice history saved.': 'Zgodovina računa je shranjena.',
+  'Invoice history': 'Zgodovina računov',
+  'Filter by invoice / order number': 'Filtriraj po številki računa / naročila',
+  'Invoice Name': 'Naziv računa',
+  'Price': 'Cena',
+  'Date': 'Datum',
+  'No invoice history matches this filter.': 'Nobena zgodovina računa ne ustreza filtru.',
+  'Select or save a customer before loading invoice history.': 'Pred nalaganjem zgodovine izberite ali shranite stranko.',
+  'Loading invoice history...': 'Nalaganje zgodovine računov...',
+  'Saved invoice payload is invalid.': 'Shranjeni podatki računa niso veljavni.',
+  'Saved invoice has no calculated route data.': 'Shranjeni račun nima izračunanih podatkov poti.',
+  'Saved invoice restored. PDF and XML can be generated without recalculating the route.': 'Shranjeni račun je obnovljen. PDF in XML lahko ustvarite brez ponovnega izračuna poti.',
+  'Calculate a route first, then generate PDF.': 'Najprej izračunajte pot, nato ustvarite PDF.',
+  'PDF generated.': 'PDF je ustvarjen.',
+  'Calculate a route first, then export Minimax XML.': 'Najprej izračunajte pot, nato izvozite Minimax XML.',
+  'Enter Slovenia SifraKonta in the module options before exporting Minimax XML.': 'Pred izvozom Minimax XML vnesite slovenski SifraKonta v možnostih modula.',
+  'Enter Outside SifraKonta before exporting Minimax XML.': 'Pred izvozom Minimax XML vnesite zunanji SifraKonta.',
+  'Minimax XML exported.': 'Minimax XML je izvožen.',
+  'Enter manually': 'Vnesite ročno',
+  'VAT ': 'DDV ',
+  ' not subject to Slovenian VAT': ' ni predmet slovenskega DDV'
+} : {};
 const GOOGLE_MAPS_API_KEY = normalizeGoogleMapsApiKey(ROADFARE_CONFIG.googleMapsApiKey);
 const COMPANY = ROADFARE_CONFIG.company || {};
 const REVENUE_ACCOUNTS = ROADFARE_CONFIG.revenueAccounts || {};
@@ -261,6 +412,36 @@ let autoRouteTimer = null;
 let lastRouteData = null;
 let lastCalculatedData = null;
 let savedCustomers = [];
+
+function t(text) {
+  const value = String(text ?? '');
+  return ROADFARE_TRANSLATIONS[value] || value;
+}
+
+function translateStaticUi() {
+  document.documentElement.lang = ROADFARE_LANGUAGE_TAG;
+  if (document.title) document.title = t(document.title);
+
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      return node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+    }
+  });
+  const textNodes = [];
+  while (walker.nextNode()) textNodes.push(walker.currentNode);
+  textNodes.forEach(node => {
+    const original = node.nodeValue.trim();
+    const translated = t(original);
+    if (translated !== original) node.nodeValue = node.nodeValue.replace(original, translated);
+  });
+
+  document.querySelectorAll('[placeholder]').forEach(el => {
+    el.placeholder = t(el.placeholder);
+  });
+  document.querySelectorAll('[aria-label]').forEach(el => {
+    el.setAttribute('aria-label', t(el.getAttribute('aria-label')));
+  });
+}
 
 function normalizeGoogleMapsApiKey(value) {
   const raw = String(value || '').trim();
@@ -279,6 +460,7 @@ const OUTSIDE_COUNTRY_DEFAULTS = {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
+  translateStaticUi();
   loadGoogleMaps();
   try {
     setDefaultOutputFileName();
@@ -304,7 +486,7 @@ function loadGoogleMaps() {
   script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(GOOGLE_MAPS_API_KEY) + '&loading=async&libraries=geometry,routes,places&callback=initMap';
   script.async = true;
   script.defer = true;
-  script.onerror = () => { setApiStatus('Google Maps failed to load. Check API key, billing and enabled APIs.', 'danger'); setStatus('Google Maps failed to load.', 'danger'); };
+  script.onerror = () => { setApiStatus('Google Maps failed to load. Check API key, billing and enabled APIs.', 'danger'); setStatus('Google Maps failed to load. Check API key, billing and enabled APIs.', 'danger'); };
   document.head.appendChild(script);
 }
 
@@ -314,8 +496,8 @@ window.initMap = async function () {
     geocoder = new google.maps.Geocoder();
     ({ Route } = await google.maps.importLibrary('routes'));
     ({ PlaceAutocompleteElement } = await google.maps.importLibrary('places'));
-    setupPlaceAutocomplete('pickup', 'pickupPlaceAutocomplete', 'e.g. Ljubljana Airport');
-    setupPlaceAutocomplete('dropoff', 'dropoffPlaceAutocomplete', 'e.g. Venice Airport');
+    setupPlaceAutocomplete('pickup', 'pickupPlaceAutocomplete', t('e.g. Ljubljana Airport'));
+    setupPlaceAutocomplete('dropoff', 'dropoffPlaceAutocomplete', t('e.g. Venice Airport'));
     setApiStatus('Google Maps loaded successfully.', 'success');
     setStatus('Google Maps loaded. Enter pickup and drop-off, then calculate.', 'success');
   } catch (err) {
@@ -372,10 +554,10 @@ function addRouteStop(value = '') {
   const id = `routeStop${++routeStopCounter}`;
   const row = document.createElement('div');
   row.className = 'route-stop-row';
-  row.innerHTML = `<div id="${id}Autocomplete"><input id="${id}" class="route-stop-input form-control" placeholder="Add stop or place" autocomplete="off" value=""></div><button class="btn btn-sm btn-outline-danger" type="button">Remove</button>`;
+  row.innerHTML = `<div id="${id}Autocomplete"><input id="${id}" class="route-stop-input form-control" placeholder="${xmlEscape(t('Add stop or place'))}" autocomplete="off" value=""></div><button class="btn btn-sm btn-outline-danger" type="button">${xmlEscape(t('Remove'))}</button>`;
   list.appendChild(row);
   row.querySelector('button').addEventListener('click', () => { row.remove(); scheduleAutoRouteCalculation(); });
-  setupPlaceAutocomplete(id, `${id}Autocomplete`, 'Add stop or place');
+  setupPlaceAutocomplete(id, `${id}Autocomplete`, t('Add stop or place'));
   if (value) {
     const input = document.getElementById(id);
     const placeAutocomplete = row.querySelector('gmp-place-autocomplete');
@@ -508,9 +690,9 @@ function addAdjustment() {
   const row = document.createElement('div');
   row.className = 'input-group mb-2 adjustment-row';
   row.dataset.id = id;
-  row.innerHTML = `<input type="text" class="form-control form-control-sm adjustment-desc" placeholder="Description (e.g. parking)" />
+  row.innerHTML = `<input type="text" class="form-control form-control-sm adjustment-desc" placeholder="${xmlEscape(t('Description (e.g. parking)'))}" />
     <input type="number" step="0.01" class="form-control form-control-sm adjustment-amount" value="0" />
-    <button class="btn btn-sm btn-outline-danger" type="button">Remove</button>`;
+    <button class="btn btn-sm btn-outline-danger" type="button">${xmlEscape(t('Remove'))}</button>`;
   row.querySelector('button').addEventListener('click', () => { row.remove(); updateDeductionsDisplay(); });
   row.querySelector('.adjustment-amount').addEventListener('input', updateDeductionsDisplay);
   container.appendChild(row);
@@ -545,7 +727,7 @@ function getJoomlaAjaxConfig() {
 function showDatabaseStatus(message, type = 'secondary') {
   const el = document.getElementById('databaseStatus');
   if (!el) return;
-  el.textContent = message;
+  el.textContent = t(message);
   el.className = 'alert alert-' + type + ' small mb-2';
 }
 
@@ -666,7 +848,7 @@ function renderSavedCustomerSuggestions(customers) {
   if (!customers.length) {
     const empty = document.createElement('div');
     empty.className = 'list-group-item py-1 small text-muted';
-    empty.textContent = 'No saved customers found.';
+    empty.textContent = t('No saved customers found.');
     list.appendChild(empty);
     return;
   }
@@ -739,8 +921,8 @@ function renderCustomerPicker(customers) {
   list.replaceChildren();
 
   status.textContent = customers.length
-    ? `${customers.length} customer${customers.length === 1 ? '' : 's'} found. Select one to load.`
-    : 'No matching customers found.';
+    ? (ROADFARE_LANGUAGE_TAG.toLowerCase().startsWith('sl') ? `Najdenih strank: ${customers.length}. Izberite stranko za nalaganje.` : `${customers.length} customer${customers.length === 1 ? '' : 's'} found. Select one to load.`)
+    : t('No matching customers found.');
 
   customers.forEach(customer => {
     const code = String(customer.customer_code || '');
@@ -837,13 +1019,13 @@ function renderInvoiceHistory(invoices) {
     return;
   }
 
-  const filterHtml = `<div class="fw-semibold mb-2">Invoice history</div>
+  const filterHtml = `<div class="fw-semibold mb-2">${xmlEscape(t('Invoice history'))}</div>
     <div class="row g-2 mb-2">
-      <div class="col-sm-7"><input id="invoiceHistoryOrderFilter" class="form-control form-control-sm" placeholder="Filter by invoice / order number" value="${xmlEscape(orderFilterValue)}" oninput="filterInvoiceHistory()" /></div>
+      <div class="col-sm-7"><input id="invoiceHistoryOrderFilter" class="form-control form-control-sm" placeholder="${xmlEscape(t('Filter by invoice / order number'))}" value="${xmlEscape(orderFilterValue)}" oninput="filterInvoiceHistory()" /></div>
       <div class="col-sm-5"><input id="invoiceHistoryDateFilter" class="form-control form-control-sm" type="date" value="${xmlEscape(dateFilter)}" onchange="filterInvoiceHistory()" /></div>
     </div>
     <div class="invoice-history-grid small fw-semibold text-muted border-bottom pb-1 mb-1">
-      <span>Invoice Name</span><span class="text-sm-end">Price</span><span>Date</span>
+      <span>${xmlEscape(t('Invoice Name'))}</span><span class="text-sm-end">${xmlEscape(t('Price'))}</span><span>${xmlEscape(t('Date'))}</span>
     </div>`;
 
   historyEl.innerHTML = filterHtml + `<div id="invoiceHistoryRows">${invoiceHistoryRowsHtml(invoices, orderFilter, dateFilter)}</div>`;
@@ -866,7 +1048,7 @@ function invoiceHistoryRowsHtml(invoices, orderFilter, dateFilter) {
   });
 
   if (!filteredInvoices.length) {
-    return '<div class="small text-muted py-2">No invoice history matches this filter.</div>';
+    return `<div class="small text-muted py-2">${xmlEscape(t('No invoice history matches this filter.'))}</div>`;
   }
 
   return filteredInvoices.map(inv => {
@@ -1310,8 +1492,8 @@ function round2(n) { return Number(n || 0).toFixed(2); }
 function fmtKm(n) { return n.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' km'; }
 function fmtEur(n) { return n.toLocaleString('sl-SI', { style: 'currency', currency: 'EUR' }); }
 function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
-function setApiStatus(msg, type) { const el = document.getElementById('apiStatus'); el.textContent = msg; el.className = 'alert alert-' + type + ' small mb-0'; }
-function setStatus(msg, type) { const el = document.getElementById('status'); el.textContent = msg; el.className = 'alert alert-' + type + ' small mt-3 mb-0'; }
+function setApiStatus(msg, type) { const el = document.getElementById('apiStatus'); el.textContent = t(msg); el.className = 'alert alert-' + type + ' small mb-0'; }
+function setStatus(msg, type) { const el = document.getElementById('status'); el.textContent = t(msg); el.className = 'alert alert-' + type + ' small mt-3 mb-0'; }
 
 function postFrameHeight() {
   if (window.parent === window) return;
@@ -1324,7 +1506,7 @@ function postFrameHeight() {
     html.scrollHeight,
     html.offsetHeight
   );
-  window.parent.postMessage({ type: 'roadFareBillHelperHeight', height }, '*');
+  window.parent.postMessage({ type: 'routeCalculationHelpForAccountingHeight', height }, '*');
 }
 
 window.addEventListener('load', postFrameHeight);
