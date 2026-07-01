@@ -1,6 +1,6 @@
 # Route calculation help for accounting
 
-Route calculation help for accounting is a Joomla 6 site module for taxi and passenger transfer invoicing. It calculates route distance, estimates the split between the country of origin and foreign countries, prepares invoice text, and exports invoice data for PDF and Minimax XML workflows.
+Route calculation help for accounting is a Joomla 6 site module for taxi and passenger transfer invoicing. It calculates route distance, estimates the split between the country of origin and foreign countries, prepares invoice text, and exports invoice data for PDF and accouting program as is Minimax XML workflows.
 
 ## Features
 
@@ -29,9 +29,22 @@ Demo: https://builder.topoweryou.com/routecalculationhelp/
   - Places API
   - Geocoding API, if using Google reverse geocoding split mode
 
+## Automatic Updates for Subscribers
+
+The module manifest includes this Joomla update server:
+
+```text
+https://builder.topoweryou.com/routecalculationhelp/updates/route-calculation-help-for-accounting.xml
+```
+
+
 ## Default Configuration
 
 The included default configuration is prepared for Slovenia-based invoicing, with editable settings for foreign countries and revenue accounts. You can adapt the labels, accounts, VAT rates, and country split rules for another country of origin.
+
+## Configuration on Demand
+
+On request, we provide configuration adjusted to your needs. Get in touch at: https://topoweryou.com/services
 
 ## Installation
 
@@ -56,7 +69,7 @@ route-calculation-help-for-accounting/
 The installable ZIP package is distributed separately as:
 
 ```text
-Route_Calculation_Help_For_Accounting_vx.x.xxx_Joomla6.zip
+route_calculation_help_for_accounting_vx.x.xx.zip
 ```
 
 ## Security
@@ -66,5 +79,7 @@ Do not commit real Google API keys. Configure the key in the Joomla module optio
 ## License
 
 GNU General Public License version 2 or later. See `route-calculation-help-for-accounting/LICENSE.txt`.
+
+Author: Darko Fatur
 
 Copyright (C) 2026 topoweryou.com

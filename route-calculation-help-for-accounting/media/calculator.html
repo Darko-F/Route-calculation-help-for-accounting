@@ -16,8 +16,11 @@
     .route-stop-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; align-items: start; }
     .invoice-history-grid { display: grid; grid-template-columns: minmax(9rem, 1fr) 7rem 8.5rem; gap: .5rem; align-items: center; }
     .invoice-history-grid > span { min-width: 0; overflow-wrap: anywhere; }
+    .customer-picker-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .5rem; align-items: center; }
+    .customer-picker-row > span { min-width: 0; overflow-wrap: anywhere; }
     @media (max-width: 575.98px) { .action-grid { grid-template-columns: 1fr; } }
     @media (max-width: 575.98px) { .invoice-history-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 575.98px) { .customer-picker-row { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -171,11 +174,18 @@
           <div class="row g-2">
             <div class="col-md-6">
               <label for="invoiceNumber" class="form-label small mb-1">Invoice no</label>
-              <input id="invoiceNumber" class="form-control form-control-sm" placeholder="Invoice no (e.g. 26-0007)" />
+              <div class="input-group input-group-sm">
+                <input id="invoiceNumber" class="form-control" placeholder="Invoice no (e.g. RCHA-2026-001)" />
+                <button class="btn btn-outline-secondary" type="button" onclick="generateNextInvoiceNumber(true)">Generate</button>
+              </div>
             </div>
             <div class="col-md-6">
               <label for="customerCode" class="form-label small mb-1">Sifra Stranke</label>
               <input id="customerCode" class="form-control form-control-sm" placeholder="Customer code (Sifra)" />
+            </div>
+            <div class="col-md-6 mt-2">
+              <label for="serviceDate" class="form-label small mb-1">Service date</label>
+              <input id="serviceDate" class="form-control form-control-sm" type="date" />
             </div>
             <div class="col-12 mt-2"><input id="outputFileName" class="form-control form-control-sm" placeholder="Generated file name (e.g. racun_2026_2026-06-18)" /></div>
             <div class="col-12 mt-2">
@@ -194,6 +204,7 @@
             <div class="col-12 mt-2"><textarea id="customInvoiceMessage" class="form-control form-control-sm" rows="2" placeholder="Custom invoice message (optional)"></textarea></div>
             <div class="col-12 mt-2 d-flex flex-wrap gap-2">
               <button class="btn btn-sm btn-primary" type="button" onclick="saveCustomerDetails()">Save details</button>
+              <button class="btn btn-sm btn-outline-secondary" type="button" onclick="openCustomerPicker()">Customers</button>
               <button class="btn btn-sm btn-outline-primary" type="button" onclick="saveInvoiceHistory()">Save invoice history</button>
               <button class="btn btn-sm btn-outline-secondary" type="button" onclick="loadInvoiceHistory()">Load history</button>
             </div>
@@ -222,7 +233,7 @@
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 class="modal-title fs-5" id="customerPickerTitle">Load saved customer</h2>
+        <h2 class="modal-title fs-5" id="customerPickerTitle">Saved customers</h2>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -316,11 +327,14 @@ const ROADFARE_TRANSLATIONS = ROADFARE_LANGUAGE_TAG.toLowerCase().startsWith('sl
   'Total invoice amount': 'Skupni znesek računa',
   'Invoice / Customer': 'Račun / Stranka',
   'Invoice no': 'Št. računa',
+  'Generate': 'Ustvari',
   'Sifra Stranke': 'Šifra stranke',
+  'Service date': 'Datum opr. storitve',
   'Customer name': 'Naziv stranke',
   'Address, post': 'Naslov, pošta',
   'ID za DDV kupca: SIxxxx': 'ID za DDV kupca: SIxxxx',
   'Save details': 'Shrani podatke',
+  'Customers': 'Stranke',
   'Save invoice history': 'Shrani zgodovino računa',
   'Load history': 'Naloži zgodovino',
   'Auto generated invoice text': 'Samodejno ustvarjeno besedilo računa',
@@ -329,6 +343,9 @@ const ROADFARE_TRANSLATIONS = ROADFARE_LANGUAGE_TAG.toLowerCase().startsWith('sl
   'Generate PDF': 'Ustvari PDF',
   'Export minimax XML': 'Izvozi Minimax XML',
   'Load saved customer': 'Naloži shranjeno stranko',
+  'Saved customers': 'Shranjene stranke',
+  'Load': 'Naloži',
+  'Delete': 'Izbriši',
   'Close': 'Zapri',
   'Search by customer name or code': 'Išči po nazivu ali šifri stranke',
   'Start typing...': 'Začnite tipkati...',
@@ -337,6 +354,7 @@ const ROADFARE_TRANSLATIONS = ROADFARE_LANGUAGE_TAG.toLowerCase().startsWith('sl
   'Used when Other / custom is selected': 'Uporabi se pri izbiri Drugo / po meri',
   'Optional, e.g. 94.5': 'Neobvezno, npr. 94.5',
   'Invoice no (e.g. 26-0007)': 'Št. računa (npr. 26-0007)',
+  'Invoice no (e.g. RCHA-2026-001)': 'Št. računa (npr. RCHA-2026-001)',
   'Customer code (Sifra)': 'Šifra stranke',
   'Generated file name (e.g. racun_2026_2026-06-18)': 'Ime ustvarjene datoteke (npr. racun_2026_2026-06-18)',
   'Custom invoice message (optional)': 'Sporočilo na računu po meri (neobvezno)',
@@ -373,11 +391,16 @@ const ROADFARE_TRANSLATIONS = ROADFARE_LANGUAGE_TAG.toLowerCase().startsWith('sl
   'Loading saved customers...': 'Nalaganje shranjenih strank...',
   'No saved customers found.': 'Ni shranjenih strank.',
   'No matching customers found.': 'Ni najdenih ustreznih strank.',
+  'Delete this saved customer? Invoice history will stay saved.': 'Izbrišem to shranjeno stranko? Zgodovina računov ostane shranjena.',
+  'Deleting customer...': 'Brisanje stranke...',
+  'Customer deleted.': 'Stranka je izbrisana.',
   'Enter Sifra Stranke to load a customer.': 'Vnesite šifro stranke za nalaganje stranke.',
   'Loading customer details...': 'Nalaganje podatkov stranke...',
   'Customer details loaded.': 'Podatki stranke so naloženi.',
   'Calculate a route before saving invoice history.': 'Pred shranjevanjem zgodovine računa izračunajte pot.',
   'Invoice number is required.': 'Številka računa je obvezna.',
+  'Generating invoice number...': 'Ustvarjanje številke računa...',
+  'Invoice number generated.': 'Številka računa je ustvarjena.',
   'Saving invoice history...': 'Shranjevanje zgodovine računa...',
   'Invoice history saved.': 'Zgodovina računa je shranjena.',
   'Invoice history': 'Zgodovina računov',
@@ -464,8 +487,13 @@ window.addEventListener('DOMContentLoaded', () => {
   loadGoogleMaps();
   try {
     setDefaultOutputFileName();
+    setDefaultServiceDate();
     updateDeductionsDisplay();
     onOutsideCountryChange(false);
+    generateNextInvoiceNumber(false).catch(() => {});
+    document.getElementById('invoiceNumber')?.addEventListener('input', event => {
+      event.currentTarget.dataset.generated = '0';
+    });
     document.getElementById('outsideVatRate')?.addEventListener('input', () => {
       if (lastCalculatedData) calculateVatSplitFromSloveniaKm(lastCalculatedData.sloveniaKm, 'VAT rate changed. Totals recalculated.');
     });
@@ -927,18 +955,56 @@ function renderCustomerPicker(customers) {
   customers.forEach(customer => {
     const code = String(customer.customer_code || '');
     const name = String(customer.customer_name || '');
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'list-group-item list-group-item-action d-flex justify-content-between gap-3';
+    const row = document.createElement('div');
+    row.className = 'list-group-item customer-picker-row';
     const nameElement = document.createElement('span');
-    nameElement.textContent = name;
-    const codeElement = document.createElement('span');
-    codeElement.className = 'text-muted text-nowrap';
-    codeElement.textContent = code;
-    button.append(nameElement, codeElement);
-    button.addEventListener('click', () => selectCustomerFromPicker(code));
-    list.appendChild(button);
+    nameElement.innerHTML = `<span class="fw-semibold">${xmlEscape(name)}</span><span class="text-muted d-block small">${xmlEscape(code)}</span>`;
+    const loadButton = document.createElement('button');
+    loadButton.type = 'button';
+    loadButton.className = 'btn btn-sm btn-outline-primary';
+    loadButton.textContent = t('Load');
+    loadButton.addEventListener('click', () => selectCustomerFromPicker(code));
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'btn btn-sm btn-outline-danger';
+    deleteButton.textContent = t('Delete');
+    deleteButton.addEventListener('click', () => deleteSavedCustomer(code, name));
+    row.append(nameElement, loadButton, deleteButton);
+    list.appendChild(row);
   });
+}
+
+async function deleteSavedCustomer(customerCode, customerName = '') {
+  if (!customerCode) return;
+  const label = customerName ? `${customerName} (${customerCode})` : customerCode;
+  if (!window.confirm(`${t('Delete this saved customer? Invoice history will stay saved.')}\n\n${label}`)) return;
+
+  const status = document.getElementById('customerPickerStatus');
+  try {
+    if (status) status.textContent = t('Deleting customer...');
+    await postJoomlaAjax('deleteCustomer', { customer_code: customerCode });
+    savedCustomers = savedCustomers.filter(customer => String(customer.customer_code || '') !== customerCode);
+
+    if ((document.getElementById('customerCode')?.value || '').trim() === customerCode) {
+      clearCurrentCustomerForm();
+    }
+
+    renderCustomerPicker(savedCustomers);
+    document.getElementById('savedCustomerSuggestions')?.replaceChildren();
+    showDatabaseStatus('Customer deleted.', 'success');
+  } catch (err) {
+    if (status) status.textContent = err.message;
+    showDatabaseStatus(err.message, 'danger');
+  }
+}
+
+function clearCurrentCustomerForm() {
+  ['customerCode', 'customerName', 'customerAddress', 'customerVatId', 'customInvoiceMessage'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const historyEl = document.getElementById('invoiceHistory');
+  if (historyEl) historyEl.textContent = '';
 }
 
 function selectCustomerFromPicker(customerCode) {
@@ -977,9 +1043,12 @@ async function loadCustomerDetails(selectedCustomerCode = '') {
 
 function getInvoicePayload() {
   if (!lastCalculatedData) return null;
+  const invoiceNumberInput = document.getElementById('invoiceNumber');
   return {
     customer: getCustomerPayload(),
-    invoice_number: (document.getElementById('invoiceNumber')?.value || '').trim(),
+    invoice_number: (invoiceNumberInput?.value || '').trim(),
+    invoice_number_auto: invoiceNumberInput?.dataset.generated === '1',
+    service_date: getServiceDateIso(),
     output_file_name: (document.getElementById('outputFileName')?.value || '').trim(),
     calculated_data: lastCalculatedData,
     invoice_text_en: document.getElementById('invoiceTextEn')?.value || '',
@@ -987,9 +1056,37 @@ function getInvoicePayload() {
   };
 }
 
+function getInvoiceYear() {
+  const currentValue = (document.getElementById('invoiceNumber')?.value || '').trim();
+  const yearMatch = currentValue.match(/^RCHA-(\d{4})-/);
+  return yearMatch ? Number(yearMatch[1]) : new Date().getFullYear();
+}
+
+async function generateNextInvoiceNumber(force = false) {
+  const invoiceNumberInput = document.getElementById('invoiceNumber');
+  if (!invoiceNumberInput) return '';
+  if (!force && invoiceNumberInput.value.trim()) return invoiceNumberInput.value.trim();
+
+  try {
+    if (force) showDatabaseStatus('Generating invoice number...', 'warning');
+    const data = await postJoomlaAjax('nextInvoiceNumber', { year: getInvoiceYear() });
+    const invoiceNumber = String(data.invoice_number || '').trim();
+    if (invoiceNumber) {
+      invoiceNumberInput.value = invoiceNumber;
+      invoiceNumberInput.dataset.generated = '1';
+      if (force) showDatabaseStatus('Invoice number generated.', 'success');
+    }
+    return invoiceNumber;
+  } catch (err) {
+    if (force) showDatabaseStatus(err.message, 'danger');
+    return invoiceNumberInput.value.trim();
+  }
+}
+
 async function saveInvoiceHistory() {
   try {
     await resolveCustomerCodeFromName();
+    await generateNextInvoiceNumber(false);
     const payload = getInvoicePayload();
     if (!payload) { showDatabaseStatus('Calculate a route before saving invoice history.', 'warning'); return; }
     if (!payload.customer.customer_code) { showDatabaseStatus('Sifra Stranke is required.', 'danger'); return; }
@@ -997,6 +1094,11 @@ async function saveInvoiceHistory() {
     showDatabaseStatus('Saving invoice history...', 'warning');
     const data = await postJoomlaAjax('saveInvoice', payload);
     const savedInvoice = data?.invoice || null;
+    if (savedInvoice?.invoice_number) {
+      const invoiceNumberInput = document.getElementById('invoiceNumber');
+      invoiceNumberInput.value = savedInvoice.invoice_number;
+      invoiceNumberInput.dataset.generated = '0';
+    }
     showDatabaseStatus('Invoice history saved.', 'success');
     await loadInvoiceHistory(savedInvoice?.customer_code || payload.customer.customer_code, savedInvoice?.customer_name || payload.customer.customer_name, savedInvoice);
   } catch (err) {
@@ -1098,7 +1200,10 @@ function restoreInvoiceFromHistory(index) {
   document.getElementById('customerName').value = customer.customer_name || '';
   document.getElementById('customerAddress').value = customer.customer_address || '';
   document.getElementById('customerVatId').value = customer.vat_id || '';
-  document.getElementById('invoiceNumber').value = payload.invoice_number || invoice.invoice_number || '';
+  const invoiceNumberInput = document.getElementById('invoiceNumber');
+  invoiceNumberInput.value = payload.invoice_number || invoice.invoice_number || '';
+  invoiceNumberInput.dataset.generated = '0';
+  document.getElementById('serviceDate').value = normalizeIsoDate(payload.service_date || '') || getTodayIsoDate();
   document.getElementById('outputFileName').value = payload.output_file_name || '';
   if (customer.outside_country) document.getElementById('outsideCountry').value = customer.outside_country;
   onOutsideCountryChange(false);
@@ -1144,6 +1249,7 @@ function generatePdf() {
   const paymentReference = invoiceNo.replace(/[^0-9]/g, '');
   const today = new Date();
   const issueDate = today.toLocaleDateString('sl-SI');
+  const serviceDate = formatIsoDateSl(getServiceDateIso());
   const dueDate = new Date(today.getTime() + 30 * 86400000).toLocaleDateString('sl-SI');
   const pageWidth = doc.internal.pageSize.getWidth();
   const right = pageWidth - 14;
@@ -1154,7 +1260,7 @@ function generatePdf() {
   doc.text(`Racun st.: ${invoiceNo}`, 14, y); y += 5;
   const issuePlace = String(COMPANY.issueCity || '').trim();
   doc.text(`Datum izdaje: ${issuePlace ? pdfText(issuePlace) + ', ' : ''}${issueDate}`, 14, y); y += 5;
-  doc.text(`Datum opr. storitve: ${issueDate}`, 14, y); y += 5;
+  doc.text(`Datum opr. storitve: ${serviceDate}`, 14, y); y += 5;
   doc.text(`Rok placila: ${dueDate}`, 14, y);
 
   y = 15;
@@ -1334,6 +1440,7 @@ function exportMinimaxXml() {
   if (!lastCalculatedData) { setStatus('Calculate a route first, then export Minimax XML.', 'warning'); return; }
   const d = lastCalculatedData;
   const today = new Date().toISOString().slice(0,10);
+  const serviceDateXml = getServiceDateIso();
   const invoiceRef = (document.getElementById('invoiceNumber')?.value || 'PREVOZ 2026-212');
   const sifraStranke = (document.getElementById('customerCode')?.value || 'STR001');
   const naziv = (document.getElementById('customerName')?.value || '');
@@ -1363,7 +1470,7 @@ function exportMinimaxXml() {
   const total = moneyXml(totalAmount);
   const outsideRevenueLine = balancedOutsideBaseAmount > 0 ? `\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)} - izven Slovenije</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(outsideRevenueAccount)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${zunajOsnova}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${zunajOsnova}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>` : '';
   const outsideVatLine = outsideVatAmount > 0 ? `\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)} - DDV izven Slovenije</OpisVrsticeTemeljnice>\n          <SifraKonta>26000</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${zunajDdv}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${zunajDdv}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>` : '';
-  const xml = `<?xml version="1.0" encoding="utf-8"?>\n<miniMAXUvozKnjigovodstvo xmlns="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo.xsd">\n\n  <Temeljnice>\n    <Temeljnica>\n      <GlavaTemeljnice>\n        <SifraVrsteTemeljnice>IR</SifraVrsteTemeljnice>\n        <DatumTemeljnice>${today}</DatumTemeljnice>\n        <OpisGlaveTemeljnice>${xmlEscape(invoiceRef)}</OpisGlaveTemeljnice>\n      </GlavaTemeljnice>\n\n      <DDV>\n        <DDVVrstica>\n          <DDVGlava>\n            <DatumDDV>${today}</DatumDDV>\n            <KnjigaDDV>IR</KnjigaDDV>\n            <DatumKnjizenjaDDV>${today}</DatumKnjizenjaDDV>\n            <SifraStranke>${sifraStranke}</SifraStranke>\n            <Listina>${xmlEscape(invoiceRef)}</Listina>\n            <DatumListine>${today}</DatumListine>\n            <DatumOpravljanja>${today}</DatumOpravljanja>\n            <VrstaPorocanja>Obračun</VrstaPorocanja>\n          </DDVGlava>\n\n          <DDVStopnje>\n            <DDVStopnja>\n              <SifraStopnjeDDV>S</SifraStopnjeDDV>\n              <StoritevOsnova>${osnovna}</StoritevOsnova>\n              <StoritevDDV>${ddv}</StoritevDDV>\n            </DDVStopnja>\n          </DDVStopnje>\n        </DDVVrstica>\n      </DDV>\n\n      <VrsticeTemeljnice>\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>1200</SifraKonta>\n          <SifraStranke>${sifraStranke}</SifraStranke>\n          <DatumZapadlosti>${today}</DatumZapadlosti>\n          <DatumOpravljanja>${today}</DatumOpravljanja>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>${total}</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>0.00</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>${total}</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>0.00</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(sloveniaRevenueAccount)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${osnovna}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${osnovna}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${outsideRevenueLine}\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>26000</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${ddv}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${ddv}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${outsideVatLine}\n      </VrsticeTemeljnice>\n    </Temeljnica>\n  </Temeljnice>\n\n  <Stranke>\n    <Stranka>\n      <Sifra>${xmlEscape(sifraStranke)}</Sifra>\n      <Naziv>${xmlEscape(naziv)}</Naziv>\n      <Naslov>${xmlEscape(naslov)}</Naslov>\n      <KraticaDrzave>SI</KraticaDrzave>\n      <PostnaStevilka>1000</PostnaStevilka>\n      <NazivPoste>Ljubljana</NazivPoste>\n      <DavcniZavezanec>${vatId ? 'D' : 'N'}</DavcniZavezanec>\n      <IdentifikacijskaStevilka>${xmlEscape(vatId)}</IdentifikacijskaStevilka>\n    </Stranka>\n  </Stranke>\n\n</miniMAXUvozKnjigovodstvo>`;
+  const xml = `<?xml version="1.0" encoding="utf-8"?>\n<miniMAXUvozKnjigovodstvo xmlns="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo.xsd">\n\n  <Temeljnice>\n    <Temeljnica>\n      <GlavaTemeljnice>\n        <SifraVrsteTemeljnice>IR</SifraVrsteTemeljnice>\n        <DatumTemeljnice>${today}</DatumTemeljnice>\n        <OpisGlaveTemeljnice>${xmlEscape(invoiceRef)}</OpisGlaveTemeljnice>\n      </GlavaTemeljnice>\n\n      <DDV>\n        <DDVVrstica>\n          <DDVGlava>\n            <DatumDDV>${today}</DatumDDV>\n            <KnjigaDDV>IR</KnjigaDDV>\n            <DatumKnjizenjaDDV>${today}</DatumKnjizenjaDDV>\n            <SifraStranke>${sifraStranke}</SifraStranke>\n            <Listina>${xmlEscape(invoiceRef)}</Listina>\n            <DatumListine>${today}</DatumListine>\n            <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n            <VrstaPorocanja>Obračun</VrstaPorocanja>\n          </DDVGlava>\n\n          <DDVStopnje>\n            <DDVStopnja>\n              <SifraStopnjeDDV>S</SifraStopnjeDDV>\n              <StoritevOsnova>${osnovna}</StoritevOsnova>\n              <StoritevDDV>${ddv}</StoritevDDV>\n            </DDVStopnja>\n          </DDVStopnje>\n        </DDVVrstica>\n      </DDV>\n\n      <VrsticeTemeljnice>\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>1200</SifraKonta>\n          <SifraStranke>${sifraStranke}</SifraStranke>\n          <DatumZapadlosti>${today}</DatumZapadlosti>\n          <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>${total}</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>0.00</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>${total}</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>0.00</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(sloveniaRevenueAccount)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${osnovna}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${osnovna}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${outsideRevenueLine}\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>26000</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${ddv}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${ddv}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${outsideVatLine}\n      </VrsticeTemeljnice>\n    </Temeljnica>\n  </Temeljnice>\n\n  <Stranke>\n    <Stranka>\n      <Sifra>${xmlEscape(sifraStranke)}</Sifra>\n      <Naziv>${xmlEscape(naziv)}</Naziv>\n      <Naslov>${xmlEscape(naslov)}</Naslov>\n      <KraticaDrzave>SI</KraticaDrzave>\n      <PostnaStevilka>1000</PostnaStevilka>\n      <NazivPoste>Ljubljana</NazivPoste>\n      <DavcniZavezanec>${vatId ? 'D' : 'N'}</DavcniZavezanec>\n      <IdentifikacijskaStevilka>${xmlEscape(vatId)}</IdentifikacijskaStevilka>\n    </Stranka>\n  </Stranke>\n\n</miniMAXUvozKnjigovodstvo>`;
   const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = getOutputFileName('racun_26-0007', 'xml'); document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
@@ -1478,6 +1585,33 @@ function setDefaultOutputFileName() {
   const year = today.getFullYear();
   const date = today.toISOString().slice(0, 10);
   outputFileName.value = `racun_${year}_${date}`;
+}
+function setDefaultServiceDate() {
+  const serviceDate = document.getElementById('serviceDate');
+  if (!serviceDate || serviceDate.value) return;
+  serviceDate.value = getTodayIsoDate();
+}
+function getTodayIsoDate() {
+  const today = new Date();
+  const offsetMs = today.getTimezoneOffset() * 60000;
+  return new Date(today.getTime() - offsetMs).toISOString().slice(0, 10);
+}
+function normalizeIsoDate(value) {
+  const raw = String(value || '').trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : '';
+}
+function getServiceDateIso() {
+  const serviceDate = document.getElementById('serviceDate');
+  const value = normalizeIsoDate(serviceDate?.value || '');
+  if (value) return value;
+  const today = getTodayIsoDate();
+  if (serviceDate) serviceDate.value = today;
+  return today;
+}
+function formatIsoDateSl(value) {
+  const normalized = normalizeIsoDate(value) || getTodayIsoDate();
+  const parts = normalized.split('-');
+  return `${parts[2]}. ${parts[1]}. ${parts[0]}`;
 }
 function getOutputFileName(fallbackBaseName, extension) {
   const rawName = (document.getElementById('outputFileName')?.value || fallbackBaseName || 'racun').trim();

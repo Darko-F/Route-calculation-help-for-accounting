@@ -33,15 +33,22 @@ class RouteCalculationHelpForAccountingHelper
         $payload = self::payload();
         $customerPayload = is_array($payload['customer'] ?? null) ? $payload['customer'] : [];
         $invoiceNumber = trim((string) ($payload['invoice_number'] ?? ''));
+        $autoInvoiceNumber = !empty($payload['invoice_number_auto']);
 
         if ($invoiceNumber === '') {
-            throw new RuntimeException('Invoice number is required.');
+            $invoiceNumber = self::nextInvoiceNumber((int) Factory::getDate()->format('Y'));
+            $payload['invoice_number'] = $invoiceNumber;
         }
 
         self::ensureInvoiceCustomerColumns();
 
         if (self::invoiceExists($invoiceNumber)) {
-            throw new RuntimeException('Invoice number "' . $invoiceNumber . '" already exists in invoice history. Use a different invoice number to save a new record.');
+            if ($autoInvoiceNumber && preg_match('/^RCHA-(\d{4})-\d+$/', $invoiceNumber, $matches)) {
+                $invoiceNumber = self::nextInvoiceNumber((int) $matches[1]);
+                $payload['invoice_number'] = $invoiceNumber;
+            } else {
+                throw new RuntimeException('Invoice number "' . $invoiceNumber . '" already exists in invoice history. Use a different invoice number to save a new record.');
+            }
         }
 
         $customer = self::saveCustomer($customerPayload);
@@ -104,6 +111,21 @@ class RouteCalculationHelpForAccountingHelper
         ];
     }
 
+    public function nextInvoiceNumberAjax()
+    {
+        Session::checkToken('post') or throw new RuntimeException('Invalid Joomla session token.');
+        $payload = self::payload();
+        $year = (int) ($payload['year'] ?? Factory::getDate()->format('Y'));
+
+        if ($year < 2000 || $year > 9999) {
+            $year = (int) Factory::getDate()->format('Y');
+        }
+
+        $invoiceNumber = self::nextInvoiceNumber($year);
+
+        return ['invoice_number' => $invoiceNumber, 'year' => $year];
+    }
+
     public function loadCustomerAjax()
     {
         Session::checkToken('post') or throw new RuntimeException('Invalid Joomla session token.');
@@ -160,6 +182,30 @@ class RouteCalculationHelpForAccountingHelper
         $customers = $db->setQuery($query)->loadAssocList();
 
         return ['customers' => $customers ?: []];
+    }
+
+    public function deleteCustomerAjax()
+    {
+        Session::checkToken('post') or throw new RuntimeException('Invalid Joomla session token.');
+        $payload = self::payload();
+        $customerCode = trim((string) ($payload['customer_code'] ?? ''));
+
+        if ($customerCode === '') {
+            throw new RuntimeException('Sifra Stranke is required.');
+        }
+
+        self::ensureTables();
+        $db = self::db();
+        $query = $db->getQuery(true)
+            ->delete($db->quoteName('#__route_calculation_help_for_accounting_customers'))
+            ->where($db->quoteName('customer_code') . ' = ' . $db->quote($customerCode));
+        $db->setQuery($query)->execute();
+
+        if ((int) $db->getAffectedRows() < 1) {
+            throw new RuntimeException('No saved customer found for code ' . $customerCode . '.');
+        }
+
+        return ['deleted_customer_code' => $customerCode];
     }
 
     public function listInvoicesAjax()
@@ -287,6 +333,33 @@ class RouteCalculationHelpForAccountingHelper
             ->where($db->quoteName('invoice_number') . ' = ' . $db->quote($invoiceNumber));
 
         return (int) $db->setQuery($query)->loadResult() > 0;
+    }
+
+    private static function nextInvoiceNumber(int $year): string
+    {
+        self::ensureTables();
+        $db = self::db();
+        $prefix = 'RCHA-' . $year . '-';
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('invoice_number'))
+            ->from($db->quoteName('#__route_calculation_help_for_accounting_invoices'))
+            ->where($db->quoteName('invoice_number') . ' LIKE ' . $db->quote($prefix . '%'));
+        $existing = $db->setQuery($query)->loadColumn() ?: [];
+        $maxSequence = 0;
+
+        foreach ($existing as $invoiceNumber) {
+            if (preg_match('/^RCHA-' . preg_quote((string) $year, '/') . '-(\d+)$/', (string) $invoiceNumber, $matches)) {
+                $maxSequence = max($maxSequence, (int) $matches[1]);
+            }
+        }
+
+        $sequence = $maxSequence + 1;
+        do {
+            $candidate = $prefix . str_pad((string) $sequence, 3, '0', STR_PAD_LEFT);
+            $sequence++;
+        } while (self::invoiceExists($candidate));
+
+        return $candidate;
     }
 
     private static function ensureCustomerAddressColumn(): void
