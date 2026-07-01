@@ -16,7 +16,7 @@ use Joomla\CMS\Language\Text;
 
 $document = Factory::getApplication()->getDocument();
 $languageTag = Factory::getApplication()->getLanguage()->getTag();
-$calculatorUrl = Uri::root(true) . '/modules/mod_route_calculation_help_for_accounting/media/calculator.html?v=1.2.25';
+$calculatorUrl = Uri::root(true) . '/modules/mod_route_calculation_help_for_accounting/media/calculator.html?v=1.2.27';
 $ajaxUrl = Uri::root() . 'index.php?option=com_ajax&module=route_calculation_help_for_accounting&format=json';
 $tokenName = Session::getFormToken();
 $tokenValue = '1';

@@ -37,6 +37,38 @@ The module manifest includes this Joomla update server:
 https://builder.topoweryou.com/routecalculationhelp/updates/route-calculation-help-for-accounting.xml
 ```
 
+Private update downloads use the separate installer plugin:
+
+```text
+plg_installer_routecalculationupdatekey_vx.x.x.zip
+```
+
+The plugin can be installed before the customer has a subscription key. Install
+and enable the plugin with an empty key, then enter the subscriber download key
+after purchase in:
+
+```text
+System -> Manage -> Plugins -> Installer - Route Calculation Help update key
+```
+
+The plugin appends the key when Joomla downloads this module's update package.
+The plugin also has its own update server:
+
+```text
+https://builder.topoweryou.com/routecalculationhelp/updates/routecalculationupdatekey.xml
+```
+
+On the update server, `download.php` validates package names by pattern and reads
+allowed subscriber key hashes from either:
+
+```text
+DOWNLOAD_KEY_HASHES
+download-keys.local.php
+```
+
+Use `download-keys.example.php` as the template for the local file. Keep
+`download-keys.local.php` private; it is ignored by Git. Upload module and plugin
+release zips into the server `downloads/` directory.
 
 ## Default Configuration
 

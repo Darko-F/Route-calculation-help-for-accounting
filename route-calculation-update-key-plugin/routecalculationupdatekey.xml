@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="installer" method="upgrade">
+  <name>PLG_INSTALLER_ROUTECALCULATIONUPDATEKEY</name>
+  <author>Darko Fatur</author>
+  <creationDate>2026-07-01</creationDate>
+  <copyright>Copyright (C) 2026 topoweryou.com</copyright>
+  <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+  <authorEmail>info@topoweryou.com</authorEmail>
+  <authorUrl>https://topoweryou.com</authorUrl>
+  <version>1.0.0</version>
+  <description>PLG_INSTALLER_ROUTECALCULATIONUPDATEKEY_XML_DESCRIPTION</description>
+  <updateservers>
+    <server type="extension" priority="1" name="Route Calculation Help Update Key Plugin Updates">https://builder.topoweryou.com/routecalculationhelp/updates/routecalculationupdatekey.xml</server>
+  </updateservers>
+  <files>
+    <filename plugin="routecalculationupdatekey">routecalculationupdatekey.php</filename>
+    <folder>language</folder>
+  </files>
+  <languages folder="language">
+    <language tag="en-GB">en-GB/en-GB.plg_installer_routecalculationupdatekey.ini</language>
+    <language tag="en-GB">en-GB/en-GB.plg_installer_routecalculationupdatekey.sys.ini</language>
+    <language tag="sl-SI">sl-SI/sl-SI.plg_installer_routecalculationupdatekey.ini</language>
+    <language tag="sl-SI">sl-SI/sl-SI.plg_installer_routecalculationupdatekey.sys.ini</language>
+  </languages>
+  <config>
+    <fields name="params">
+      <fieldset name="basic">
+        <field
+          name="download_key"
+          type="password"
+          label="PLG_INSTALLER_ROUTECALCULATIONUPDATEKEY_FIELD_DOWNLOAD_KEY_LABEL"
+          description="PLG_INSTALLER_ROUTECALCULATIONUPDATEKEY_FIELD_DOWNLOAD_KEY_DESC"
+          default=""
+          required="false"
+          filter="raw"
+        />
+      </fieldset>
+    </fields>
+  </config>
+</extension>

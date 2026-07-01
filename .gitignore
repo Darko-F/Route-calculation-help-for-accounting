@@ -3,8 +3,7 @@
 
 # Local test/prototype files
 test.html
-download.php
-route-calculation-help-for-accounting.xml
+download-keys.local.php
 
 # OS/editor files
 .DS_Store
