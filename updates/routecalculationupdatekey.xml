@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<updates>
+  <update>
+    <name>PLG_INSTALLER_ROUTECALCULATIONUPDATEKEY</name>
+    <description>PLG_INSTALLER_ROUTECALCULATIONUPDATEKEY_XML_DESCRIPTION</description>
+    <element>routecalculationupdatekey</element>
+    <type>plugin</type>
+    <folder>installer</folder>
+    <version>1.0.0</version>
+    <client>0</client>
+    <downloads>
+      <downloadurl type="full" format="zip">https://builder.topoweryou.com/routecalculationhelp/download.php?file=plg_installer_routecalculationupdatekey_v1.0.0.zip</downloadurl>
+    </downloads>
+    <targetplatform name="joomla" version="6.*" />
+  </update>
+</updates>

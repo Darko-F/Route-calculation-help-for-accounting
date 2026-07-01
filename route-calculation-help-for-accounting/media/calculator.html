@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Taxi Transfer VAT Route Calculator</title>
+  <title>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_TITLE</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
     body { background: #f6f7f9; }
@@ -16,15 +16,18 @@
     .route-stop-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; align-items: start; }
     .invoice-history-grid { display: grid; grid-template-columns: minmax(9rem, 1fr) 7rem 8.5rem; gap: .5rem; align-items: center; }
     .invoice-history-grid > span { min-width: 0; overflow-wrap: anywhere; }
+    .customer-picker-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .5rem; align-items: center; }
+    .customer-picker-row > span { min-width: 0; overflow-wrap: anywhere; }
     @media (max-width: 575.98px) { .action-grid { grid-template-columns: 1fr; } }
     @media (max-width: 575.98px) { .invoice-history-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 575.98px) { .customer-picker-row { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg bg-dark navbar-dark">
   <div class="container">
-    <span class="navbar-brand mb-0 h1">Route calculation help for accounting</span>
-    <span class="navbar-text d-none d-md-inline">Fast Slovenia route split</span>
+    <span class="navbar-brand mb-0 h1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_NAV_TITLE</span>
+    <span class="navbar-text d-none d-md-inline">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_NAV_SUBTITLE</span>
   </div>
 </nav>
 <main class="container py-4 py-lg-5">
@@ -32,8 +35,8 @@
     <div class="col-lg-10">
       <div class="card shadow-sm border-0">
         <div class="card-body p-4 p-lg-5">
-          <h1 class="h3 mb-3">Taxi Transfer VAT Route Calculator</h1>
-          <p class="text-muted mb-0">Calculates route distance, Slovenia km, outside-Slovenia km, gross price, net price, Slovenian VAT and invoice text.</p>
+          <h1 class="h3 mb-3">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_TITLE</h1>
+          <p class="text-muted mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_INTRO</p>
         </div>
       </div>
     </div>
@@ -41,161 +44,169 @@
   <div class="row g-4">
     <div class="col-lg-5">
       <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white"><h2 class="h5 mb-0">Google Maps status</h2></div>
+        <div class="card-header bg-white"><h2 class="h5 mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GOOGLE_MAPS_STATUS</h2></div>
         <div class="card-body">
-          <div id="apiStatus" class="alert alert-secondary small mb-0">Loading Google Maps...</div>
-          <div class="form-text mt-2">The Google Maps API key is configured in the module Options tab.</div>
+          <div id="apiStatus" class="alert alert-secondary small mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_LOADING_GOOGLE_MAPS</div>
+          <div class="form-text mt-2">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_API_KEY_HELP</div>
         </div>
       </div>
       <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white"><h2 class="h5 mb-0">Transfer details</h2></div>
+        <div class="card-header bg-white"><h2 class="h5 mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_TRANSFER_DETAILS</h2></div>
         <div class="card-body">
           <div class="mb-3">
-            <label for="pickup" class="form-label fw-semibold">Pickup</label>
+            <label for="pickup" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PICKUP</label>
             <div id="pickupPlaceAutocomplete">
-              <input id="pickup" class="form-control" placeholder="e.g. Ljubljana Airport" autocomplete="off" />
+              <input id="pickup" class="form-control" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_PICKUP" autocomplete="off" />
             </div>
           </div>
           <div class="mb-3">
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <label class="form-label fw-semibold mb-0">Additional places</label>
-              <button class="btn btn-sm btn-outline-primary" type="button" onclick="addRouteStop()">Add place</button>
+              <label class="form-label fw-semibold mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADDITIONAL_PLACES</label>
+              <button class="btn btn-sm btn-outline-primary" type="button" onclick="addRouteStop()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADD_PLACE</button>
             </div>
             <div id="routeStopsList" class="vstack gap-2"></div>
           </div>
           <div class="mb-3">
-            <label for="dropoff" class="form-label fw-semibold">Drop-off</label>
+            <label for="dropoff" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_DROPOFF</label>
             <div id="dropoffPlaceAutocomplete">
-              <input id="dropoff" class="form-control" placeholder="e.g. Venice Airport" autocomplete="off" />
+              <input id="dropoff" class="form-control" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_DROPOFF" autocomplete="off" />
             </div>
           </div>
           <div class="form-check mb-3">
             <input id="returnTrip" class="form-check-input" type="checkbox" />
-            <label for="returnTrip" class="form-check-label">Return trip to pickup</label>
+            <label for="returnTrip" class="form-check-label">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_RETURN_TRIP</label>
           </div>
           <div class="border rounded p-3 mb-3">
-            <h3 class="h6 mb-2">Additional costs (deduct from gross price)</h3>
+            <h3 class="h6 mb-2">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADDITIONAL_COSTS</h3>
             <div id="adjustmentsList"></div>
             <div class="d-flex flex-wrap gap-2">
-              <button class="btn btn-sm btn-outline-primary" type="button" onclick="addAdjustment()">Add cost</button>
-              <button class="btn btn-sm btn-outline-secondary" type="button" onclick="clearAdjustments()">Clear</button>
-              <div class="ms-auto align-self-center small text-muted">Total deductions: <span id="deductionsTotal">0.00</span> €</div>
+              <button class="btn btn-sm btn-outline-primary" type="button" onclick="addAdjustment()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADD_COST</button>
+              <button class="btn btn-sm btn-outline-secondary" type="button" onclick="clearAdjustments()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CLEAR</button>
+              <div class="ms-auto align-self-center small text-muted">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_TOTAL_DEDUCTIONS <span id="deductionsTotal">0.00</span> €</div>
             </div>
           </div>
           <div class="mb-3">
-            <label for="grossPrice" class="form-label fw-semibold">Price with VAT / final customer price (€)</label>
+            <label for="grossPrice" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GROSS_PRICE</label>
             <input id="grossPrice" type="number" step="0.01" class="form-control form-control-lg" value="300" />
-            <div class="form-text">Enter final price charged to the customer. Price without VAT is calculated automatically.</div>
+            <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GROSS_PRICE_HELP</div>
           </div>
           <div class="row g-3">
-            <div class="col-md-6"><label for="price" class="form-label fw-semibold">Calculated price without VAT (€)</label><input id="price" type="number" step="0.01" class="form-control" value="" readonly /></div>
-            <div class="col-md-6"><label for="vatRate" class="form-label fw-semibold">Slovenian VAT rate (%)</label><input id="vatRate" type="number" step="0.1" class="form-control" value="9.5" /></div>
+            <div class="col-md-6"><label for="price" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_NET_PRICE</label><input id="price" type="number" step="0.01" class="form-control" value="" readonly /></div>
+            <div class="col-md-6"><label for="vatRate" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIAN_VAT_RATE</label><input id="vatRate" type="number" step="0.1" class="form-control" value="9.5" /></div>
           </div>
           <div class="row g-3 mt-1">
             <div class="col-md-6">
-              <label for="outsideCountry" class="form-label fw-semibold">Outside Slovenia country</label>
+              <label for="outsideCountry" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OUTSIDE_COUNTRY</label>
               <select id="outsideCountry" class="form-select" onchange="onOutsideCountryChange()">
-                <option value="IT" selected>Italy</option>
-                <option value="HR">Croatia / Zagreb</option>
-                <option value="AT">Austria</option>
-                <option value="DE">Germany</option>
-                <option value="OTHER">Other / custom</option>
+                <option value="IT" selected>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ITALY</option>
+                <option value="HR">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CROATIA_ZAGREB</option>
+                <option value="AT">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_AUSTRIA</option>
+                <option value="DE">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GERMANY</option>
+                <option value="OTHER">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OTHER_CUSTOM</option>
               </select>
             </div>
             <div class="col-md-6">
-              <label for="outsideVatRate" class="form-label fw-semibold">Outside Slovenia VAT rate (%)</label>
+              <label for="outsideVatRate" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OUTSIDE_VAT_RATE</label>
               <input id="outsideVatRate" type="number" step="0.1" class="form-control" value="0" />
-              <div class="form-text">Country defaults are editable before recalculation.</div>
+              <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_COUNTRY_DEFAULTS_HELP</div>
             </div>
             <div class="col-md-6">
-              <label for="outsideRevenueAccount" class="form-label fw-semibold">Outside SifraKonta</label>
+              <label for="outsideRevenueAccount" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OUTSIDE_SIFRAKONTA</label>
               <input id="outsideRevenueAccount" class="form-control" value="7602" />
-              <div class="form-text">Revenue account used for the outside-Slovenia XML line.</div>
+              <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OUTSIDE_SIFRAKONTA_HELP</div>
             </div>
             <div class="col-md-6">
-              <label for="customCountryName" class="form-label fw-semibold">Custom country name</label>
-              <input id="customCountryName" class="form-control" placeholder="Used when Other / custom is selected" />
+              <label for="customCountryName" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOM_COUNTRY_NAME</label>
+              <input id="customCountryName" class="form-control" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOM_COUNTRY_HELP" />
             </div>
           </div>
           <div class="mt-3">
-            <label for="splitMethod" class="form-label fw-semibold">Country split method</label>
-            <select id="splitMethod" class="form-select"><option value="fast" selected>Fast: embedded Slovenia border polygon</option><option value="geocode">Slower: Google reverse geocoding</option><option value="manual">Manual Slovenia km only</option></select>
-            <div class="form-text">Fast method is instant. Manual override is still possible.</div>
+            <label for="splitMethod" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_METHOD</label>
+            <select id="splitMethod" class="form-select"><option value="fast" selected>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_FAST</option><option value="geocode">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_GEOCODE</option><option value="manual">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_MANUAL</option></select>
+            <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_HELP</div>
           </div>
           <div class="mt-3">
-            <label for="sampleKm" class="form-label fw-semibold">Sampling accuracy</label>
-            <select id="sampleKm" class="form-select"><option value="10">Fast / rough: every 10 km</option><option value="5">Normal: every 5 km</option><option value="2" selected>Accurate and fast: every 2 km</option><option value="1">Very accurate: every 1 km</option><option value="0.5">High: every 500 m</option></select>
+            <label for="sampleKm" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLING_ACCURACY</label>
+            <select id="sampleKm" class="form-select"><option value="10">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_10</option><option value="5">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_5</option><option value="2" selected>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_2</option><option value="1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_1</option><option value="0.5">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_05</option></select>
           </div>
           <div class="mt-3">
-            <label for="manualSiKm" class="form-label fw-semibold">Manual Slovenia km override</label>
-            <input id="manualSiKm" type="number" step="0.01" class="form-control" placeholder="Optional, e.g. 94.5" />
-            <div class="form-text">If entered, this value can be used to recalculate the invoice exactly.</div>
+            <label for="manualSiKm" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_MANUAL_SI_KM</label>
+            <input id="manualSiKm" type="number" step="0.01" class="form-control" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OPTIONAL_KM" />
+            <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_MANUAL_SI_KM_HELP</div>
           </div>
-          <div id="status" class="alert alert-secondary small mt-3 mb-0">Waiting for Google Maps...</div>
+          <div id="status" class="alert alert-secondary small mt-3 mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_WAITING_GOOGLE_MAPS</div>
         </div>
       </div>
     </div>
     <div class="col-lg-7">
       <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white"><h2 class="h5 mb-0">Actions</h2></div>
+        <div class="card-header bg-white"><h2 class="h5 mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ACTIONS</h2></div>
         <div class="card-body">
           <div class="action-grid">
-            <button class="btn btn-primary" onclick="calculateRoute()">Calculate route and VAT split</button>
-            <button class="btn btn-outline-secondary" onclick="calculateWithManualKm()">Recalculate with manual Slovenia km</button>
+            <button class="btn btn-primary" onclick="calculateRoute()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CALCULATE_ROUTE</button>
+            <button class="btn btn-outline-secondary" onclick="calculateWithManualKm()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_RECALCULATE_MANUAL</button>
           </div>
         </div>
       </div>
       <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center"><h2 class="h5 mb-0">Map</h2><span class="badge text-bg-light">Driving route</span></div>
+        <div class="card-header bg-white d-flex justify-content-between align-items-center"><h2 class="h5 mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_MAP</h2><span class="badge text-bg-light">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_DRIVING_ROUTE</span></div>
         <div class="card-body"><div id="map"></div></div>
       </div>
       <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white"><h2 class="h5 mb-0">Results</h2></div>
+        <div class="card-header bg-white"><h2 class="h5 mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_RESULTS</h2></div>
         <div class="card-body p-0">
           <table class="table table-striped table-hover mb-0 align-middle"><tbody>
-            <tr><th scope="row">Total route distance</th><td id="totalKm" class="result-value text-end">-</td></tr>
-            <tr><th scope="row">Estimated km in Slovenia</th><td id="siKm" class="result-value text-end">-</td></tr>
-            <tr><th scope="row">Estimated km outside Slovenia</th><td id="outsideKm" class="result-value text-end">-</td></tr>
-            <tr><th scope="row">Total price without VAT</th><td id="netTotal" class="result-value text-end">-</td></tr>
-            <tr><th scope="row">Slovenian taxable base</th><td id="taxableBase" class="result-value text-end">-</td></tr>
-            <tr><th scope="row">Outside Slovenia part</th><td id="outsideBase" class="result-value text-end">-</td></tr>
-            <tr><th scope="row">Slovenian VAT</th><td id="vatAmount" class="result-value text-end">-</td></tr>
-            <tr><th scope="row">Outside Slovenia VAT</th><td id="outsideVatAmount" class="result-value text-end">-</td></tr>
-            <tr class="table-dark"><th scope="row">Total invoice amount</th><td id="totalAmount" class="result-value text-end">-</td></tr>
+            <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_TOTAL_ROUTE_DISTANCE</th><td id="totalKm" class="result-value text-end">-</td></tr>
+            <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ESTIMATED_SI_KM</th><td id="siKm" class="result-value text-end">-</td></tr>
+            <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ESTIMATED_OUTSIDE_KM</th><td id="outsideKm" class="result-value text-end">-</td></tr>
+            <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_TOTAL_NET_PRICE</th><td id="netTotal" class="result-value text-end">-</td></tr>
+            <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIAN_TAXABLE_BASE</th><td id="taxableBase" class="result-value text-end">-</td></tr>
+            <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OUTSIDE_PART</th><td id="outsideBase" class="result-value text-end">-</td></tr>
+            <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIAN_VAT</th><td id="vatAmount" class="result-value text-end">-</td></tr>
+            <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OUTSIDE_VAT</th><td id="outsideVatAmount" class="result-value text-end">-</td></tr>
+            <tr class="table-dark"><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_TOTAL_INVOICE_AMOUNT</th><td id="totalAmount" class="result-value text-end">-</td></tr>
           </tbody></table>
         </div>
       </div>
       <div class="mt-3">
         <div class="card border p-3 mb-4">
-          <h3 class="h6 mb-2">Invoice / Customer</h3>
+          <h3 class="h6 mb-2">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_INVOICE_CUSTOMER</h3>
           <div class="row g-2">
             <div class="col-md-6">
-              <label for="invoiceNumber" class="form-label small mb-1">Invoice no</label>
-              <input id="invoiceNumber" class="form-control form-control-sm" placeholder="Invoice no (e.g. 26-0007)" />
+              <label for="invoiceNumber" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_INVOICE_NO</label>
+              <div class="input-group input-group-sm">
+                <input id="invoiceNumber" class="form-control" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_INVOICE" />
+                <button class="btn btn-outline-secondary" type="button" onclick="generateNextInvoiceNumber(true)">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GENERATE</button>
+              </div>
             </div>
             <div class="col-md-6">
-              <label for="customerCode" class="form-label small mb-1">Sifra Stranke</label>
-              <input id="customerCode" class="form-control form-control-sm" placeholder="Customer code (Sifra)" />
+              <label for="customerCode" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SIFRA_STRANKE</label>
+              <input id="customerCode" class="form-control form-control-sm" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_CUSTOMER_CODE" />
             </div>
-            <div class="col-12 mt-2"><input id="outputFileName" class="form-control form-control-sm" placeholder="Generated file name (e.g. racun_2026_2026-06-18)" /></div>
+            <div class="col-md-6 mt-2">
+              <label for="serviceDate" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SERVICE_DATE</label>
+              <input id="serviceDate" class="form-control form-control-sm" type="date" />
+            </div>
+            <div class="col-12 mt-2"><input id="outputFileName" class="form-control form-control-sm" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_FILE_NAME" /></div>
             <div class="col-12 mt-2">
-              <label for="customerName" class="form-label small mb-1">Customer name</label>
-              <input id="customerName" class="form-control form-control-sm" placeholder="Customer name" autocomplete="off" onfocus="onCustomerNameInput()" oninput="onCustomerNameInput()" />
+              <label for="customerName" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMER_NAME</label>
+              <input id="customerName" class="form-control form-control-sm" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMER_NAME" autocomplete="off" onfocus="onCustomerNameInput()" oninput="onCustomerNameInput()" />
               <div id="savedCustomerSuggestions" class="list-group mt-1"></div>
             </div>
             <div class="col-12 mt-2">
-              <label for="customerAddress" class="form-label small mb-1">Address, post</label>
-              <input id="customerAddress" class="form-control form-control-sm" placeholder="Address, post" autocomplete="off" />
+              <label for="customerAddress" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADDRESS_POST</label>
+              <input id="customerAddress" class="form-control form-control-sm" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADDRESS_POST" autocomplete="off" />
             </div>
             <div class="col-12 mt-2">
-              <label for="customerVatId" class="form-label small mb-1">ID za DDV kupca: SIxxxx</label>
-              <input id="customerVatId" class="form-control form-control-sm" placeholder="ID za DDV kupca: SIxxxx" autocomplete="off" />
+              <label for="customerVatId" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMER_VAT_ID</label>
+              <input id="customerVatId" class="form-control form-control-sm" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMER_VAT_ID" autocomplete="off" />
             </div>
-            <div class="col-12 mt-2"><textarea id="customInvoiceMessage" class="form-control form-control-sm" rows="2" placeholder="Custom invoice message (optional)"></textarea></div>
+            <div class="col-12 mt-2"><textarea id="customInvoiceMessage" class="form-control form-control-sm" rows="2" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_CUSTOM_MESSAGE"></textarea></div>
             <div class="col-12 mt-2 d-flex flex-wrap gap-2">
-              <button class="btn btn-sm btn-primary" type="button" onclick="saveCustomerDetails()">Save details</button>
-              <button class="btn btn-sm btn-outline-primary" type="button" onclick="saveInvoiceHistory()">Save invoice history</button>
-              <button class="btn btn-sm btn-outline-secondary" type="button" onclick="loadInvoiceHistory()">Load history</button>
+              <button class="btn btn-sm btn-primary" type="button" onclick="saveCustomerDetails()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAVE_DETAILS</button>
+              <button class="btn btn-sm btn-outline-secondary" type="button" onclick="openCustomerPicker()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMERS</button>
+              <button class="btn btn-sm btn-outline-primary" type="button" onclick="saveInvoiceHistory()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAVE_INVOICE_HISTORY</button>
+              <button class="btn btn-sm btn-outline-secondary" type="button" onclick="loadInvoiceHistory()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_LOAD_HISTORY</button>
             </div>
             <div class="col-12 mt-2">
               <div id="databaseStatus" class="alert alert-secondary small mb-2 d-none"></div>
@@ -205,13 +216,13 @@
         </div>
       </div>
       <div class="card shadow-sm">
-        <div class="card-header bg-white"><h2 class="h5 mb-0">Auto generated invoice text</h2></div>
+        <div class="card-header bg-white"><h2 class="h5 mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_AUTO_INVOICE_TEXT</h2></div>
         <div class="card-body">
-          <div class="mb-3"><label for="invoiceTextEn" class="form-label fw-semibold">English</label><textarea id="invoiceTextEn" class="form-control"></textarea></div>
-          <div class="mb-3"><label for="invoiceTextSl" class="form-label fw-semibold">Slovenian</label><textarea id="invoiceTextSl" class="form-control"></textarea></div>
+          <div class="mb-3"><label for="invoiceTextEn" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ENGLISH</label><textarea id="invoiceTextEn" class="form-control"></textarea></div>
+          <div class="mb-3"><label for="invoiceTextSl" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIAN</label><textarea id="invoiceTextSl" class="form-control"></textarea></div>
           <div class="action-grid">
-            <button class="btn btn-info" onclick="generatePdf()">Generate PDF</button>
-            <button class="btn btn-success" onclick="exportMinimaxXml()">Export minimax XML</button>
+            <button class="btn btn-info" onclick="generatePdf()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GENERATE_PDF</button>
+            <button class="btn btn-success" onclick="exportMinimaxXml()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_EXPORT_MINIMAX_XML</button>
           </div>
         </div>
       </div>
@@ -222,18 +233,19 @@
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 class="modal-title fs-5" id="customerPickerTitle">Load saved customer</h2>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h2 class="modal-title fs-5" id="customerPickerTitle">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAVED_CUSTOMERS</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CLOSE"></button>
       </div>
       <div class="modal-body">
-        <label for="customerSearch" class="form-label">Search by customer name or code</label>
-        <input id="customerSearch" class="form-control mb-3" type="search" placeholder="Start typing..." oninput="filterCustomerPicker()" autocomplete="off" />
+        <label for="customerSearch" class="form-label">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SEARCH_CUSTOMER</label>
+        <input id="customerSearch" class="form-control mb-3" type="search" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_START_TYPING" oninput="filterCustomerPicker()" autocomplete="off" />
         <div id="customerPickerStatus" class="text-muted small mb-2"></div>
         <div id="customerPickerList" class="list-group" style="max-height: 50vh; overflow-y: auto;"></div>
       </div>
     </div>
   </div>
 </div>
+<script src="slovenia_polygon_precise.js"></script>
 <script>
 function getRoadfareFrameConfig() {
   try {
@@ -252,155 +264,7 @@ window.ROADFARE_LANGUAGE_TAG = window.ROADFARE_LANGUAGE_TAG || ROADFARE_FRAME_CO
 
 const ROADFARE_CONFIG = window.ROADFARE_CONFIG || {};
 const ROADFARE_LANGUAGE_TAG = String(window.ROADFARE_LANGUAGE_TAG || 'en-GB');
-const ROADFARE_TRANSLATIONS = ROADFARE_LANGUAGE_TAG.toLowerCase().startsWith('sl') ? {
-  'Taxi Transfer VAT Route Calculator': 'Kalkulator DDV za taxi prevoze',
-  'Route calculation help for accounting': 'Pomočnik za obračun prevozov',
-  'Fast Slovenia route split': 'Hitra delitev poti po Sloveniji',
-  'Calculates route distance, Slovenia km, outside-Slovenia km, gross price, net price, Slovenian VAT and invoice text.': 'Izračuna razdaljo poti, kilometre po Sloveniji, kilometre izven Slovenije, bruto ceno, neto ceno, slovenski DDV in besedilo računa.',
-  'Google Maps status': 'Stanje Google Maps',
-  'Loading Google Maps...': 'Nalaganje Google Maps...',
-  'The Google Maps API key is configured in the module Options tab.': 'Google Maps API ključ nastavite v zavihku Možnosti modula.',
-  'Transfer details': 'Podatki prevoza',
-  'Pickup': 'Prevzem',
-  'Drop-off': 'Cilj',
-  'Additional places': 'Dodatni postanki',
-  'Add place': 'Dodaj postanek',
-  'Return trip to pickup': 'Povratna vožnja na prevzem',
-  'Additional costs (deduct from gross price)': 'Dodatni stroški (odštejejo se od bruto cene)',
-  'Add cost': 'Dodaj strošek',
-  'Clear': 'Počisti',
-  'Total deductions:': 'Skupni odbitki:',
-  'Price with VAT / final customer price (€)': 'Cena z DDV / končna cena za stranko (€)',
-  'Enter final price charged to the customer. Price without VAT is calculated automatically.': 'Vnesite končno ceno, zaračunano stranki. Cena brez DDV se izračuna samodejno.',
-  'Calculated price without VAT (€)': 'Izračunana cena brez DDV (€)',
-  'Slovenian VAT rate (%)': 'Slovenska stopnja DDV (%)',
-  'Outside Slovenia country': 'Država izven Slovenije',
-  'Italy': 'Italija',
-  'Croatia / Zagreb': 'Hrvaška / Zagreb',
-  'Austria': 'Avstrija',
-  'Germany': 'Nemčija',
-  'Other / custom': 'Drugo / po meri',
-  'Outside Slovenia VAT rate (%)': 'Stopnja DDV izven Slovenije (%)',
-  'Country defaults are editable before recalculation.': 'Privzete vrednosti države lahko uredite pred ponovnim izračunom.',
-  'Outside SifraKonta': 'SifraKonta izven Slovenije',
-  'Revenue account used for the outside-Slovenia XML line.': 'Konto prihodka za XML vrstico izven Slovenije.',
-  'Custom country name': 'Ime države po meri',
-  'Country split method': 'Način delitve po državah',
-  'Fast: embedded Slovenia border polygon': 'Hitro: vgrajen poligon meje Slovenije',
-  'Slower: Google reverse geocoding': 'Počasneje: Google povratno geokodiranje',
-  'Manual Slovenia km only': 'Samo ročni kilometri po Sloveniji',
-  'Fast method is instant. Manual override is still possible.': 'Hitra metoda je takojšnja. Ročni popravek je še vedno možen.',
-  'Sampling accuracy': 'Natančnost vzorčenja',
-  'Fast / rough: every 10 km': 'Hitro / grobo: vsakih 10 km',
-  'Normal: every 5 km': 'Običajno: vsakih 5 km',
-  'Accurate and fast: every 2 km': 'Natančno in hitro: vsaka 2 km',
-  'Very accurate: every 1 km': 'Zelo natančno: vsak 1 km',
-  'High: every 500 m': 'Visoko: vsakih 500 m',
-  'Manual Slovenia km override': 'Ročni popravek kilometrov po Sloveniji',
-  'If entered, this value can be used to recalculate the invoice exactly.': 'Če je vneseno, se ta vrednost uporabi za natančen ponovni izračun računa.',
-  'Waiting for Google Maps...': 'Čakanje na Google Maps...',
-  'Actions': 'Dejanja',
-  'Calculate route and VAT split': 'Izračunaj pot in delitev DDV',
-  'Recalculate with manual Slovenia km': 'Preračunaj z ročnimi km po Sloveniji',
-  'Map': 'Zemljevid',
-  'Driving route': 'Vozna pot',
-  'Results': 'Rezultati',
-  'Total route distance': 'Skupna razdalja poti',
-  'Estimated km in Slovenia': 'Ocenjeni km po Sloveniji',
-  'Estimated km outside Slovenia': 'Ocenjeni km izven Slovenije',
-  'Total price without VAT': 'Skupna cena brez DDV',
-  'Slovenian taxable base': 'Slovenska davčna osnova',
-  'Outside Slovenia part': 'Del izven Slovenije',
-  'Slovenian VAT': 'Slovenski DDV',
-  'Outside Slovenia VAT': 'DDV izven Slovenije',
-  'Total invoice amount': 'Skupni znesek računa',
-  'Invoice / Customer': 'Račun / Stranka',
-  'Invoice no': 'Št. računa',
-  'Sifra Stranke': 'Šifra stranke',
-  'Customer name': 'Naziv stranke',
-  'Address, post': 'Naslov, pošta',
-  'ID za DDV kupca: SIxxxx': 'ID za DDV kupca: SIxxxx',
-  'Save details': 'Shrani podatke',
-  'Save invoice history': 'Shrani zgodovino računa',
-  'Load history': 'Naloži zgodovino',
-  'Auto generated invoice text': 'Samodejno ustvarjeno besedilo računa',
-  'English': 'Angleško',
-  'Slovenian': 'Slovensko',
-  'Generate PDF': 'Ustvari PDF',
-  'Export minimax XML': 'Izvozi Minimax XML',
-  'Load saved customer': 'Naloži shranjeno stranko',
-  'Close': 'Zapri',
-  'Search by customer name or code': 'Išči po nazivu ali šifri stranke',
-  'Start typing...': 'Začnite tipkati...',
-  'e.g. Ljubljana Airport': 'npr. Letališče Ljubljana',
-  'e.g. Venice Airport': 'npr. Letališče Benetke',
-  'Used when Other / custom is selected': 'Uporabi se pri izbiri Drugo / po meri',
-  'Optional, e.g. 94.5': 'Neobvezno, npr. 94.5',
-  'Invoice no (e.g. 26-0007)': 'Št. računa (npr. 26-0007)',
-  'Customer code (Sifra)': 'Šifra stranke',
-  'Generated file name (e.g. racun_2026_2026-06-18)': 'Ime ustvarjene datoteke (npr. racun_2026_2026-06-18)',
-  'Custom invoice message (optional)': 'Sporočilo na računu po meri (neobvezno)',
-  'Add stop or place': 'Dodaj postanek ali kraj',
-  'Remove': 'Odstrani',
-  'Description (e.g. parking)': 'Opis (npr. parkirnina)',
-  'Google Maps API key is missing. Enter it in the module Options tab.': 'Google Maps API ključ manjka. Vnesite ga v zavihku Možnosti modula.',
-  'Map cannot load until the module API key is configured.': 'Zemljevid se ne more naložiti, dokler API ključ modula ni nastavljen.',
-  'Google Maps loaded successfully.': 'Google Maps je uspešno naložen.',
-  'Google Maps loaded. Enter pickup and drop-off, then calculate.': 'Google Maps je naložen. Vnesite prevzem in cilj ter izračunajte.',
-  'Google Maps failed to load. Check API key, billing and enabled APIs.': 'Google Maps se ni naložil. Preverite API ključ, plačevanje in omogočene API-je.',
-  'Google Maps Routes library failed to load. Enable Routes API for this key.': 'Knjižnica Google Maps Routes se ni naložila. Za ta ključ omogočite Routes API.',
-  'Google Maps Routes library failed to load. Check API key, billing and enabled APIs.': 'Knjižnica Google Maps Routes se ni naložila. Preverite API ključ, plačevanje in omogočene API-je.',
-  'Google Maps Routes library is not loaded yet.': 'Knjižnica Google Maps Routes še ni naložena.',
-  'Pickup and drop-off are required.': 'Prevzem in cilj sta obvezna.',
-  'Routes API supports a maximum of 25 additional places.': 'Routes API podpira največ 25 dodatnih postankov.',
-  'Enter a valid gross price.': 'Vnesite veljavno bruto ceno.',
-  'Calculating route...': 'Izračun poti...',
-  'Route error: no route found.': 'Napaka poti: pot ni najdena.',
-  'Domestic Slovenia route detected. Outside Slovenia set to 0 km.': 'Zaznana je domača pot po Sloveniji. Del izven Slovenije je nastavljen na 0 km.',
-  'Route calculated. Enter manual Slovenia km and click “Recalculate with manual Slovenia km”.': 'Pot je izračunana. Vnesite ročne kilometre po Sloveniji in kliknite »Preračunaj z ročnimi km po Sloveniji«.',
-  'Manual Slovenia km used.': 'Uporabljeni so ročni kilometri po Sloveniji.',
-  'Done. Fast Slovenia border polygon split used.': 'Končano. Uporabljena je hitra delitev po poligonu meje Slovenije.',
-  'Using slower Google reverse geocoding method...': 'Uporablja se počasnejša metoda Google povratnega geokodiranja...',
-  'Done. Google reverse geocoding split used.': 'Končano. Uporabljena je delitev z Google povratnim geokodiranjem.',
-  'Calculate the route first, then enter manual Slovenia km.': 'Najprej izračunajte pot, nato vnesite ročne kilometre po Sloveniji.',
-  'Enter a valid Slovenia km number.': 'Vnesite veljavno število kilometrov po Sloveniji.',
-  'VAT rate changed. Totals recalculated.': 'Stopnja DDV je spremenjena. Skupni zneski so preračunani.',
-  'Database save is available only inside the Joomla module package.': 'Shranjevanje v bazo je na voljo samo znotraj Joomla modula.',
-  'Joomla database request failed.': 'Zahteva do Joomla baze ni uspela.',
-  'Sifra Stranke is required.': 'Šifra stranke je obvezna.',
-  'Customer name is required.': 'Naziv stranke je obvezen.',
-  'Saving customer details...': 'Shranjevanje podatkov stranke...',
-  'Loading saved customers...': 'Nalaganje shranjenih strank...',
-  'No saved customers found.': 'Ni shranjenih strank.',
-  'No matching customers found.': 'Ni najdenih ustreznih strank.',
-  'Enter Sifra Stranke to load a customer.': 'Vnesite šifro stranke za nalaganje stranke.',
-  'Loading customer details...': 'Nalaganje podatkov stranke...',
-  'Customer details loaded.': 'Podatki stranke so naloženi.',
-  'Calculate a route before saving invoice history.': 'Pred shranjevanjem zgodovine računa izračunajte pot.',
-  'Invoice number is required.': 'Številka računa je obvezna.',
-  'Saving invoice history...': 'Shranjevanje zgodovine računa...',
-  'Invoice history saved.': 'Zgodovina računa je shranjena.',
-  'Invoice history': 'Zgodovina računov',
-  'Filter by invoice / order number': 'Filtriraj po številki računa / naročila',
-  'Invoice Name': 'Naziv računa',
-  'Price': 'Cena',
-  'Date': 'Datum',
-  'No invoice history matches this filter.': 'Nobena zgodovina računa ne ustreza filtru.',
-  'Select or save a customer before loading invoice history.': 'Pred nalaganjem zgodovine izberite ali shranite stranko.',
-  'Loading invoice history...': 'Nalaganje zgodovine računov...',
-  'Saved invoice payload is invalid.': 'Shranjeni podatki računa niso veljavni.',
-  'Saved invoice has no calculated route data.': 'Shranjeni račun nima izračunanih podatkov poti.',
-  'Saved invoice restored. PDF and XML can be generated without recalculating the route.': 'Shranjeni račun je obnovljen. PDF in XML lahko ustvarite brez ponovnega izračuna poti.',
-  'Calculate a route first, then generate PDF.': 'Najprej izračunajte pot, nato ustvarite PDF.',
-  'PDF generated.': 'PDF je ustvarjen.',
-  'Calculate a route first, then export Minimax XML.': 'Najprej izračunajte pot, nato izvozite Minimax XML.',
-  'Enter Slovenia SifraKonta in the module options before exporting Minimax XML.': 'Pred izvozom Minimax XML vnesite slovenski SifraKonta v možnostih modula.',
-  'Enter Outside SifraKonta before exporting Minimax XML.': 'Pred izvozom Minimax XML vnesite zunanji SifraKonta.',
-  'Minimax XML exported.': 'Minimax XML je izvožen.',
-  'Enter manually': 'Vnesite ročno',
-  'VAT ': 'DDV ',
-  ' not subject to Slovenian VAT': ' ni predmet slovenskega DDV'
-} : {};
+const ROADFARE_TRANSLATIONS = ROADFARE_FRAME_CONFIG.translations || {};
 const GOOGLE_MAPS_API_KEY = normalizeGoogleMapsApiKey(ROADFARE_CONFIG.googleMapsApiKey);
 const COMPANY = ROADFARE_CONFIG.company || {};
 const REVENUE_ACCOUNTS = ROADFARE_CONFIG.revenueAccounts || {};
@@ -415,7 +279,14 @@ let savedCustomers = [];
 
 function t(text) {
   const value = String(text ?? '');
-  return ROADFARE_TRANSLATIONS[value] || value;
+  return String(ROADFARE_TRANSLATIONS[value] || value).replaceAll('\\n', '\n');
+}
+
+function tf(text, replacements = {}) {
+  return Object.entries(replacements).reduce(
+    (message, [key, value]) => message.replaceAll('{' + key + '}', String(value ?? '')),
+    t(text)
+  );
 }
 
 function translateStaticUi() {
@@ -449,8 +320,8 @@ function normalizeGoogleMapsApiKey(value) {
   return match ? match[0] : raw;
 }
 
-const SLOVENIA_POLYGON = [[45.421,13.375],[45.500,13.530],[45.590,13.620],[45.690,13.780],[45.775,13.930],[45.835,14.120],[45.830,14.310],[45.900,14.520],[45.890,14.760],[45.820,14.950],[45.770,15.130],[45.760,15.310],[45.650,15.450],[45.660,15.650],[45.780,15.700],[45.900,15.650],[46.040,15.720],[46.160,15.900],[46.250,16.080],[46.370,16.270],[46.480,16.520],[46.620,16.390],[46.740,16.160],[46.850,15.950],[46.870,15.650],[46.720,15.400],[46.650,15.150],[46.480,14.980],[46.430,14.740],[46.510,14.550],[46.420,14.300],[46.520,14.050],[46.520,13.830],[46.430,13.620],[46.350,13.430],[46.180,13.540],[46.030,13.500],[45.900,13.420],[45.740,13.520],[45.600,13.430],[45.421,13.375]];
-const SLOVENIA_DOMESTIC_CHECK_POLYGON = [[46.509306,13.806475],[46.431817,14.632472],[46.658703,15.137092],[46.683611,16.011664],[46.852386,16.202298],[46.841327,16.370505],[46.503751,16.564808],[46.238108,15.768733],[45.834154,15.671530],[45.731783,15.323954],[45.452316,15.327675],[45.471695,14.935244],[45.634941,14.595109],[45.466166,14.411968],[45.500324,13.715060],[45.591016,13.937630],[46.016778,13.698110],[46.509306,13.806475]];
+const SLOVENIA_POLYGON = typeof SLOVENIA_POLYGON_PRECISE !== 'undefined' ? SLOVENIA_POLYGON_PRECISE : [[45.421,13.375],[45.500,13.530],[45.590,13.620],[45.690,13.780],[45.775,13.930],[45.835,14.120],[45.830,14.310],[45.900,14.520],[45.890,14.760],[45.820,14.950],[45.770,15.130],[45.760,15.310],[45.650,15.450],[45.660,15.650],[45.780,15.700],[45.900,15.650],[46.040,15.720],[46.160,15.900],[46.250,16.080],[46.370,16.270],[46.480,16.520],[46.620,16.390],[46.740,16.160],[46.850,15.950],[46.870,15.650],[46.720,15.400],[46.650,15.150],[46.480,14.980],[46.430,14.740],[46.510,14.550],[46.420,14.300],[46.520,14.050],[46.520,13.830],[46.430,13.620],[46.350,13.430],[46.180,13.540],[46.030,13.500],[45.900,13.420],[45.740,13.520],[45.600,13.430],[45.421,13.375]];
+const SLOVENIA_DOMESTIC_CHECK_POLYGON = SLOVENIA_POLYGON;
 const OUTSIDE_COUNTRY_DEFAULTS = {
   IT: { name: 'Italy', vatRate: 0, revenueAccount: REVENUE_ACCOUNTS.italy || '7602' },
   HR: { name: 'Croatia', vatRate: 25, revenueAccount: REVENUE_ACCOUNTS.croatia || '7603' },
@@ -464,8 +335,13 @@ window.addEventListener('DOMContentLoaded', () => {
   loadGoogleMaps();
   try {
     setDefaultOutputFileName();
+    setDefaultServiceDate();
     updateDeductionsDisplay();
     onOutsideCountryChange(false);
+    generateNextInvoiceNumber(false).catch(() => {});
+    document.getElementById('invoiceNumber')?.addEventListener('input', event => {
+      event.currentTarget.dataset.generated = '0';
+    });
     document.getElementById('outsideVatRate')?.addEventListener('input', () => {
       if (lastCalculatedData) calculateVatSplitFromSloveniaKm(lastCalculatedData.sloveniaKm, 'VAT rate changed. Totals recalculated.');
     });
@@ -643,10 +519,10 @@ async function calculateRoute() {
     if (splitMethod === 'fast') { const siMeters = estimateSloveniaMetersFast(path, sampleKm * 1000); calculateVatSplitFromSloveniaKm(siMeters / 1000, 'Done. Fast Slovenia border polygon split used.'); return; }
     setStatus('Using slower Google reverse geocoding method...', 'warning');
     try { const siMeters = await estimateSloveniaMetersByGeocoding(path, sampleKm * 1000); calculateVatSplitFromSloveniaKm(siMeters / 1000, 'Done. Google reverse geocoding split used.'); }
-    catch (err) { console.error(err); showRouteOnly(totalKm); setStatus('Route calculated, but Google Geocoding split failed: ' + err.message + '. Use fast method or enter manual Slovenia km.', 'warning'); }
+    catch (err) { console.error(err); showRouteOnly(totalKm); setStatus(tf('Route calculated, but Google Geocoding split failed: {error}. Use fast method or enter manual Slovenia km.', { error: err.message }), 'warning'); }
   } catch (err) {
     console.error(err);
-    setStatus('Route error: ' + (err.message || err) + '. Check that Routes API is enabled for this Google key.', 'danger');
+    setStatus(tf('Route error: {error}. Check that Routes API is enabled for this Google key.', { error: err.message || err }), 'danger');
   }
 }
 
@@ -792,7 +668,7 @@ async function saveCustomerDetails() {
     if (!payload.customer_name) { showDatabaseStatus('Customer name is required.', 'danger'); return; }
     showDatabaseStatus('Saving customer details...', 'warning');
     await postJoomlaAjax('saveCustomer', payload);
-    showDatabaseStatus('Customer details saved for ' + payload.customer_code + '.', 'success');
+    showDatabaseStatus(t('Customer details saved for') + ' ' + payload.customer_code + '.', 'success');
     savedCustomers = [];
     await ensureSavedCustomersLoaded();
     await loadInvoiceHistory();
@@ -808,7 +684,7 @@ async function openCustomerPicker() {
   if (!modalElement || !window.bootstrap) return;
 
   search.value = '';
-  status.textContent = 'Loading saved customers...';
+  status.textContent = t('Loading saved customers...');
   document.getElementById('customerPickerList').replaceChildren();
   bootstrap.Modal.getOrCreateInstance(modalElement).show();
 
@@ -921,24 +797,62 @@ function renderCustomerPicker(customers) {
   list.replaceChildren();
 
   status.textContent = customers.length
-    ? (ROADFARE_LANGUAGE_TAG.toLowerCase().startsWith('sl') ? `Najdenih strank: ${customers.length}. Izberite stranko za nalaganje.` : `${customers.length} customer${customers.length === 1 ? '' : 's'} found. Select one to load.`)
+    ? `${customers.length} ${t(customers.length === 1 ? 'customer found. Select one to load.' : 'customers found. Select one to load.')}`
     : t('No matching customers found.');
 
   customers.forEach(customer => {
     const code = String(customer.customer_code || '');
     const name = String(customer.customer_name || '');
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'list-group-item list-group-item-action d-flex justify-content-between gap-3';
+    const row = document.createElement('div');
+    row.className = 'list-group-item customer-picker-row';
     const nameElement = document.createElement('span');
-    nameElement.textContent = name;
-    const codeElement = document.createElement('span');
-    codeElement.className = 'text-muted text-nowrap';
-    codeElement.textContent = code;
-    button.append(nameElement, codeElement);
-    button.addEventListener('click', () => selectCustomerFromPicker(code));
-    list.appendChild(button);
+    nameElement.innerHTML = `<span class="fw-semibold">${xmlEscape(name)}</span><span class="text-muted d-block small">${xmlEscape(code)}</span>`;
+    const loadButton = document.createElement('button');
+    loadButton.type = 'button';
+    loadButton.className = 'btn btn-sm btn-outline-primary';
+    loadButton.textContent = t('Load');
+    loadButton.addEventListener('click', () => selectCustomerFromPicker(code));
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'btn btn-sm btn-outline-danger';
+    deleteButton.textContent = t('Delete');
+    deleteButton.addEventListener('click', () => deleteSavedCustomer(code, name));
+    row.append(nameElement, loadButton, deleteButton);
+    list.appendChild(row);
   });
+}
+
+async function deleteSavedCustomer(customerCode, customerName = '') {
+  if (!customerCode) return;
+  const label = customerName ? `${customerName} (${customerCode})` : customerCode;
+  if (!window.confirm(`${t('Delete this saved customer? Invoice history will stay saved.')}\n\n${label}`)) return;
+
+  const status = document.getElementById('customerPickerStatus');
+  try {
+    if (status) status.textContent = t('Deleting customer...');
+    await postJoomlaAjax('deleteCustomer', { customer_code: customerCode });
+    savedCustomers = savedCustomers.filter(customer => String(customer.customer_code || '') !== customerCode);
+
+    if ((document.getElementById('customerCode')?.value || '').trim() === customerCode) {
+      clearCurrentCustomerForm();
+    }
+
+    renderCustomerPicker(savedCustomers);
+    document.getElementById('savedCustomerSuggestions')?.replaceChildren();
+    showDatabaseStatus('Customer deleted.', 'success');
+  } catch (err) {
+    if (status) status.textContent = err.message;
+    showDatabaseStatus(err.message, 'danger');
+  }
+}
+
+function clearCurrentCustomerForm() {
+  ['customerCode', 'customerName', 'customerAddress', 'customerVatId', 'customInvoiceMessage'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const historyEl = document.getElementById('invoiceHistory');
+  if (historyEl) historyEl.textContent = '';
 }
 
 function selectCustomerFromPicker(customerCode) {
@@ -977,9 +891,12 @@ async function loadCustomerDetails(selectedCustomerCode = '') {
 
 function getInvoicePayload() {
   if (!lastCalculatedData) return null;
+  const invoiceNumberInput = document.getElementById('invoiceNumber');
   return {
     customer: getCustomerPayload(),
-    invoice_number: (document.getElementById('invoiceNumber')?.value || '').trim(),
+    invoice_number: (invoiceNumberInput?.value || '').trim(),
+    invoice_number_auto: invoiceNumberInput?.dataset.generated === '1',
+    service_date: getServiceDateIso(),
     output_file_name: (document.getElementById('outputFileName')?.value || '').trim(),
     calculated_data: lastCalculatedData,
     invoice_text_en: document.getElementById('invoiceTextEn')?.value || '',
@@ -987,9 +904,37 @@ function getInvoicePayload() {
   };
 }
 
+function getInvoiceYear() {
+  const currentValue = (document.getElementById('invoiceNumber')?.value || '').trim();
+  const yearMatch = currentValue.match(/^RCHA-(\d{4})-/);
+  return yearMatch ? Number(yearMatch[1]) : new Date().getFullYear();
+}
+
+async function generateNextInvoiceNumber(force = false) {
+  const invoiceNumberInput = document.getElementById('invoiceNumber');
+  if (!invoiceNumberInput) return '';
+  if (!force && invoiceNumberInput.value.trim()) return invoiceNumberInput.value.trim();
+
+  try {
+    if (force) showDatabaseStatus('Generating invoice number...', 'warning');
+    const data = await postJoomlaAjax('nextInvoiceNumber', { year: getInvoiceYear() });
+    const invoiceNumber = String(data.invoice_number || '').trim();
+    if (invoiceNumber) {
+      invoiceNumberInput.value = invoiceNumber;
+      invoiceNumberInput.dataset.generated = '1';
+      if (force) showDatabaseStatus('Invoice number generated.', 'success');
+    }
+    return invoiceNumber;
+  } catch (err) {
+    if (force) showDatabaseStatus(err.message, 'danger');
+    return invoiceNumberInput.value.trim();
+  }
+}
+
 async function saveInvoiceHistory() {
   try {
     await resolveCustomerCodeFromName();
+    await generateNextInvoiceNumber(false);
     const payload = getInvoicePayload();
     if (!payload) { showDatabaseStatus('Calculate a route before saving invoice history.', 'warning'); return; }
     if (!payload.customer.customer_code) { showDatabaseStatus('Sifra Stranke is required.', 'danger'); return; }
@@ -997,6 +942,11 @@ async function saveInvoiceHistory() {
     showDatabaseStatus('Saving invoice history...', 'warning');
     const data = await postJoomlaAjax('saveInvoice', payload);
     const savedInvoice = data?.invoice || null;
+    if (savedInvoice?.invoice_number) {
+      const invoiceNumberInput = document.getElementById('invoiceNumber');
+      invoiceNumberInput.value = savedInvoice.invoice_number;
+      invoiceNumberInput.dataset.generated = '0';
+    }
     showDatabaseStatus('Invoice history saved.', 'success');
     await loadInvoiceHistory(savedInvoice?.customer_code || payload.customer.customer_code, savedInvoice?.customer_name || payload.customer.customer_name, savedInvoice);
   } catch (err) {
@@ -1015,7 +965,7 @@ function renderInvoiceHistory(invoices) {
 
   if (!invoices.length) {
     historyEl.dataset.invoices = '[]';
-    historyEl.textContent = 'No saved invoice history for this customer. Use "Save invoice history" after calculating a route to store reusable route details.';
+    historyEl.textContent = t('No saved invoice history for this customer. Use "Save invoice history" after calculating a route to store reusable route details.');
     return;
   }
 
@@ -1066,10 +1016,10 @@ async function loadInvoiceHistory(customerCodeOverride = '', customerNameOverrid
     const customerCode = customerCodeOverride || resolvedCode;
     const customerName = customerNameOverride || (document.getElementById('customerName')?.value || '').trim();
     if (!customerCode && !customerName) {
-      historyEl.textContent = 'Select or save a customer before loading invoice history.';
+      historyEl.textContent = t('Select or save a customer before loading invoice history.');
       return;
     }
-    historyEl.textContent = 'Loading invoice history...';
+    historyEl.textContent = t('Loading invoice history...');
     const data = await postJoomlaAjax('listInvoices', { customer_code: customerCode, customer_name: customerName });
     const invoices = data.invoices || [];
     renderInvoiceHistory(invoices.length ? invoices : (savedInvoice ? [savedInvoice] : []));
@@ -1098,7 +1048,10 @@ function restoreInvoiceFromHistory(index) {
   document.getElementById('customerName').value = customer.customer_name || '';
   document.getElementById('customerAddress').value = customer.customer_address || '';
   document.getElementById('customerVatId').value = customer.vat_id || '';
-  document.getElementById('invoiceNumber').value = payload.invoice_number || invoice.invoice_number || '';
+  const invoiceNumberInput = document.getElementById('invoiceNumber');
+  invoiceNumberInput.value = payload.invoice_number || invoice.invoice_number || '';
+  invoiceNumberInput.dataset.generated = '0';
+  document.getElementById('serviceDate').value = normalizeIsoDate(payload.service_date || '') || getTodayIsoDate();
   document.getElementById('outputFileName').value = payload.output_file_name || '';
   if (customer.outside_country) document.getElementById('outsideCountry').value = customer.outside_country;
   onOutsideCountryChange(false);
@@ -1144,6 +1097,7 @@ function generatePdf() {
   const paymentReference = invoiceNo.replace(/[^0-9]/g, '');
   const today = new Date();
   const issueDate = today.toLocaleDateString('sl-SI');
+  const serviceDate = formatIsoDateSl(getServiceDateIso());
   const dueDate = new Date(today.getTime() + 30 * 86400000).toLocaleDateString('sl-SI');
   const pageWidth = doc.internal.pageSize.getWidth();
   const right = pageWidth - 14;
@@ -1151,22 +1105,22 @@ function generatePdf() {
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.text(`Racun st.: ${invoiceNo}`, 14, y); y += 5;
+  doc.text(tf('Racun st.: {invoiceNo}', { invoiceNo }), 14, y); y += 5;
   const issuePlace = String(COMPANY.issueCity || '').trim();
-  doc.text(`Datum izdaje: ${issuePlace ? pdfText(issuePlace) + ', ' : ''}${issueDate}`, 14, y); y += 5;
-  doc.text(`Datum opr. storitve: ${issueDate}`, 14, y); y += 5;
-  doc.text(`Rok placila: ${dueDate}`, 14, y);
+  doc.text(tf('Datum izdaje: {issuePlace}{issueDate}', { issuePlace: issuePlace ? pdfText(issuePlace) + ', ' : '', issueDate }), 14, y); y += 5;
+  doc.text(tf('Datum opr. storitve: {serviceDate}', { serviceDate }), 14, y); y += 5;
+  doc.text(tf('Rok placila: {dueDate}', { dueDate }), 14, y);
 
   y = 15;
   const companyLines = [
     COMPANY.name,
     COMPANY.address,
     COMPANY.postcodeCity,
-    COMPANY.taxNumber ? `ID za DDV: ${COMPANY.taxNumber}` : '',
-    COMPANY.iban ? `IBAN st.: ${COMPANY.iban}` : '',
-    COMPANY.registrationNumber ? `Maticna st.: ${COMPANY.registrationNumber}` : '',
-    COMPANY.email ? `E-posta: ${COMPANY.email}` : '',
-    COMPANY.phone ? `Telefon: ${COMPANY.phone}` : ''
+    COMPANY.taxNumber ? tf('ID za DDV: {taxNumber}', { taxNumber: COMPANY.taxNumber }) : '',
+    COMPANY.iban ? tf('IBAN st.: {iban}', { iban: COMPANY.iban }) : '',
+    COMPANY.registrationNumber ? tf('Maticna st.: {registrationNumber}', { registrationNumber: COMPANY.registrationNumber }) : '',
+    COMPANY.email ? tf('E-posta: {email}', { email: COMPANY.email }) : '',
+    COMPANY.phone ? tf('Telefon: {phone}', { phone: COMPANY.phone }) : ''
   ].filter(Boolean);
   companyLines.forEach(line => { doc.text(pdfText(line), right, y, { align: 'right' }); y += 5; });
 
@@ -1174,51 +1128,51 @@ function generatePdf() {
   doc.setFontSize(10);
   if (customerName) { doc.text(pdfText(customerName), 14, y); y += 5; }
   if (customerAddress) y = writeWrapped(doc, customerAddress, 14, y, 90, 5);
-  if (customerVatId) y = writeWrapped(doc, `ID za DDV: ${customerVatId}`, 14, y, 90, 5);
+  if (customerVatId) y = writeWrapped(doc, tf('ID za DDV: {taxNumber}', { taxNumber: customerVatId }), 14, y, 90, 5);
 
   y = 93;
   const tableTop = y;
   const cols = { desc: 14, price: 108, qty: 132, unit: 148, vat: 164, amount: right };
   doc.setFontSize(7.8);
   doc.setFont('helvetica', 'bold');
-  doc.text('Opis', cols.desc, y);
-  doc.text('Cena', cols.price, y, { align: 'right' });
-  doc.text('Kolicina', cols.qty, y, { align: 'right' });
-  doc.text('Enota', cols.unit, y, { align: 'right' });
-  doc.text('DDV', cols.vat, y, { align: 'right' });
-  doc.text('Znesek', cols.amount, y, { align: 'right' });
+  doc.text(t('Opis'), cols.desc, y);
+  doc.text(t('Cena'), cols.price, y, { align: 'right' });
+  doc.text(t('Kolicina'), cols.qty, y, { align: 'right' });
+  doc.text(t('Enota'), cols.unit, y, { align: 'right' });
+  doc.text(t('DDV'), cols.vat, y, { align: 'right' });
+  doc.text(t('Znesek'), cols.amount, y, { align: 'right' });
   doc.setLineWidth(0.2);
   doc.line(14, y + 2, right, y + 2);
   y += 8;
 
-  const routeTitle = `Prevoz ${pdfRouteText(d.dropoff || [d.pickup, d.routeDropoff].filter(Boolean).join(' - '))}`;
-  const siDesc = `${routeTitle}, del poti Slovenija (${round2(d.sloveniaKm)} km)`;
-  const outsideDesc = `${routeTitle}, del poti izven Slovenije (${round2(d.outsideSloveniaKm)} km)`;
-  y = drawInvoiceRow(doc, y, siDesc, d.taxableBaseSlovenia, 1, 'kos', d.vatRate, d.taxableBaseSlovenia);
+  const routeTitle = tf('Prevoz {route}', { route: pdfRouteText(d.dropoff || [d.pickup, d.routeDropoff].filter(Boolean).join(' - ')) });
+  const siDesc = tf('{routeTitle}, del poti Slovenija ({km} km)', { routeTitle, km: round2(d.sloveniaKm) });
+  const outsideDesc = tf('{routeTitle}, del poti izven Slovenije ({km} km)', { routeTitle, km: round2(d.outsideSloveniaKm) });
+  y = drawInvoiceRow(doc, y, siDesc, d.taxableBaseSlovenia, 1, t('kos'), d.vatRate, d.taxableBaseSlovenia);
   if (d.outsideSloveniaBase > 0.004) {
-    y = drawInvoiceRow(doc, y, outsideDesc, d.outsideSloveniaBase, 1, 'kos', d.outsideVatRate, d.outsideSloveniaBase);
+    y = drawInvoiceRow(doc, y, outsideDesc, d.outsideSloveniaBase, 1, t('kos'), d.outsideVatRate, d.outsideSloveniaBase);
   }
   (d.deductions || []).filter(a => Number(a.amount) > 0).forEach(a => {
-    y = drawInvoiceRow(doc, y, a.description || 'Dodatni strosek', a.amount, 1, 'kos', 0, a.amount);
+    y = drawInvoiceRow(doc, y, a.description || t('Dodatni strosek'), a.amount, 1, t('kos'), 0, a.amount);
   });
 
   y += 4;
   const netTotal = d.taxableBaseSlovenia + d.outsideSloveniaBase + (d.deductionsTotal || 0);
   const vatTotal = d.vatAmount + d.outsideVatAmount;
   doc.setFont('helvetica', 'bold');
-  doc.text('Skupaj', cols.vat, y, { align: 'right' });
+  doc.text(t('Skupaj'), cols.vat, y, { align: 'right' });
   doc.text(fmtPdfEur(netTotal), right, y, { align: 'right' }); y += 6;
-  doc.text('DDV', cols.vat, y, { align: 'right' });
+  doc.text(t('DDV'), cols.vat, y, { align: 'right' });
   doc.text(fmtPdfEur(vatTotal), right, y, { align: 'right' }); y += 6;
-  doc.text('Za placilo', cols.vat, y, { align: 'right' });
+  doc.text(t('Za placilo'), cols.vat, y, { align: 'right' });
   doc.text(fmtPdfEur(d.totalAmount + (d.deductionsTotal || 0)), right, y, { align: 'right' });
 
   y = Math.max(y + 18, tableTop + 58);
   doc.setFontSize(8.5);
-  doc.text('Davcna stopnja', 14, y);
-  doc.text('Osnova za DDV', 82, y, { align: 'right' });
-  doc.text('DDV', 124, y, { align: 'right' });
-  doc.text('Znesek z DDV', right, y, { align: 'right' });
+  doc.text(t('Davcna stopnja'), 14, y);
+  doc.text(t('Osnova za DDV'), 82, y, { align: 'right' });
+  doc.text(t('DDV'), 124, y, { align: 'right' });
+  doc.text(t('Znesek z DDV'), right, y, { align: 'right' });
   doc.setFont('helvetica', 'normal');
   y += 7;
   y = drawVatSummaryRow(doc, y, 0, d.deductionsTotal || 0, 0);
@@ -1227,14 +1181,14 @@ function generatePdf() {
 
   y += 10;
   setPdfFooterFont(doc);
-  doc.text(`Pri placilu se sklicujte na stevilko SI00 ${paymentReference}.`, 14, y); y += 8;
+  doc.text(tf('Pri placilu se sklicujte na stevilko SI00 {paymentReference}.', { paymentReference }), 14, y); y += 8;
   if (customInvoiceMessage) y = writeWrapped(doc, customInvoiceMessage, 14, y, 180, 5) + 3;
   const note = Number(d.outsideVatRate)
-    ? `Za del poti izven Slovenije je uporabljen DDV ${formatRate(d.outsideVatRate)}%, skladno z izbrano drzavo opravljanja storitve.`
-    : 'Prevoz v tujini je oproscen obracuna DDV na podlagi prvega odstavka 28. clena ZDDV-1.';
+    ? tf('Za del poti izven Slovenije je uporabljen DDV {outsideVatRate}%, skladno z izbrano drzavo opravljanja storitve.', { outsideVatRate: formatRate(d.outsideVatRate) })
+    : t('Prevoz v tujini je oproscen obracuna DDV na podlagi prvega odstavka 28. clena ZDDV-1.');
   y = writeWrapped(doc, note, 14, y, 180, 5);
-  y = writeWrapped(doc, 'Zahvaljujemo se vam za vase zaupanje in se veselimo nadaljnjega sodelovanja!', 14, y + 5, 180, 5);
-  doc.text('Zig in podpis:', 158, 275);
+  y = writeWrapped(doc, t('Zahvaljujemo se vam za vase zaupanje in se veselimo nadaljnjega sodelovanja!'), 14, y + 5, 180, 5);
+  doc.text(t('Zig in podpis:'), 158, 275);
 
   doc.save(getOutputFileName('racun_' + (invoiceNo || '26-0007'), 'pdf'));
   setStatus('PDF generated.', 'success');
@@ -1334,6 +1288,7 @@ function exportMinimaxXml() {
   if (!lastCalculatedData) { setStatus('Calculate a route first, then export Minimax XML.', 'warning'); return; }
   const d = lastCalculatedData;
   const today = new Date().toISOString().slice(0,10);
+  const serviceDateXml = getServiceDateIso();
   const invoiceRef = (document.getElementById('invoiceNumber')?.value || 'PREVOZ 2026-212');
   const sifraStranke = (document.getElementById('customerCode')?.value || 'STR001');
   const naziv = (document.getElementById('customerName')?.value || '');
@@ -1363,7 +1318,7 @@ function exportMinimaxXml() {
   const total = moneyXml(totalAmount);
   const outsideRevenueLine = balancedOutsideBaseAmount > 0 ? `\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)} - izven Slovenije</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(outsideRevenueAccount)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${zunajOsnova}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${zunajOsnova}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>` : '';
   const outsideVatLine = outsideVatAmount > 0 ? `\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)} - DDV izven Slovenije</OpisVrsticeTemeljnice>\n          <SifraKonta>26000</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${zunajDdv}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${zunajDdv}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>` : '';
-  const xml = `<?xml version="1.0" encoding="utf-8"?>\n<miniMAXUvozKnjigovodstvo xmlns="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo.xsd">\n\n  <Temeljnice>\n    <Temeljnica>\n      <GlavaTemeljnice>\n        <SifraVrsteTemeljnice>IR</SifraVrsteTemeljnice>\n        <DatumTemeljnice>${today}</DatumTemeljnice>\n        <OpisGlaveTemeljnice>${xmlEscape(invoiceRef)}</OpisGlaveTemeljnice>\n      </GlavaTemeljnice>\n\n      <DDV>\n        <DDVVrstica>\n          <DDVGlava>\n            <DatumDDV>${today}</DatumDDV>\n            <KnjigaDDV>IR</KnjigaDDV>\n            <DatumKnjizenjaDDV>${today}</DatumKnjizenjaDDV>\n            <SifraStranke>${sifraStranke}</SifraStranke>\n            <Listina>${xmlEscape(invoiceRef)}</Listina>\n            <DatumListine>${today}</DatumListine>\n            <DatumOpravljanja>${today}</DatumOpravljanja>\n            <VrstaPorocanja>Obračun</VrstaPorocanja>\n          </DDVGlava>\n\n          <DDVStopnje>\n            <DDVStopnja>\n              <SifraStopnjeDDV>S</SifraStopnjeDDV>\n              <StoritevOsnova>${osnovna}</StoritevOsnova>\n              <StoritevDDV>${ddv}</StoritevDDV>\n            </DDVStopnja>\n          </DDVStopnje>\n        </DDVVrstica>\n      </DDV>\n\n      <VrsticeTemeljnice>\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>1200</SifraKonta>\n          <SifraStranke>${sifraStranke}</SifraStranke>\n          <DatumZapadlosti>${today}</DatumZapadlosti>\n          <DatumOpravljanja>${today}</DatumOpravljanja>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>${total}</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>0.00</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>${total}</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>0.00</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(sloveniaRevenueAccount)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${osnovna}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${osnovna}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${outsideRevenueLine}\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>26000</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${ddv}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${ddv}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${outsideVatLine}\n      </VrsticeTemeljnice>\n    </Temeljnica>\n  </Temeljnice>\n\n  <Stranke>\n    <Stranka>\n      <Sifra>${xmlEscape(sifraStranke)}</Sifra>\n      <Naziv>${xmlEscape(naziv)}</Naziv>\n      <Naslov>${xmlEscape(naslov)}</Naslov>\n      <KraticaDrzave>SI</KraticaDrzave>\n      <PostnaStevilka>1000</PostnaStevilka>\n      <NazivPoste>Ljubljana</NazivPoste>\n      <DavcniZavezanec>${vatId ? 'D' : 'N'}</DavcniZavezanec>\n      <IdentifikacijskaStevilka>${xmlEscape(vatId)}</IdentifikacijskaStevilka>\n    </Stranka>\n  </Stranke>\n\n</miniMAXUvozKnjigovodstvo>`;
+  const xml = `<?xml version="1.0" encoding="utf-8"?>\n<miniMAXUvozKnjigovodstvo xmlns="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo.xsd">\n\n  <Temeljnice>\n    <Temeljnica>\n      <GlavaTemeljnice>\n        <SifraVrsteTemeljnice>IR</SifraVrsteTemeljnice>\n        <DatumTemeljnice>${today}</DatumTemeljnice>\n        <OpisGlaveTemeljnice>${xmlEscape(invoiceRef)}</OpisGlaveTemeljnice>\n      </GlavaTemeljnice>\n\n      <DDV>\n        <DDVVrstica>\n          <DDVGlava>\n            <DatumDDV>${today}</DatumDDV>\n            <KnjigaDDV>IR</KnjigaDDV>\n            <DatumKnjizenjaDDV>${today}</DatumKnjizenjaDDV>\n            <SifraStranke>${sifraStranke}</SifraStranke>\n            <Listina>${xmlEscape(invoiceRef)}</Listina>\n            <DatumListine>${today}</DatumListine>\n            <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n            <VrstaPorocanja>Obračun</VrstaPorocanja>\n          </DDVGlava>\n\n          <DDVStopnje>\n            <DDVStopnja>\n              <SifraStopnjeDDV>S</SifraStopnjeDDV>\n              <StoritevOsnova>${osnovna}</StoritevOsnova>\n              <StoritevDDV>${ddv}</StoritevDDV>\n            </DDVStopnja>\n          </DDVStopnje>\n        </DDVVrstica>\n      </DDV>\n\n      <VrsticeTemeljnice>\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>1200</SifraKonta>\n          <SifraStranke>${sifraStranke}</SifraStranke>\n          <DatumZapadlosti>${today}</DatumZapadlosti>\n          <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>${total}</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>0.00</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>${total}</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>0.00</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(sloveniaRevenueAccount)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${osnovna}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${osnovna}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${outsideRevenueLine}\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>26000</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${ddv}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${ddv}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${outsideVatLine}\n      </VrsticeTemeljnice>\n    </Temeljnica>\n  </Temeljnice>\n\n  <Stranke>\n    <Stranka>\n      <Sifra>${xmlEscape(sifraStranke)}</Sifra>\n      <Naziv>${xmlEscape(naziv)}</Naziv>\n      <Naslov>${xmlEscape(naslov)}</Naslov>\n      <KraticaDrzave>SI</KraticaDrzave>\n      <PostnaStevilka>1000</PostnaStevilka>\n      <NazivPoste>Ljubljana</NazivPoste>\n      <DavcniZavezanec>${vatId ? 'D' : 'N'}</DavcniZavezanec>\n      <IdentifikacijskaStevilka>${xmlEscape(vatId)}</IdentifikacijskaStevilka>\n    </Stranka>\n  </Stranke>\n\n</miniMAXUvozKnjigovodstvo>`;
   const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = getOutputFileName('racun_26-0007', 'xml'); document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
@@ -1372,7 +1327,7 @@ function exportMinimaxXml() {
 
 function showRouteOnly(totalKm) {
   document.getElementById('totalKm').textContent = fmtKm(totalKm);
-  document.getElementById('siKm').textContent = 'Enter manually';
+  document.getElementById('siKm').textContent = t('Enter manually');
   document.getElementById('outsideKm').textContent = '-';
   document.getElementById('netTotal').textContent = '-';
   document.getElementById('taxableBase').textContent = '-';
@@ -1461,15 +1416,16 @@ function showResults(totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmou
   document.getElementById('siKm').textContent = fmtKm(siKm);
   document.getElementById('outsideKm').textContent = fmtKm(outsideKm);
   document.getElementById('netTotal').textContent = fmtEur(netTotal);
-  document.getElementById('taxableBase').textContent = fmtEur(taxableBase) + ' VAT ' + vatRate + '%';
-  document.getElementById('outsideBase').textContent = fmtEur(outsideBase) + (Number(outsideVatRate) ? (' VAT ' + outsideVatRate + '%') : ' not subject to Slovenian VAT');
+  document.getElementById('taxableBase').textContent = fmtEur(taxableBase) + ' ' + t('VAT ') + vatRate + '%';
+  document.getElementById('outsideBase').textContent = fmtEur(outsideBase) + (Number(outsideVatRate) ? (' ' + t('VAT ') + outsideVatRate + '%') : t(' not subject to Slovenian VAT'));
   document.getElementById('vatAmount').textContent = fmtEur(vatAmount);
   document.getElementById('outsideVatAmount').textContent = fmtEur(outsideVatAmount || 0);
   document.getElementById('totalAmount').textContent = fmtEur(totalAmount);
 }
 function buildInvoiceText(pickup, dropoff, totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate) {
-  document.getElementById('invoiceTextEn').value = `International passenger transfer ${pickup} → ${dropoff}.\nTotal route: ${fmtKm(totalKm)}. Estimated Slovenia part: ${fmtKm(siKm)}. Outside Slovenia: ${fmtKm(outsideKm)}.\nSlovenian VAT is calculated only on the part of the route performed in Slovenia, proportionate to kilometres driven in Slovenia.\nTaxable base Slovenia: ${fmtEur(taxableBase)}. Outside Slovenia part: ${fmtEur(outsideBase)}.${Number(outsideVatRate) ? (' Outside VAT ' + outsideVatRate + '%: ' + fmtEur(outsideVatAmount) + '.') : ''} VAT ${vatRate}%: ${fmtEur(vatAmount)}. Total: ${fmtEur(totalAmount)}.`;
-  document.getElementById('invoiceTextSl').value = `Mednarodni prevoz potnikov ${pickup} → ${dropoff}.\nSkupna pot: ${fmtKm(totalKm)}. Ocenjen del poti po Sloveniji: ${fmtKm(siKm)}. Del poti izven Slovenije: ${fmtKm(outsideKm)}.\nDDV je obračunan samo od dela poti, opravljenega na ozemlju Slovenije, sorazmerno glede na kilometre v Sloveniji.\nDavčna osnova Slovenija: ${fmtEur(taxableBase)}. Del izven Slovenije: ${fmtEur(outsideBase)}.${Number(outsideVatRate) ? (' DDV izven: ' + outsideVatRate + '%: ' + fmtEur(outsideVatAmount) + '.') : ''} DDV ${vatRate}%: ${fmtEur(vatAmount)}. Skupaj: ${fmtEur(totalAmount)}.`;
+  const replacements = { pickup, dropoff, totalKm: fmtKm(totalKm), siKm: fmtKm(siKm), outsideKm: fmtKm(outsideKm), taxableBase: fmtEur(taxableBase), outsideBase: fmtEur(outsideBase), vatRate, vatAmount: fmtEur(vatAmount), totalAmount: fmtEur(totalAmount) };
+  document.getElementById('invoiceTextEn').value = tf('International passenger transfer {pickup} → {dropoff}.\nTotal route: {totalKm}. Estimated Slovenia part: {siKm}. Outside Slovenia: {outsideKm}.\nSlovenian VAT is calculated only on the part of the route performed in Slovenia, proportionate to kilometres driven in Slovenia.\nTaxable base Slovenia: {taxableBase}. Outside Slovenia part: {outsideBase}.{outsideVatText} VAT {vatRate}%: {vatAmount}. Total: {totalAmount}.', { ...replacements, outsideVatText: Number(outsideVatRate) ? tf(' Outside VAT {outsideVatRate}%: {outsideVatAmount}.', { outsideVatRate, outsideVatAmount: fmtEur(outsideVatAmount) }) : '' });
+  document.getElementById('invoiceTextSl').value = tf('Mednarodni prevoz potnikov {pickup} → {dropoff}.\nSkupna pot: {totalKm}. Ocenjen del poti po Sloveniji: {siKm}. Del poti izven Slovenije: {outsideKm}.\nDDV je obračunan samo od dela poti, opravljenega na ozemlju Slovenije, sorazmerno glede na kilometre v Sloveniji.\nDavčna osnova Slovenija: {taxableBase}. Del izven Slovenije: {outsideBase}.{outsideVatText} DDV {vatRate}%: {vatAmount}. Skupaj: {totalAmount}.', { ...replacements, outsideVatText: Number(outsideVatRate) ? tf(' DDV izven: {outsideVatRate}%: {outsideVatAmount}.', { outsideVatRate, outsideVatAmount: fmtEur(outsideVatAmount) }) : '' });
 }
 function setDefaultOutputFileName() {
   const outputFileName = document.getElementById('outputFileName');
@@ -1478,6 +1434,33 @@ function setDefaultOutputFileName() {
   const year = today.getFullYear();
   const date = today.toISOString().slice(0, 10);
   outputFileName.value = `racun_${year}_${date}`;
+}
+function setDefaultServiceDate() {
+  const serviceDate = document.getElementById('serviceDate');
+  if (!serviceDate || serviceDate.value) return;
+  serviceDate.value = getTodayIsoDate();
+}
+function getTodayIsoDate() {
+  const today = new Date();
+  const offsetMs = today.getTimezoneOffset() * 60000;
+  return new Date(today.getTime() - offsetMs).toISOString().slice(0, 10);
+}
+function normalizeIsoDate(value) {
+  const raw = String(value || '').trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : '';
+}
+function getServiceDateIso() {
+  const serviceDate = document.getElementById('serviceDate');
+  const value = normalizeIsoDate(serviceDate?.value || '');
+  if (value) return value;
+  const today = getTodayIsoDate();
+  if (serviceDate) serviceDate.value = today;
+  return today;
+}
+function formatIsoDateSl(value) {
+  const normalized = normalizeIsoDate(value) || getTodayIsoDate();
+  const parts = normalized.split('-');
+  return `${parts[2]}. ${parts[1]}. ${parts[0]}`;
 }
 function getOutputFileName(fallbackBaseName, extension) {
   const rawName = (document.getElementById('outputFileName')?.value || fallbackBaseName || 'racun').trim();

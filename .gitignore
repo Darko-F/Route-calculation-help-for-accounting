@@ -3,6 +3,7 @@
 
 # Local test/prototype files
 test.html
+download-keys.local.php
 
 # OS/editor files
 .DS_Store
