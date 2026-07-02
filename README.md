@@ -34,7 +34,7 @@ Demo: https://builder.topoweryou.com/routecalculationhelp/
 The module manifest includes this Joomla update server:
 
 ```text
-https://builder.topoweryou.com/routecalculationhelp/updates/route-calculation-help-for-accounting.xml
+https://builder.topoweryou.com/routecalculationhelp/files/routecalculationhelp/updates/route-calculation-help-for-accounting.xml
 ```
 
 Private update downloads use the separate installer plugin:
@@ -55,10 +55,11 @@ The plugin appends the key when Joomla downloads this module's update package.
 The plugin also has its own update server:
 
 ```text
-https://builder.topoweryou.com/routecalculationhelp/updates/routecalculationupdatekey.xml
+https://builder.topoweryou.com/routecalculationhelp/files/routecalculationhelp/updates/routecalculationupdatekey.xml
 ```
 
-On the update server, `download.php` validates package names by pattern and reads
+On the update server, `/routecalculationhelp/files/routecalculationhelp/downloads/download.php`
+validates package names by pattern and reads
 allowed subscriber key hashes from either:
 
 ```text
@@ -68,11 +69,14 @@ download-keys.local.php
 
 Use `download-keys.example.php` as the template for the local file. Keep
 `download-keys.local.php` private; it is ignored by Git. Upload module and plugin
-release zips into the server `downloads/` directory.
+release zips into the server `/routecalculationhelp/files/routecalculationhelp/downloads/`
+directory.
 
 ## Default Configuration
 
-The included default configuration is prepared for Slovenia-based invoicing, with editable settings for foreign countries and revenue accounts. You can adapt the labels, accounts, VAT rates, and country split rules for another country of origin.
+The included configuration is currently ready for Slovenia, Italy, Croatia, Austria, Germany, and Hungary, with editable base-country settings, foreign-country settings, VAT rates, PDF notes, and revenue accounts.
+
+Additional countries can be added on demand when you need another border polygon, VAT setup, invoice text, or account mapping.
 
 ## Configuration on Demand
 

@@ -5,7 +5,9 @@ declare(strict_types=1);
  * Subscriber download endpoint for Joomla extension updates.
  *
  * Files must use one of the allowed package filename patterns and exist in the
- * downloads directory. Configure valid key hashes with either:
+ * downloads directory. When this file is deployed inside the downloads
+ * directory, package files may live alongside it. Configure valid key hashes with
+ * either:
  *
  * 1. DOWNLOAD_KEY_HASHES environment variable, comma-separated.
  * 2. download-keys.local.php returning an array of sha256 hashes.
@@ -65,7 +67,7 @@ if (!$keyIsValid) {
     exit('Forbidden');
 }
 
-$downloadsDir = realpath(__DIR__ . '/downloads');
+$downloadsDir = realpath(__DIR__ . '/downloads') ?: realpath(__DIR__);
 $path = $downloadsDir !== false ? realpath($downloadsDir . DIRECTORY_SEPARATOR . $file) : false;
 
 if ($path === false || !is_file($path) || !is_readable($path) || dirname($path) !== $downloadsDir) {

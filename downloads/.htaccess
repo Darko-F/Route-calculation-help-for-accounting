@@ -1,1 +1,9 @@
-Require all denied
+Options -Indexes
+
+<Files "download.php">
+    Require all granted
+</Files>
+
+<FilesMatch "^(download-keys\.local\.php|.*\.zip)$">
+    Require all denied
+</FilesMatch>

@@ -14,11 +14,22 @@
     .place-autocomplete { display: block; width: 100%; }
     gmp-place-autocomplete { display: block; width: 100%; }
     .route-stop-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; align-items: start; }
+    .country-split-item { overflow: hidden; }
+    .country-split-main-row { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(5rem, .55fr) minmax(5rem, .55fr); gap: .5rem; align-items: end; }
+    .country-split-meta-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; align-items: end; }
+    .country-split-main-row > div,
+    .country-split-meta-row > div { min-width: 0; }
+    .country-split-item .form-control,
+    .country-split-item .form-select { width: 100%; min-width: 0; }
+    .country-remove-wrap .btn { width: 100%; min-width: 5rem; white-space: nowrap; }
+    .country-note-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: .25rem; }
     .invoice-history-grid { display: grid; grid-template-columns: minmax(9rem, 1fr) 7rem 8.5rem; gap: .5rem; align-items: center; }
     .invoice-history-grid > span { min-width: 0; overflow-wrap: anywhere; }
     .customer-picker-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .5rem; align-items: center; }
     .customer-picker-row > span { min-width: 0; overflow-wrap: anywhere; }
     @media (max-width: 575.98px) { .action-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 1199.98px) { .country-split-main-row { grid-template-columns: minmax(0, 1fr) minmax(5rem, .55fr); } .country-split-main-row .country-vat-wrap { grid-column: 1 / -1; } }
+    @media (max-width: 575.98px) { .country-split-main-row { grid-template-columns: 1fr; } }
     @media (max-width: 575.98px) { .invoice-history-grid { grid-template-columns: 1fr; } }
     @media (max-width: 575.98px) { .customer-picker-row { grid-template-columns: 1fr; } }
   </style>
@@ -87,14 +98,18 @@
           </div>
           <div class="mb-3">
             <label for="grossPrice" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GROSS_PRICE</label>
-            <input id="grossPrice" type="number" step="0.01" class="form-control form-control-lg" value="300" />
+            <input id="grossPrice" type="number" step="0.01" class="form-control form-control-lg" value="" />
             <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GROSS_PRICE_HELP</div>
           </div>
-          <div class="row g-3">
-            <div class="col-md-6"><label for="price" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_NET_PRICE</label><input id="price" type="number" step="0.01" class="form-control" value="" readonly /></div>
-            <div class="col-md-6"><label for="vatRate" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIAN_VAT_RATE</label><input id="vatRate" type="number" step="0.1" class="form-control" value="9.5" /></div>
+          <div class="mb-3">
+            <label for="price" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_NET_PRICE</label>
+            <input id="price" type="number" step="0.01" class="form-control form-control-lg" value="" />
           </div>
-          <div class="row g-3 mt-1">
+          <div class="mb-3">
+            <label for="vatRate" class="form-label fw-semibold" data-base-country-label="vat-rate">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIAN_VAT_RATE</label>
+            <input id="vatRate" type="number" step="0.1" class="form-control form-control-lg" value="9.5" />
+          </div>
+          <div class="row g-3">
             <div class="col-md-6">
               <label for="outsideCountry" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OUTSIDE_COUNTRY</label>
               <select id="outsideCountry" class="form-select" onchange="onOutsideCountryChange()">
@@ -102,6 +117,7 @@
                 <option value="HR">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CROATIA_ZAGREB</option>
                 <option value="AT">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_AUSTRIA</option>
                 <option value="DE">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GERMANY</option>
+                <option value="HU">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_HUNGARY</option>
                 <option value="OTHER">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OTHER_CUSTOM</option>
               </select>
             </div>
@@ -110,29 +126,15 @@
               <input id="outsideVatRate" type="number" step="0.1" class="form-control" value="0" />
               <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_COUNTRY_DEFAULTS_HELP</div>
             </div>
-            <div class="col-md-6">
-              <label for="outsideRevenueAccount" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OUTSIDE_SIFRAKONTA</label>
-              <input id="outsideRevenueAccount" class="form-control" value="7602" />
-              <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OUTSIDE_SIFRAKONTA_HELP</div>
+          </div>
+          <div class="border rounded p-3 mt-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h3 class="h6 mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_COUNTRY_VAT_SPLIT</h3>
+              <button class="btn btn-sm btn-outline-primary" type="button" onclick="addCountrySplitRow()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADD_COUNTRY</button>
             </div>
-            <div class="col-md-6">
-              <label for="customCountryName" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOM_COUNTRY_NAME</label>
-              <input id="customCountryName" class="form-control" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOM_COUNTRY_HELP" />
-            </div>
-          </div>
-          <div class="mt-3">
-            <label for="splitMethod" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_METHOD</label>
-            <select id="splitMethod" class="form-select"><option value="fast" selected>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_FAST</option><option value="geocode">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_GEOCODE</option><option value="manual">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_MANUAL</option></select>
-            <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_HELP</div>
-          </div>
-          <div class="mt-3">
-            <label for="sampleKm" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLING_ACCURACY</label>
-            <select id="sampleKm" class="form-select"><option value="10">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_10</option><option value="5">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_5</option><option value="2" selected>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_2</option><option value="1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_1</option><option value="0.5">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_05</option></select>
-          </div>
-          <div class="mt-3">
-            <label for="manualSiKm" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_MANUAL_SI_KM</label>
-            <input id="manualSiKm" type="number" step="0.01" class="form-control" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OPTIONAL_KM" />
-            <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_MANUAL_SI_KM_HELP</div>
+            <div class="form-text mb-2">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_COUNTRY_VAT_SPLIT_HELP</div>
+            <div id="countrySplitRows" class="vstack gap-2"></div>
+            <button class="btn btn-sm btn-outline-secondary mt-2" type="button" onclick="recalculateFromCountrySplit()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_RECALCULATE_COUNTRIES</button>
           </div>
           <div id="status" class="alert alert-secondary small mt-3 mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_WAITING_GOOGLE_MAPS</div>
         </div>
@@ -146,6 +148,22 @@
             <button class="btn btn-primary" onclick="calculateRoute()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CALCULATE_ROUTE</button>
             <button class="btn btn-outline-secondary" onclick="calculateWithManualKm()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_RECALCULATE_MANUAL</button>
           </div>
+          <div class="row g-3 mt-2">
+            <div class="col-md-6">
+              <label for="splitMethod" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_METHOD</label>
+              <select id="splitMethod" class="form-select"><option value="fast" selected>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_FAST</option><option value="geocode">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_GEOCODE</option><option value="manual">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_MANUAL</option></select>
+              <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_HELP</div>
+            </div>
+            <div class="col-md-6">
+              <label for="sampleKm" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLING_ACCURACY</label>
+              <select id="sampleKm" class="form-select"><option value="10">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_10</option><option value="5">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_5</option><option value="2" selected>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_2</option><option value="1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_1</option><option value="0.5">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_05</option></select>
+            </div>
+            <div class="col-12">
+              <label for="manualSiKm" class="form-label fw-semibold" data-base-country-label="manual-km">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_MANUAL_SI_KM</label>
+              <input id="manualSiKm" type="number" step="0.01" class="form-control" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OPTIONAL_KM" />
+              <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_MANUAL_SI_KM_HELP</div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="card shadow-sm mb-4">
@@ -157,12 +175,12 @@
         <div class="card-body p-0">
           <table class="table table-striped table-hover mb-0 align-middle"><tbody>
             <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_TOTAL_ROUTE_DISTANCE</th><td id="totalKm" class="result-value text-end">-</td></tr>
-            <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ESTIMATED_SI_KM</th><td id="siKm" class="result-value text-end">-</td></tr>
+            <tr><th scope="row" data-base-country-label="estimated-km">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ESTIMATED_SI_KM</th><td id="siKm" class="result-value text-end">-</td></tr>
             <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ESTIMATED_OUTSIDE_KM</th><td id="outsideKm" class="result-value text-end">-</td></tr>
             <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_TOTAL_NET_PRICE</th><td id="netTotal" class="result-value text-end">-</td></tr>
-            <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIAN_TAXABLE_BASE</th><td id="taxableBase" class="result-value text-end">-</td></tr>
+            <tr><th scope="row" data-base-country-label="taxable-base">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIAN_TAXABLE_BASE</th><td id="taxableBase" class="result-value text-end">-</td></tr>
             <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OUTSIDE_PART</th><td id="outsideBase" class="result-value text-end">-</td></tr>
-            <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIAN_VAT</th><td id="vatAmount" class="result-value text-end">-</td></tr>
+            <tr><th scope="row" data-base-country-label="vat-amount">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIAN_VAT</th><td id="vatAmount" class="result-value text-end">-</td></tr>
             <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OUTSIDE_VAT</th><td id="outsideVatAmount" class="result-value text-end">-</td></tr>
             <tr class="table-dark"><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_TOTAL_INVOICE_AMOUNT</th><td id="totalAmount" class="result-value text-end">-</td></tr>
           </tbody></table>
@@ -276,6 +294,8 @@ let autoRouteTimer = null;
 let lastRouteData = null;
 let lastCalculatedData = null;
 let savedCustomers = [];
+let countryBoundaryPromise = null;
+let countryBoundaryPolygons = {};
 
 function t(text) {
   const value = String(text ?? '');
@@ -322,13 +342,35 @@ function normalizeGoogleMapsApiKey(value) {
 
 const SLOVENIA_POLYGON = typeof SLOVENIA_POLYGON_PRECISE !== 'undefined' ? SLOVENIA_POLYGON_PRECISE : [[45.421,13.375],[45.500,13.530],[45.590,13.620],[45.690,13.780],[45.775,13.930],[45.835,14.120],[45.830,14.310],[45.900,14.520],[45.890,14.760],[45.820,14.950],[45.770,15.130],[45.760,15.310],[45.650,15.450],[45.660,15.650],[45.780,15.700],[45.900,15.650],[46.040,15.720],[46.160,15.900],[46.250,16.080],[46.370,16.270],[46.480,16.520],[46.620,16.390],[46.740,16.160],[46.850,15.950],[46.870,15.650],[46.720,15.400],[46.650,15.150],[46.480,14.980],[46.430,14.740],[46.510,14.550],[46.420,14.300],[46.520,14.050],[46.520,13.830],[46.430,13.620],[46.350,13.430],[46.180,13.540],[46.030,13.500],[45.900,13.420],[45.740,13.520],[45.600,13.430],[45.421,13.375]];
 const SLOVENIA_DOMESTIC_CHECK_POLYGON = SLOVENIA_POLYGON;
-const OUTSIDE_COUNTRY_DEFAULTS = {
-  IT: { name: 'Italy', vatRate: 0, revenueAccount: REVENUE_ACCOUNTS.italy || '7602' },
-  HR: { name: 'Croatia', vatRate: 25, revenueAccount: REVENUE_ACCOUNTS.croatia || '7603' },
-  AT: { name: 'Austria', vatRate: 10, revenueAccount: REVENUE_ACCOUNTS.austria || '7604' },
-  DE: { name: 'Germany', vatRate: 19, revenueAccount: REVENUE_ACCOUNTS.germany || '7605' },
-  OTHER: { name: 'Custom', vatRate: 0, revenueAccount: '' }
+const COUNTRY_GEOJSON_FILES = {
+  SI: 'geoBoundaries-SVN-ADM0.geojson',
+  IT: 'geoBoundaries-ITA-ADM0_simplified.geojson',
+  HR: 'geoBoundaries-HRV-ADM0_simplified.geojson',
+  AT: 'geoBoundaries-AUT-ADM0_simplified.geojson',
+  DE: 'geoBoundaries-DEU-ADM0_simplified.geojson',
+  HU: 'geoBoundaries-HUN-ADM0.geojson'
 };
+const COUNTRY_OPTION_ORDER = ['SI', 'IT', 'HR', 'AT', 'DE', 'HU', 'OTHER'];
+const COUNTRY_MAP_DEFAULTS = {
+  SI: { center: { lat: 46.1512, lng: 14.9955 }, zoom: 7 },
+  IT: { center: { lat: 42.8333, lng: 12.8333 }, zoom: 6 },
+  HR: { center: { lat: 45.1, lng: 15.2 }, zoom: 7 },
+  AT: { center: { lat: 47.5162, lng: 14.5501 }, zoom: 7 },
+  DE: { center: { lat: 51.1657, lng: 10.4515 }, zoom: 6 },
+  HU: { center: { lat: 47.1625, lng: 19.5033 }, zoom: 7 }
+};
+const SLOVENIA_PDF_NOTE = 'Kraj opravljanja storitve je zunaj Slovenije v skladu s 1. odstavkom 28. člena ZDDV-1 - DDV ni obračunan.';
+const OUTSIDE_COUNTRY_DEFAULTS = {
+  IT: { name: 'Italy', label: 'Italy', vatRate: 0, revenueAccount: REVENUE_ACCOUNTS.italy || '7602', note: SLOVENIA_PDF_NOTE },
+  HR: { name: 'Croatia', label: 'Croatia / Zagreb', vatRate: 25, revenueAccount: REVENUE_ACCOUNTS.croatia || '7603', note: 'Hrvaška davčna številka: OIB39387192794. Obračunan 25% DDV, smo davčni zavezanci.' },
+  AT: { name: 'Austria', label: 'Austria', vatRate: 10, revenueAccount: REVENUE_ACCOUNTS.austria || '7604', note: 'Avstrijska davčna številka: AT686058199. Obračunan 10% DDV, smo davčni zavezanci.' },
+  DE: { name: 'Germany', label: 'Germany', vatRate: 19, revenueAccount: REVENUE_ACCOUNTS.germany || '7605', note: 'Nemška davčna številka: 053/659/50131. Obračunan 19% DDV, smo davčni zavezanci.' },
+  HU: { name: 'Hungary', label: 'Hungary', vatRate: 0, revenueAccount: REVENUE_ACCOUNTS.hungary || '7606', note: SLOVENIA_PDF_NOTE },
+  OTHER: { name: 'Custom', label: 'Other / custom', vatRate: 0, revenueAccount: '', note: SLOVENIA_PDF_NOTE }
+};
+const BASE_COUNTRY_CODE = COUNTRY_OPTION_ORDER.includes(String(ROADFARE_CONFIG.baseCountry || '').toUpperCase())
+  ? String(ROADFARE_CONFIG.baseCountry || '').toUpperCase()
+  : 'SI';
 
 window.addEventListener('DOMContentLoaded', () => {
   translateStaticUi();
@@ -336,6 +378,9 @@ window.addEventListener('DOMContentLoaded', () => {
   try {
     setDefaultOutputFileName();
     setDefaultServiceDate();
+    applyBaseCountryDefaults();
+    updateBaseCountryUiText();
+    setupPriceInputs();
     updateDeductionsDisplay();
     onOutsideCountryChange(false);
     generateNextInvoiceNumber(false).catch(() => {});
@@ -343,6 +388,9 @@ window.addEventListener('DOMContentLoaded', () => {
       event.currentTarget.dataset.generated = '0';
     });
     document.getElementById('outsideVatRate')?.addEventListener('input', () => {
+      if (lastCalculatedData) calculateVatSplitFromSloveniaKm(lastCalculatedData.sloveniaKm, 'VAT rate changed. Totals recalculated.');
+    });
+    document.getElementById('vatRate')?.addEventListener('input', () => {
       if (lastCalculatedData) calculateVatSplitFromSloveniaKm(lastCalculatedData.sloveniaKm, 'VAT rate changed. Totals recalculated.');
     });
     document.getElementById('returnTrip')?.addEventListener('change', scheduleAutoRouteCalculation);
@@ -368,7 +416,8 @@ function loadGoogleMaps() {
 
 window.initMap = async function () {
   try {
-    map = new google.maps.Map(document.getElementById('map'), { center: { lat: 46.1512, lng: 14.9955 }, zoom: 7, mapTypeControl: true, streetViewControl: false });
+    const mapDefault = getBaseCountryMapDefault();
+    map = new google.maps.Map(document.getElementById('map'), { center: mapDefault.center, zoom: mapDefault.zoom, mapTypeControl: true, streetViewControl: false });
     geocoder = new google.maps.Geocoder();
     ({ Route } = await google.maps.importLibrary('routes'));
     ({ PlaceAutocompleteElement } = await google.maps.importLibrary('places'));
@@ -464,6 +513,36 @@ function buildRouteDescription(pickup, dropoff, stops, returnTrip) {
   return places.filter(Boolean).join(' → ');
 }
 
+function setupPriceInputs() {
+  const grossInput = document.getElementById('grossPrice');
+  const netInput = document.getElementById('price');
+  if (!grossInput || !netInput) return;
+  if (!grossInput.dataset.priceSource) grossInput.dataset.priceSource = 'gross';
+  grossInput.addEventListener('input', () => {
+    setPriceSource('gross');
+    if (lastCalculatedData) calculateVatSplitFromSloveniaKm(lastCalculatedData.sloveniaKm, 'Price changed. Totals recalculated.');
+  });
+  netInput.addEventListener('input', () => {
+    setPriceSource('net');
+    if (lastCalculatedData) calculateVatSplitFromSloveniaKm(lastCalculatedData.sloveniaKm, 'Price changed. Totals recalculated.');
+  });
+}
+
+function setPriceSource(source) {
+  const grossInput = document.getElementById('grossPrice');
+  if (grossInput) grossInput.dataset.priceSource = source === 'net' ? 'net' : 'gross';
+}
+
+function getPriceSource() {
+  return document.getElementById('grossPrice')?.dataset.priceSource === 'net' ? 'net' : 'gross';
+}
+
+function setPriceInputValue(id, value) {
+  const input = document.getElementById(id);
+  if (!input) return;
+  input.value = Number(value || 0).toFixed(2);
+}
+
 async function calculateRoute() {
   if (!Route) { setStatus('Google Maps Routes library is not loaded yet.', 'danger'); return; }
   syncAllPlaceAutocompleteValues();
@@ -474,13 +553,15 @@ async function calculateRoute() {
   const destination = returnTrip ? pickup : dropoff;
   const intermediates = stops.concat(returnTrip ? [dropoff] : []);
   const grossPrice = parseFloat(document.getElementById('grossPrice').value || '0');
+  const netPriceInput = parseFloat(document.getElementById('price').value || '0');
+  const priceSource = getPriceSource();
   const vatRate = parseFloat(document.getElementById('vatRate').value || '0');
   const sampleKm = parseFloat(document.getElementById('sampleKm').value || '2');
   const splitMethod = document.getElementById('splitMethod').value;
   const manualSiKm = parseFloat(document.getElementById('manualSiKm').value || '');
   if (!pickup || !dropoff) { setStatus('Pickup and drop-off are required.', 'danger'); return; }
   if (intermediates.length > 25) { setStatus('Routes API supports a maximum of 25 additional places.', 'danger'); return; }
-  if (!grossPrice || grossPrice <= 0) { setStatus('Enter a valid gross price.', 'danger'); return; }
+  if ((priceSource === 'gross' && (!grossPrice || grossPrice <= 0)) || (priceSource === 'net' && (!netPriceInput || netPriceInput <= 0))) { setStatus('Enter a valid final price or price without tax.', 'danger'); return; }
   setStatus('Calculating route...', 'warning');
   try {
     const routeRequest = {
@@ -503,22 +584,34 @@ async function calculateRoute() {
     const startPoint = path[0];
     const endPoint = path[path.length - 1];
     const routeDescription = buildRouteDescription(pickup, dropoff, stops, returnTrip);
-    lastRouteData = { pickup, dropoff: routeDescription, routeDropoff: dropoff, stops, returnTrip, totalKm, grossPrice, vatRate, path };
+    lastRouteData = { pickup, dropoff: routeDescription, routeDropoff: dropoff, stops, returnTrip, totalKm, grossPrice, netPriceInput, priceSource, vatRate, path };
     const pickupCountry = await getCountryFromAddress(pickup);
     const dropoffCountry = await getCountryFromAddress(dropoff);
     const stopCountries = await Promise.all(stops.map(stop => getCountryFromAddress(stop)));
     const routeCountries = [pickupCountry, dropoffCountry].concat(stopCountries);
     const allRouteCountriesAreKnown = routeCountries.every(Boolean);
-    const allGeocodedCountriesAreSlovenia = allRouteCountriesAreKnown && routeCountries.every(isSloveniaCountry);
-    const bothRouteEndpointsLookInsideSlovenia = !returnTrip && !stops.length && startPoint && endPoint && isPointInDomesticSloveniaPolygon(getPointLat(startPoint), getPointLng(startPoint)) && isPointInDomesticSloveniaPolygon(getPointLat(endPoint), getPointLng(endPoint));
-    if (allGeocodedCountriesAreSlovenia || bothRouteEndpointsLookInsideSlovenia) { calculateVatSplitFromSloveniaKm(totalKm, 'Domestic Slovenia route detected. Outside Slovenia set to 0 km.'); return; }
+    const allGeocodedCountriesAreBase = allRouteCountriesAreKnown && routeCountries.every(isBaseCountry);
+    const bothRouteEndpointsLookInsideBase = !returnTrip && !stops.length && startPoint && endPoint && await arePointsInsideBaseCountry(startPoint, endPoint);
+    if (allGeocodedCountriesAreBase || bothRouteEndpointsLookInsideBase) { calculateVatSplitFromSloveniaKm(totalKm, 'Domestic Slovenia route detected. Outside Slovenia set to 0 km.'); return; }
     if (splitMethod === 'manual' || (!Number.isNaN(manualSiKm) && manualSiKm >= 0)) {
       if (Number.isNaN(manualSiKm) || manualSiKm < 0) { showRouteOnly(totalKm); setStatus('Route calculated. Enter manual Slovenia km and click “Recalculate with manual Slovenia km”.', 'warning'); return; }
       calculateVatSplitFromSloveniaKm(manualSiKm, 'Manual Slovenia km used.'); return;
     }
-    if (splitMethod === 'fast') { const siMeters = estimateSloveniaMetersFast(path, sampleKm * 1000); calculateVatSplitFromSloveniaKm(siMeters / 1000, 'Done. Fast Slovenia border polygon split used.'); return; }
+    if (splitMethod === 'fast') {
+      const countryMeters = await estimateCountryMetersFast(path, sampleKm * 1000);
+      if (countryMeters.length) {
+        calculateVatSplitFromCountryMeters(countryMeters, 'Done. Fast Slovenia border polygon split used.');
+      } else if (getBaseCountryCode() !== 'SI') {
+        showRouteOnly(totalKm);
+        setStatus('Route calculated, but country boundaries could not be loaded. Enter manual Slovenia km.', 'warning');
+      } else {
+        const siMeters = estimateSloveniaMetersFast(path, sampleKm * 1000);
+        calculateVatSplitFromSloveniaKm(siMeters / 1000, 'Done. Fast Slovenia border polygon split used.');
+      }
+      return;
+    }
     setStatus('Using slower Google reverse geocoding method...', 'warning');
-    try { const siMeters = await estimateSloveniaMetersByGeocoding(path, sampleKm * 1000); calculateVatSplitFromSloveniaKm(siMeters / 1000, 'Done. Google reverse geocoding split used.'); }
+    try { const siMeters = await estimateBaseCountryMetersByGeocoding(path, sampleKm * 1000); calculateVatSplitFromSloveniaKm(siMeters / 1000, 'Done. Google reverse geocoding split used.'); }
     catch (err) { console.error(err); showRouteOnly(totalKm); setStatus(tf('Route calculated, but Google Geocoding split failed: {error}. Use fast method or enter manual Slovenia km.', { error: err.message }), 'warning'); }
   } catch (err) {
     console.error(err);
@@ -537,24 +630,249 @@ function calculateVatSplitFromSloveniaKm(siKm, successMessage) {
   const { pickup, dropoff, totalKm, grossPrice, vatRate } = lastRouteData;
   siKm = Math.min(Math.max(siKm, 0), totalKm);
   const outsideKm = Math.max(0, totalKm - siKm);
-  const sloveniaRatio = totalKm > 0 ? siKm / totalKm : 0;
-  const outsideRatio = totalKm > 0 ? outsideKm / totalKm : 0;
+  seedCountrySplitRows(siKm, outsideKm);
+  calculateFromCountrySegments(readCountrySplitRows(), successMessage);
+}
+
+function getBaseCountryCode() {
+  return BASE_COUNTRY_CODE;
+}
+
+function getBaseCountryDisplayName() {
+  const config = getBaseCountryConfig();
+  return t(config.label || config.name || getBaseCountryCode());
+}
+
+function getBaseCountryMapDefault() {
+  return COUNTRY_MAP_DEFAULTS[getBaseCountryCode()] || COUNTRY_MAP_DEFAULTS.SI;
+}
+
+function updateBaseCountryUiText() {
+  const country = getBaseCountryDisplayName();
+  document.querySelectorAll('[data-base-country-label]').forEach(element => {
+    const type = element.dataset.baseCountryLabel;
+    if (type === 'vat-rate') element.textContent = tf('Base - {country} VAT rate (%)', { country });
+    if (type === 'manual-km') element.textContent = tf('Manual {country} km override', { country });
+    if (type === 'estimated-km') element.textContent = tf('Estimated km in {country}', { country });
+    if (type === 'taxable-base') element.textContent = tf('{country} taxable base', { country });
+    if (type === 'vat-amount') element.textContent = tf('{country} VAT', { country });
+  });
+}
+
+function applyBaseCountryDefaults() {
+  const vatInput = document.getElementById('vatRate');
+  if (!vatInput || getBaseCountryCode() === 'SI') return;
+  const config = OUTSIDE_COUNTRY_DEFAULTS[getBaseCountryCode()] || OUTSIDE_COUNTRY_DEFAULTS.OTHER;
+  vatInput.value = String(config.vatRate);
+}
+
+function getBaseCountryConfig() {
+  return getCountryOptionConfig(getBaseCountryCode());
+}
+
+function getCountryOptionConfig(value) {
+  if (value === 'SI') {
+    const sloveniaVatRate = getBaseCountryCode() === 'SI'
+      ? (parseFloat(document.getElementById('vatRate')?.value || '9.5') || 0)
+      : 9.5;
+    return { name: 'Slovenia', label: 'Slovenia', vatRate: sloveniaVatRate, revenueAccount: REVENUE_ACCOUNTS.slovenia || '7601', note: '' };
+  }
+  const config = OUTSIDE_COUNTRY_DEFAULTS[value] || OUTSIDE_COUNTRY_DEFAULTS.OTHER;
+  if (value === getBaseCountryCode()) {
+    return { ...config, vatRate: parseFloat(document.getElementById('vatRate')?.value || String(config.vatRate)) || 0 };
+  }
+  return config;
+}
+
+function countryOptionHtml(selectedValue) {
+  const options = COUNTRY_OPTION_ORDER.map(value => [value, getCountryOptionConfig(value).label || getCountryOptionConfig(value).name]);
+  return options.map(([value, label]) => `<option value="${value}"${value === selectedValue ? ' selected' : ''}>${xmlEscape(t(label))}</option>`).join('');
+}
+
+function addCountrySplitRow(segment = {}) {
+  const list = document.getElementById('countrySplitRows');
+  if (!list) return;
+  const value = segment.countryValue || 'OTHER';
+  const config = getCountryOptionConfig(value);
+  const countryName = segment.countryName ?? config.name;
+  const km = Number(segment.km || 0);
+  const vatRate = segment.vatRate ?? config.vatRate;
+  const account = segment.revenueAccount ?? config.revenueAccount;
+  const note = segment.pdfNote ?? config.note ?? '';
+  const row = document.createElement('div');
+  row.className = 'country-split-item border rounded p-2';
+  row.innerHTML = `
+    <div class="country-split-main-row">
+      <div>
+        <label class="form-label small mb-1">${xmlEscape(t('Country'))}</label>
+        <select class="form-select form-select-sm country-split-select">${countryOptionHtml(value)}</select>
+        <input class="form-control form-control-sm country-split-name mt-1" value="${xmlEscape(countryName)}" placeholder="${xmlEscape(t('Country name'))}" />
+      </div>
+      <div>
+        <label class="form-label small mb-1">${xmlEscape(t('Km'))}</label>
+        <input class="form-control form-control-sm country-split-km" type="number" step="0.01" value="${xmlEscape(round2(km))}" />
+      </div>
+      <div class="country-vat-wrap">
+        <label class="form-label small mb-1">${xmlEscape(t('VAT %'))}</label>
+        <input class="form-control form-control-sm country-split-vat" type="number" step="0.1" value="${xmlEscape(String(vatRate))}" />
+      </div>
+    </div>
+    <div class="country-split-meta-row mt-2">
+      <div>
+        <label class="form-label small mb-1">${xmlEscape(t('SifraKonta'))}</label>
+        <input class="form-control form-control-sm country-split-account" value="${xmlEscape(account)}" />
+      </div>
+      <div class="country-remove-wrap">
+        <button class="btn btn-sm btn-outline-danger" type="button">${xmlEscape(t('Remove'))}</button>
+      </div>
+    </div>
+    <div class="country-note-row mt-2">
+      <label class="form-label small mb-1">${xmlEscape(t('PDF note for this country'))}</label>
+      <textarea class="form-control form-control-sm country-split-note" rows="2" placeholder="${xmlEscape(t('Optional text printed under the invoice table for this country'))}">${xmlEscape(note)}</textarea>
+    </div>`;
+  list.appendChild(row);
+  const select = row.querySelector('.country-split-select');
+  const nameInput = row.querySelector('.country-split-name');
+  select.addEventListener('change', () => {
+    const selectedConfig = getCountryOptionConfig(select.value);
+    nameInput.value = selectedConfig.name;
+    row.querySelector('.country-split-vat').value = String(selectedConfig.vatRate);
+    row.querySelector('.country-split-account').value = selectedConfig.revenueAccount;
+    row.querySelector('.country-split-note').value = selectedConfig.note || '';
+  });
+  row.querySelector('button').addEventListener('click', () => row.remove());
+}
+
+function seedCountrySplitRows(siKm, outsideKm) {
+  const list = document.getElementById('countrySplitRows');
+  if (!list) return;
+  list.innerHTML = '';
+  if (siKm > 0.004) addCountrySplitRow({ countryValue: getBaseCountryCode(), km: siKm });
+  if (outsideKm > 0.004) {
+    const outsideCountry = document.getElementById('outsideCountry')?.value || 'IT';
+    addCountrySplitRow({
+      countryValue: outsideCountry,
+      km: outsideKm,
+      vatRate: parseFloat(document.getElementById('outsideVatRate')?.value || '0') || 0,
+      revenueAccount: getCountryOptionConfig(outsideCountry).revenueAccount,
+      countryName: getCountryOptionConfig(outsideCountry).name
+    });
+  }
+}
+
+function calculateVatSplitFromCountryMeters(countryMeters, successMessage) {
+  if (!lastRouteData) return;
+  const totalKm = Number(lastRouteData.totalKm || 0);
+  const sampledMeters = countryMeters.reduce((sum, item) => sum + item.meters, 0);
+  const meterScale = sampledMeters > 0 ? (totalKm * 1000) / sampledMeters : 1;
+  const rows = countryMeters.map(item => {
+    const countryValue = COUNTRY_OPTION_ORDER.includes(item.countryCode) ? item.countryCode : 'OTHER';
+    const config = getCountryOptionConfig(countryValue);
+    return {
+      countryValue,
+      countryName: config.name,
+      km: (item.meters * meterScale) / 1000,
+      vatRate: config.vatRate,
+      revenueAccount: config.revenueAccount,
+      pdfNote: config.note || ''
+    };
+  }).filter(segment => segment.km > 0.004);
+  const knownKm = rows.reduce((sum, segment) => sum + segment.km, 0);
+  const remainderKm = Math.max(0, totalKm - knownKm);
+  if (remainderKm > 0.1) {
+    const outsideCountry = document.getElementById('outsideCountry')?.value || 'IT';
+    const config = getCountryOptionConfig(outsideCountry);
+    rows.push({
+      countryValue: outsideCountry,
+      countryName: config.name,
+      km: remainderKm,
+      vatRate: parseFloat(document.getElementById('outsideVatRate')?.value || String(config.vatRate)) || 0,
+      revenueAccount: config.revenueAccount,
+      pdfNote: config.note || ''
+    });
+  }
+  const list = document.getElementById('countrySplitRows');
+  if (list) {
+    list.innerHTML = '';
+    rows.forEach(addCountrySplitRow);
+  }
+  calculateFromCountrySegments(readCountrySplitRows(), successMessage);
+}
+
+function readCountrySplitRows() {
+  return Array.from(document.querySelectorAll('.country-split-item')).map(row => {
+    const countryValue = row.querySelector('.country-split-select')?.value || 'OTHER';
+    const countryName = countryValue === 'OTHER'
+      ? (row.querySelector('.country-split-name')?.value || 'Custom').trim()
+      : (row.querySelector('.country-split-name')?.value || getCountryOptionConfig(countryValue).name).trim();
+    const normalizedName = countryName.toLowerCase();
+    const isBaseCountryRow = countryValue === getBaseCountryCode()
+      || (getBaseCountryCode() === 'SI' && (normalizedName === 'slovenia' || normalizedName === 'slovenija'));
+    return {
+      countryValue,
+      countryName,
+      isSlovenia: isBaseCountryRow,
+      isBaseCountry: isBaseCountryRow,
+      km: parseFloat(row.querySelector('.country-split-km')?.value || '0') || 0,
+      vatRate: parseFloat(row.querySelector('.country-split-vat')?.value || '0') || 0,
+      revenueAccount: (row.querySelector('.country-split-account')?.value || '').trim(),
+      pdfNote: (row.querySelector('.country-split-note')?.value || '').trim()
+    };
+  }).filter(segment => segment.km > 0);
+}
+
+function recalculateFromCountrySplit() {
+  if (!lastRouteData) { setStatus('Calculate a route before recalculating country rows.', 'warning'); return; }
+  calculateFromCountrySegments(readCountrySplitRows(), 'Country VAT split recalculated.');
+}
+
+function calculateFromCountrySegments(countrySegments, successMessage) {
+  if (!lastRouteData) return;
+  const { pickup, dropoff, totalKm } = lastRouteData;
+  const segmentKmTotal = countrySegments.reduce((sum, segment) => sum + segment.km, 0);
+  if (!countrySegments.length || segmentKmTotal <= 0) {
+    setStatus('Enter at least one country row with km.', 'danger');
+    return;
+  }
+  if (Math.abs(segmentKmTotal - totalKm) > 0.1) {
+    setStatus(tf('Country km total must match route total. Country rows: {countryKm}, route: {totalKm}.', { countryKm: fmtKm(segmentKmTotal), totalKm: fmtKm(totalKm) }), 'danger');
+    return;
+  }
   // apply deductions from adjustments
   const deductions = getAdjustmentsArray();
   const deductionsTotal = deductions.reduce((s, a) => s + (Number(a.amount) || 0), 0);
-  const grossAfterDeductions = Math.max(0, grossPrice - deductionsTotal);
-  const outsideVatRate = parseFloat(document.getElementById('outsideVatRate')?.value || '0');
-  const weightedVatRate = sloveniaRatio * (vatRate / 100) + outsideRatio * (outsideVatRate / 100);
-  const netPrice = grossAfterDeductions / (1 + weightedVatRate);
-  const taxableBase = netPrice * sloveniaRatio;
-  const outsideBase = netPrice - taxableBase;
-  const vatAmount = taxableBase * (vatRate / 100);
-  const outsideVatAmount = outsideBase * (outsideVatRate / 100);
+  const weightedVatRate = countrySegments.reduce((sum, segment) => sum + (segment.km / segmentKmTotal) * (segment.vatRate / 100), 0);
+  const priceSource = getPriceSource();
+  const grossInput = parseFloat(document.getElementById('grossPrice')?.value || String(lastRouteData.grossPrice || '0')) || 0;
+  const netInput = parseFloat(document.getElementById('price')?.value || String(lastRouteData.netPriceInput || '0')) || 0;
+  const netPrice = priceSource === 'net'
+    ? Math.max(0, netInput)
+    : Math.max(0, grossInput - deductionsTotal) / (1 + weightedVatRate);
+  const grossAfterDeductions = netPrice * (1 + weightedVatRate);
+  const grossPrice = grossAfterDeductions + deductionsTotal;
+  const calculatedSegments = countrySegments.map(segment => {
+    const base = netPrice * (segment.km / segmentKmTotal);
+    const vatAmount = base * (segment.vatRate / 100);
+    return { ...segment, base, vatAmount };
+  });
+  const sloveniaSegments = calculatedSegments.filter(segment => segment.isBaseCountry ?? segment.isSlovenia);
+  const outsideSegments = calculatedSegments.filter(segment => !(segment.isBaseCountry ?? segment.isSlovenia));
+  const siKm = sloveniaSegments.reduce((sum, segment) => sum + segment.km, 0);
+  const outsideKm = outsideSegments.reduce((sum, segment) => sum + segment.km, 0);
+  const taxableBase = sloveniaSegments.reduce((sum, segment) => sum + segment.base, 0);
+  const outsideBase = outsideSegments.reduce((sum, segment) => sum + segment.base, 0);
+  const vatAmount = sloveniaSegments.reduce((sum, segment) => sum + segment.vatAmount, 0);
+  const outsideVatAmount = outsideSegments.reduce((sum, segment) => sum + segment.vatAmount, 0);
   const totalAmount = netPrice + vatAmount + outsideVatAmount;
-  document.getElementById('price').value = netPrice.toFixed(2);
-  lastCalculatedData = { createdAt: new Date().toISOString(), pickup, dropoff, totalKm, sloveniaKm: siKm, outsideSloveniaKm: outsideKm, grossPrice, deductions, deductionsTotal, grossAfterDeductions, netPrice, taxableBaseSlovenia: taxableBase, outsideSloveniaBase: outsideBase, vatRate, vatAmount, outsideVatRate, outsideVatAmount, totalAmount, splitMethod: document.getElementById('splitMethod').value, currency: 'EUR', invoiceTextEn: '', invoiceTextSl: '' };
-  showResults(totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate);
-  buildInvoiceText(pickup, dropoff, totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate);
+  const vatRate = sloveniaSegments[0]?.vatRate ?? (parseFloat(document.getElementById('vatRate')?.value || '0') || 0);
+  const outsideVatRate = outsideSegments.length === 1 ? outsideSegments[0].vatRate : 0;
+  const isDomesticSloveniaOnly = outsideSegments.length === 0 && sloveniaSegments.length > 0;
+  setPriceInputValue('price', netPrice);
+  setPriceInputValue('grossPrice', grossPrice);
+  setPriceSource(priceSource);
+  lastCalculatedData = { createdAt: new Date().toISOString(), baseCountry: getBaseCountryCode(), pickup, dropoff, totalKm, sloveniaKm: siKm, outsideSloveniaKm: outsideKm, grossPrice, priceSource, deductions, deductionsTotal, grossAfterDeductions, netPrice, taxableBaseSlovenia: taxableBase, outsideSloveniaBase: outsideBase, vatRate, vatAmount, outsideVatRate, outsideVatAmount, totalAmount, splitMethod: document.getElementById('splitMethod').value, currency: 'EUR', invoiceTextEn: '', invoiceTextSl: '', countrySegments: calculatedSegments, isDomesticSloveniaOnly };
+  showResults(totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate, calculatedSegments);
+  buildInvoiceText(pickup, dropoff, totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate, isDomesticSloveniaOnly);
   lastCalculatedData.invoiceTextEn = document.getElementById('invoiceTextEn').value;
   lastCalculatedData.invoiceTextSl = document.getElementById('invoiceTextSl').value;
   setStatus(successMessage, 'success');
@@ -583,8 +901,6 @@ function onOutsideCountryChange(recalculate = true) {
   const v = document.getElementById('outsideCountry')?.value || 'IT';
   const config = OUTSIDE_COUNTRY_DEFAULTS[v] || OUTSIDE_COUNTRY_DEFAULTS.OTHER;
   document.getElementById('outsideVatRate').value = String(config.vatRate);
-  document.getElementById('outsideRevenueAccount').value = config.revenueAccount;
-  document.getElementById('customCountryName').disabled = v !== 'OTHER';
   if (recalculate && lastCalculatedData) calculateVatSplitFromSloveniaKm(lastCalculatedData.sloveniaKm, 'VAT rate changed. Totals recalculated.');
 }
 
@@ -643,9 +959,7 @@ function getCustomerPayload() {
     customer_address: (document.getElementById('customerAddress')?.value || '').trim(),
     vat_id: (document.getElementById('customerVatId')?.value || '').trim(),
     outside_country: outsideCountry,
-    custom_country_name: (document.getElementById('customCountryName')?.value || '').trim(),
     outside_vat_rate: parseFloat(document.getElementById('outsideVatRate')?.value || '0') || 0,
-    outside_revenue_account: (document.getElementById('outsideRevenueAccount')?.value || '').trim(),
     custom_invoice_message: (document.getElementById('customInvoiceMessage')?.value || '').trim()
   };
 }
@@ -877,9 +1191,7 @@ async function loadCustomerDetails(selectedCustomerCode = '') {
     document.getElementById('customerVatId').value = customer.vat_id || '';
     document.getElementById('outsideCountry').value = customer.outside_country || 'IT';
     onOutsideCountryChange(false);
-    document.getElementById('customCountryName').value = customer.custom_country_name || '';
     document.getElementById('outsideVatRate').value = String(customer.outside_vat_rate ?? 0);
-    document.getElementById('outsideRevenueAccount').value = customer.outside_revenue_account || '';
     document.getElementById('customInvoiceMessage').value = customer.custom_invoice_message || '';
 
     showDatabaseStatus('Customer details loaded.', 'success');
@@ -1055,9 +1367,7 @@ function restoreInvoiceFromHistory(index) {
   document.getElementById('outputFileName').value = payload.output_file_name || '';
   if (customer.outside_country) document.getElementById('outsideCountry').value = customer.outside_country;
   onOutsideCountryChange(false);
-  document.getElementById('customCountryName').value = customer.custom_country_name || '';
   document.getElementById('outsideVatRate').value = String(customer.outside_vat_rate ?? 0);
-  document.getElementById('outsideRevenueAccount').value = customer.outside_revenue_account || '';
   document.getElementById('customInvoiceMessage').value = customer.custom_invoice_message || '';
 
   lastCalculatedData = payload.calculated_data || null;
@@ -1076,7 +1386,8 @@ function restoreInvoiceFromHistory(index) {
     Number(lastCalculatedData.outsideVatAmount || 0),
     Number(lastCalculatedData.totalAmount || 0),
     Number(lastCalculatedData.vatRate || 0),
-    Number(lastCalculatedData.outsideVatRate || 0)
+    Number(lastCalculatedData.outsideVatRate || 0),
+    Array.isArray(lastCalculatedData.countrySegments) ? lastCalculatedData.countrySegments : []
   );
   document.getElementById('invoiceTextEn').value = payload.invoice_text_en || lastCalculatedData.invoiceTextEn || '';
   document.getElementById('invoiceTextSl').value = payload.invoice_text_sl || lastCalculatedData.invoiceTextSl || '';
@@ -1146,11 +1457,19 @@ function generatePdf() {
   y += 8;
 
   const routeTitle = tf('Prevoz {route}', { route: pdfRouteText(d.dropoff || [d.pickup, d.routeDropoff].filter(Boolean).join(' - ')) });
-  const siDesc = tf('{routeTitle}, del poti Slovenija ({km} km)', { routeTitle, km: round2(d.sloveniaKm) });
-  const outsideDesc = tf('{routeTitle}, del poti izven Slovenije ({km} km)', { routeTitle, km: round2(d.outsideSloveniaKm) });
-  y = drawInvoiceRow(doc, y, siDesc, d.taxableBaseSlovenia, 1, t('kos'), d.vatRate, d.taxableBaseSlovenia);
-  if (d.outsideSloveniaBase > 0.004) {
-    y = drawInvoiceRow(doc, y, outsideDesc, d.outsideSloveniaBase, 1, t('kos'), d.outsideVatRate, d.outsideSloveniaBase);
+  const countrySegments = Array.isArray(d.countrySegments) && d.countrySegments.length
+    ? d.countrySegments
+    : [
+        { countryName: getBaseCountryConfig().name, isSlovenia: true, isBaseCountry: true, km: d.sloveniaKm, base: d.taxableBaseSlovenia, vatRate: d.vatRate, vatAmount: d.vatAmount, pdfNote: '' },
+        { countryName: t('Outside Slovenia'), isSlovenia: false, km: d.outsideSloveniaKm, base: d.outsideSloveniaBase, vatRate: d.outsideVatRate, vatAmount: d.outsideVatAmount, pdfNote: '' }
+      ].filter(segment => Number(segment.base) > 0.004);
+  if (d.isDomesticSloveniaOnly) {
+    y = drawInvoiceRow(doc, y, routeTitle, d.taxableBaseSlovenia, 1, t('kos'), d.vatRate, d.taxableBaseSlovenia);
+  } else {
+    countrySegments.filter(segment => Number(segment.base) > 0.004).forEach(segment => {
+      const description = tf('{routeTitle}, del poti {country} ({km} km)', { routeTitle, country: segment.countryName, km: round2(segment.km) });
+      y = drawInvoiceRow(doc, y, description, segment.base, 1, t('kos'), segment.vatRate, segment.base);
+    });
   }
   (d.deductions || []).filter(a => Number(a.amount) > 0).forEach(a => {
     y = drawInvoiceRow(doc, y, a.description || t('Dodatni strosek'), a.amount, 1, t('kos'), 0, a.amount);
@@ -1176,17 +1495,23 @@ function generatePdf() {
   doc.setFont('helvetica', 'normal');
   y += 7;
   y = drawVatSummaryRow(doc, y, 0, d.deductionsTotal || 0, 0);
-  y = drawVatSummaryRow(doc, y, d.vatRate, d.taxableBaseSlovenia, d.vatAmount);
-  if (d.outsideSloveniaBase > 0.004 || d.outsideVatAmount > 0.004) y = drawVatSummaryRow(doc, y, d.outsideVatRate, d.outsideSloveniaBase, d.outsideVatAmount);
+  countrySegments.filter(segment => Number(segment.base) > 0.004 || Number(segment.vatAmount) > 0.004).forEach(segment => {
+    y = drawVatSummaryRow(doc, y, segment.vatRate, segment.base, segment.vatAmount);
+  });
 
   y += 10;
   setPdfFooterFont(doc);
   doc.text(tf('Pri placilu se sklicujte na stevilko SI00 {paymentReference}.', { paymentReference }), 14, y); y += 8;
   if (customInvoiceMessage) y = writeWrapped(doc, customInvoiceMessage, 14, y, 180, 5) + 3;
-  const note = Number(d.outsideVatRate)
-    ? tf('Za del poti izven Slovenije je uporabljen DDV {outsideVatRate}%, skladno z izbrano drzavo opravljanja storitve.', { outsideVatRate: formatRate(d.outsideVatRate) })
-    : t('Prevoz v tujini je oproscen obracuna DDV na podlagi prvega odstavka 28. clena ZDDV-1.');
-  y = writeWrapped(doc, note, 14, y, 180, 5);
+  const countryNotes = d.isDomesticSloveniaOnly ? [] : countrySegments.map(segment => segment.pdfNote).filter(Boolean);
+  if (countryNotes.length) {
+    countryNotes.forEach(note => { y = writeWrapped(doc, note, 14, y, 180, 5) + 2; });
+  } else if (!d.isDomesticSloveniaOnly && d.outsideSloveniaBase > 0.004) {
+    const note = Number(d.outsideVatRate)
+      ? tf('Za del poti izven Slovenije je uporabljen DDV {outsideVatRate}%, skladno z izbrano drzavo opravljanja storitve.', { outsideVatRate: formatRate(d.outsideVatRate) })
+      : t(SLOVENIA_PDF_NOTE);
+    y = writeWrapped(doc, note, 14, y, 180, 5);
+  }
   y = writeWrapped(doc, t('Zahvaljujemo se vam za vase zaupanje in se veselimo nadaljnjega sodelovanja!'), 14, y + 5, 180, 5);
   doc.text(t('Zig in podpis:'), 158, 275);
 
@@ -1294,8 +1619,10 @@ function exportMinimaxXml() {
   const naziv = (document.getElementById('customerName')?.value || '');
   const naslov = (document.getElementById('customerAddress')?.value || '');
   const vatId = (document.getElementById('customerVatId')?.value || '').trim();
-  const sloveniaRevenueAccount = String(REVENUE_ACCOUNTS.slovenia || '7601').trim();
-  const outsideRevenueAccount = (document.getElementById('outsideRevenueAccount')?.value || '').trim();
+  const calculationBaseCountryCode = String(d.baseCountry || getBaseCountryCode()).toUpperCase();
+  const baseRevenueAccount = String(getCountryOptionConfig(calculationBaseCountryCode).revenueAccount || '').trim();
+  const countrySegments = Array.isArray(d.countrySegments) ? d.countrySegments : [];
+  let outsideSegments = countrySegments.filter(segment => !(segment.isBaseCountry ?? segment.isSlovenia) && roundMoney(segment.base) > 0);
   const siBaseAmount = roundMoney(d.taxableBaseSlovenia);
   const outsideBaseAmount = roundMoney(d.outsideSloveniaBase);
   const siVatAmount = roundMoney(d.vatAmount);
@@ -1303,22 +1630,33 @@ function exportMinimaxXml() {
   const totalAmount = roundMoney(d.totalAmount);
   const balanceDiff = roundMoney(totalAmount - siBaseAmount - outsideBaseAmount - siVatAmount - outsideVatAmount);
   const balancedOutsideBaseAmount = roundMoney(outsideBaseAmount + balanceDiff);
-  if (siBaseAmount > 0 && !sloveniaRevenueAccount) {
+  if (!outsideSegments.length && outsideBaseAmount > 0) {
+    const outsideCountry = document.getElementById('outsideCountry')?.value || 'IT';
+    const config = getCountryOptionConfig(outsideCountry);
+    outsideSegments = [{ base: outsideBaseAmount, revenueAccount: config.revenueAccount, isSlovenia: false }];
+  }
+  if (siBaseAmount > 0 && !baseRevenueAccount) {
     setStatus('Enter Slovenia SifraKonta in the module options before exporting Minimax XML.', 'danger');
     return;
   }
-  if (balancedOutsideBaseAmount > 0 && !outsideRevenueAccount) {
-    setStatus('Enter Outside SifraKonta before exporting Minimax XML.', 'danger');
+  if (balancedOutsideBaseAmount > 0 && outsideSegments.some(segment => !String(segment.revenueAccount || '').trim())) {
+    setStatus('Enter SifraKonta in every outside country split row before exporting Minimax XML.', 'danger');
     return;
   }
+  const outsideRevenueAmountsByAccount = {};
+  outsideSegments.forEach((segment, index) => {
+    const account = String(segment.revenueAccount || '').trim();
+    const amount = roundMoney(segment.base + (index === 0 ? balanceDiff : 0));
+    if (!account || amount <= 0) return;
+    outsideRevenueAmountsByAccount[account] = roundMoney((outsideRevenueAmountsByAccount[account] || 0) + amount);
+  });
   const osnovna = moneyXml(siBaseAmount);
-  const zunajOsnova = moneyXml(balancedOutsideBaseAmount);
   const ddv = moneyXml(siVatAmount);
   const zunajDdv = moneyXml(outsideVatAmount);
   const total = moneyXml(totalAmount);
-  const outsideRevenueLine = balancedOutsideBaseAmount > 0 ? `\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)} - izven Slovenije</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(outsideRevenueAccount)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${zunajOsnova}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${zunajOsnova}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>` : '';
+  const outsideRevenueLine = Object.entries(outsideRevenueAmountsByAccount).map(([account, amount]) => `\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)} - izven Slovenije</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(account)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>`).join('');
   const outsideVatLine = outsideVatAmount > 0 ? `\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)} - DDV izven Slovenije</OpisVrsticeTemeljnice>\n          <SifraKonta>26000</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${zunajDdv}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${zunajDdv}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>` : '';
-  const xml = `<?xml version="1.0" encoding="utf-8"?>\n<miniMAXUvozKnjigovodstvo xmlns="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo.xsd">\n\n  <Temeljnice>\n    <Temeljnica>\n      <GlavaTemeljnice>\n        <SifraVrsteTemeljnice>IR</SifraVrsteTemeljnice>\n        <DatumTemeljnice>${today}</DatumTemeljnice>\n        <OpisGlaveTemeljnice>${xmlEscape(invoiceRef)}</OpisGlaveTemeljnice>\n      </GlavaTemeljnice>\n\n      <DDV>\n        <DDVVrstica>\n          <DDVGlava>\n            <DatumDDV>${today}</DatumDDV>\n            <KnjigaDDV>IR</KnjigaDDV>\n            <DatumKnjizenjaDDV>${today}</DatumKnjizenjaDDV>\n            <SifraStranke>${sifraStranke}</SifraStranke>\n            <Listina>${xmlEscape(invoiceRef)}</Listina>\n            <DatumListine>${today}</DatumListine>\n            <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n            <VrstaPorocanja>Obračun</VrstaPorocanja>\n          </DDVGlava>\n\n          <DDVStopnje>\n            <DDVStopnja>\n              <SifraStopnjeDDV>S</SifraStopnjeDDV>\n              <StoritevOsnova>${osnovna}</StoritevOsnova>\n              <StoritevDDV>${ddv}</StoritevDDV>\n            </DDVStopnja>\n          </DDVStopnje>\n        </DDVVrstica>\n      </DDV>\n\n      <VrsticeTemeljnice>\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>1200</SifraKonta>\n          <SifraStranke>${sifraStranke}</SifraStranke>\n          <DatumZapadlosti>${today}</DatumZapadlosti>\n          <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>${total}</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>0.00</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>${total}</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>0.00</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(sloveniaRevenueAccount)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${osnovna}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${osnovna}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${outsideRevenueLine}\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>26000</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${ddv}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${ddv}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${outsideVatLine}\n      </VrsticeTemeljnice>\n    </Temeljnica>\n  </Temeljnice>\n\n  <Stranke>\n    <Stranka>\n      <Sifra>${xmlEscape(sifraStranke)}</Sifra>\n      <Naziv>${xmlEscape(naziv)}</Naziv>\n      <Naslov>${xmlEscape(naslov)}</Naslov>\n      <KraticaDrzave>SI</KraticaDrzave>\n      <PostnaStevilka>1000</PostnaStevilka>\n      <NazivPoste>Ljubljana</NazivPoste>\n      <DavcniZavezanec>${vatId ? 'D' : 'N'}</DavcniZavezanec>\n      <IdentifikacijskaStevilka>${xmlEscape(vatId)}</IdentifikacijskaStevilka>\n    </Stranka>\n  </Stranke>\n\n</miniMAXUvozKnjigovodstvo>`;
+  const xml = `<?xml version="1.0" encoding="utf-8"?>\n<miniMAXUvozKnjigovodstvo xmlns="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo.xsd">\n\n  <Temeljnice>\n    <Temeljnica>\n      <GlavaTemeljnice>\n        <SifraVrsteTemeljnice>IR</SifraVrsteTemeljnice>\n        <DatumTemeljnice>${today}</DatumTemeljnice>\n        <OpisGlaveTemeljnice>${xmlEscape(invoiceRef)}</OpisGlaveTemeljnice>\n      </GlavaTemeljnice>\n\n      <DDV>\n        <DDVVrstica>\n          <DDVGlava>\n            <DatumDDV>${today}</DatumDDV>\n            <KnjigaDDV>IR</KnjigaDDV>\n            <DatumKnjizenjaDDV>${today}</DatumKnjizenjaDDV>\n            <SifraStranke>${sifraStranke}</SifraStranke>\n            <Listina>${xmlEscape(invoiceRef)}</Listina>\n            <DatumListine>${today}</DatumListine>\n            <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n            <VrstaPorocanja>Obračun</VrstaPorocanja>\n          </DDVGlava>\n\n          <DDVStopnje>\n            <DDVStopnja>\n              <SifraStopnjeDDV>S</SifraStopnjeDDV>\n              <StoritevOsnova>${osnovna}</StoritevOsnova>\n              <StoritevDDV>${ddv}</StoritevDDV>\n            </DDVStopnja>\n          </DDVStopnje>\n        </DDVVrstica>\n      </DDV>\n\n      <VrsticeTemeljnice>\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>1200</SifraKonta>\n          <SifraStranke>${sifraStranke}</SifraStranke>\n          <DatumZapadlosti>${today}</DatumZapadlosti>\n          <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>${total}</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>0.00</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>${total}</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>0.00</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(baseRevenueAccount)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${osnovna}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${osnovna}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${outsideRevenueLine}\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>26000</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${ddv}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${ddv}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${outsideVatLine}\n      </VrsticeTemeljnice>\n    </Temeljnica>\n  </Temeljnice>\n\n  <Stranke>\n    <Stranka>\n      <Sifra>${xmlEscape(sifraStranke)}</Sifra>\n      <Naziv>${xmlEscape(naziv)}</Naziv>\n      <Naslov>${xmlEscape(naslov)}</Naslov>\n      <KraticaDrzave>SI</KraticaDrzave>\n      <PostnaStevilka>1000</PostnaStevilka>\n      <NazivPoste>Ljubljana</NazivPoste>\n      <DavcniZavezanec>${vatId ? 'D' : 'N'}</DavcniZavezanec>\n      <IdentifikacijskaStevilka>${xmlEscape(vatId)}</IdentifikacijskaStevilka>\n    </Stranka>\n  </Stranke>\n\n</miniMAXUvozKnjigovodstvo>`;
   const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = getOutputFileName('racun_26-0007', 'xml'); document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
@@ -1336,6 +1674,84 @@ function showRouteOnly(totalKm) {
   document.getElementById('outsideVatAmount').textContent = '-';
   document.getElementById('totalAmount').textContent = '-';
 }
+
+async function loadCountryBoundaries() {
+  if (!countryBoundaryPromise) {
+    countryBoundaryPromise = Promise.all(Object.entries(COUNTRY_GEOJSON_FILES).map(async ([countryCode, fileName]) => {
+      try {
+        const response = await fetch(fileName, { cache: 'force-cache' });
+        if (!response.ok) throw new Error(response.status + ' ' + response.statusText);
+        const geojson = await response.json();
+        countryBoundaryPolygons[countryCode] = extractGeoJsonPolygons(geojson);
+      } catch (error) {
+        console.warn('Country boundary failed to load:', countryCode, error);
+        countryBoundaryPolygons[countryCode] = [];
+      }
+    })).then(() => countryBoundaryPolygons);
+  }
+
+  return countryBoundaryPromise;
+}
+
+function extractGeoJsonPolygons(geojson) {
+  const polygons = [];
+  const features = geojson?.type === 'FeatureCollection'
+    ? geojson.features || []
+    : [geojson?.type === 'Feature' ? geojson : { geometry: geojson }];
+
+  features.forEach(feature => {
+    const geometry = feature?.geometry || {};
+    if (geometry.type === 'Polygon') {
+      geometry.coordinates.forEach(ring => polygons.push(ring.map(([lng, lat]) => [lat, lng])));
+    } else if (geometry.type === 'MultiPolygon') {
+      geometry.coordinates.forEach(polygon => {
+        polygon.forEach(ring => polygons.push(ring.map(([lng, lat]) => [lat, lng])));
+      });
+    }
+  });
+
+  return polygons.filter(polygon => polygon.length >= 3);
+}
+
+function getCountryCodeForPoint(lat, lng) {
+  for (const countryCode of ['SI', 'HR', 'AT', 'DE', 'HU', 'IT']) {
+    const polygons = countryBoundaryPolygons[countryCode] || [];
+    if (polygons.some(polygon => pointInPolygon(lat, lng, polygon))) return countryCode;
+  }
+
+  return '';
+}
+
+async function estimateCountryMetersFast(path, sampleEveryMeters) {
+  await loadCountryBoundaries();
+  if (!Object.values(countryBoundaryPolygons).some(polygons => polygons.length)) return [];
+
+  const metersByCountry = {};
+  let unknownMeters = 0;
+  for (let i = 1; i < path.length; i++) {
+    const a = toLatLng(path[i - 1]);
+    const b = toLatLng(path[i]);
+    const segmentMeters = google.maps.geometry.spherical.computeDistanceBetween(a, b);
+    const samples = Math.max(1, Math.ceil(segmentMeters / sampleEveryMeters));
+    for (let s = 0; s < samples; s++) {
+      const midpoint = google.maps.geometry.spherical.interpolate(a, b, ((s / samples) + ((s + 1) / samples)) / 2);
+      const countryCode = getCountryCodeForPoint(midpoint.lat(), midpoint.lng());
+      if (!countryCode) {
+        unknownMeters += segmentMeters / samples;
+        continue;
+      }
+      metersByCountry[countryCode] = (metersByCountry[countryCode] || 0) + segmentMeters / samples;
+    }
+  }
+
+  const countryMeters = COUNTRY_OPTION_ORDER
+    .filter(countryCode => countryCode !== 'OTHER' && metersByCountry[countryCode] > 0)
+    .map(countryCode => ({ countryCode, meters: metersByCountry[countryCode] }));
+  if (unknownMeters > 0) countryMeters.push({ countryCode: 'OTHER', meters: unknownMeters });
+
+  return countryMeters;
+}
+
 function estimateSloveniaMetersFast(path, sampleEveryMeters) {
   let sloveniaMeters = 0;
   for (let i = 1; i < path.length; i++) {
@@ -1390,11 +1806,34 @@ function getCountryFromAddressComponents(components) {
   }
   return '';
 }
-function isSloveniaCountry(country) { const c = String(country || '').toLowerCase(); return c === 'slovenia' || c === 'slovenija' || c === 'si' || c === 'svn'; }
+function isBaseCountry(country) {
+  const c = String(country || '').toLowerCase();
+  const names = {
+    SI: ['slovenia', 'slovenija', 'si', 'svn'],
+    IT: ['italy', 'italija', 'it', 'ita'],
+    HR: ['croatia', 'hrvaska', 'hrvaška', 'hr', 'hrv'],
+    AT: ['austria', 'avstrija', 'at', 'aut'],
+    DE: ['germany', 'nemcija', 'nemčija', 'de', 'deu'],
+    HU: ['hungary', 'madzarska', 'madžarska', 'hu', 'hun']
+  };
+  return (names[getBaseCountryCode()] || []).includes(c);
+}
 function isPointInDomesticSloveniaPolygon(lat, lng) { return pointInPolygon(lat, lng, SLOVENIA_DOMESTIC_CHECK_POLYGON); }
 function isPointInSloveniaPolygon(lat, lng) { return pointInPolygon(lat, lng, SLOVENIA_POLYGON); }
+async function arePointsInsideBaseCountry(startPoint, endPoint) {
+  const startLat = getPointLat(startPoint);
+  const startLng = getPointLng(startPoint);
+  const endLat = getPointLat(endPoint);
+  const endLng = getPointLng(endPoint);
+  if (getBaseCountryCode() === 'SI') {
+    return isPointInDomesticSloveniaPolygon(startLat, startLng) && isPointInDomesticSloveniaPolygon(endLat, endLng);
+  }
+  await loadCountryBoundaries();
+  return getCountryCodeForPoint(startLat, startLng) === getBaseCountryCode()
+    && getCountryCodeForPoint(endLat, endLng) === getBaseCountryCode();
+}
 function pointInPolygon(lat, lng, polygon) { let inside = false; for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) { const yi = polygon[i][0], xi = polygon[i][1], yj = polygon[j][0], xj = polygon[j][1]; const intersect = ((yi > lat) !== (yj > lat)) && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi); if (intersect) inside = !inside; } return inside; }
-async function estimateSloveniaMetersByGeocoding(path, sampleEveryMeters) {
+async function estimateBaseCountryMetersByGeocoding(path, sampleEveryMeters) {
   let sloveniaMeters = 0;
   for (let i = 1; i < path.length; i++) {
     const a = toLatLng(path[i - 1]), b = toLatLng(path[i]);
@@ -1403,27 +1842,37 @@ async function estimateSloveniaMetersByGeocoding(path, sampleEveryMeters) {
     for (let s = 0; s < samples; s++) {
       const midpoint = google.maps.geometry.spherical.interpolate(a, b, ((s / samples) + ((s + 1) / samples)) / 2);
       const country = await reverseGeocodeCountry(midpoint);
-      if (country === 'Slovenia' || country === 'Slovenija') sloveniaMeters += segmentMeters / samples;
+      if (isBaseCountry(country)) sloveniaMeters += segmentMeters / samples;
       await delay(120);
     }
   }
   return sloveniaMeters;
 }
 function reverseGeocodeCountry(latLng) { return new Promise((resolve, reject) => { geocoder.geocode({ location: latLng }, (results, status) => { if (status === 'OK' && results && results.length) { for (const result of results) for (const comp of result.address_components) if (comp.types.includes('country')) { resolve(comp.long_name); return; } resolve(''); } else if (status === 'ZERO_RESULTS') resolve(''); else reject(new Error('Geocoder status ' + status)); }); }); }
-function showResults(totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate) {
+function showResults(totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate, countrySegments = []) {
   const netTotal = taxableBase + outsideBase;
+  const outsideSegments = countrySegments.filter(segment => !(segment.isBaseCountry ?? segment.isSlovenia) && Number(segment.base) > 0.004);
+  const outsideRates = Array.from(new Set(outsideSegments.map(segment => Number(segment.vatRate || 0))));
   document.getElementById('totalKm').textContent = fmtKm(totalKm);
   document.getElementById('siKm').textContent = fmtKm(siKm);
   document.getElementById('outsideKm').textContent = fmtKm(outsideKm);
   document.getElementById('netTotal').textContent = fmtEur(netTotal);
   document.getElementById('taxableBase').textContent = fmtEur(taxableBase) + ' ' + t('VAT ') + vatRate + '%';
-  document.getElementById('outsideBase').textContent = fmtEur(outsideBase) + (Number(outsideVatRate) ? (' ' + t('VAT ') + outsideVatRate + '%') : t(' not subject to Slovenian VAT'));
+  document.getElementById('outsideBase').textContent = fmtEur(outsideBase)
+    + (outsideSegments.length > 1 ? tf(' / {count} countries', { count: outsideSegments.length }) : (Number(outsideVatRate) ? (' ' + t('VAT ') + outsideVatRate + '%') : t(' not subject to Slovenian VAT')))
+    + (outsideRates.length > 1 ? (' (' + outsideRates.map(rate => `${formatRate(rate)}%`).join(', ') + ')') : '');
   document.getElementById('vatAmount').textContent = fmtEur(vatAmount);
   document.getElementById('outsideVatAmount').textContent = fmtEur(outsideVatAmount || 0);
   document.getElementById('totalAmount').textContent = fmtEur(totalAmount);
 }
-function buildInvoiceText(pickup, dropoff, totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate) {
-  const replacements = { pickup, dropoff, totalKm: fmtKm(totalKm), siKm: fmtKm(siKm), outsideKm: fmtKm(outsideKm), taxableBase: fmtEur(taxableBase), outsideBase: fmtEur(outsideBase), vatRate, vatAmount: fmtEur(vatAmount), totalAmount: fmtEur(totalAmount) };
+function buildInvoiceText(pickup, dropoff, totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate, isDomesticSloveniaOnly = false) {
+  const baseCountryName = getBaseCountryConfig().name;
+  const replacements = { pickup, dropoff, baseCountryName, totalKm: fmtKm(totalKm), siKm: fmtKm(siKm), outsideKm: fmtKm(outsideKm), taxableBase: fmtEur(taxableBase), outsideBase: fmtEur(outsideBase), vatRate, vatAmount: fmtEur(vatAmount), totalAmount: fmtEur(totalAmount) };
+  if (isDomesticSloveniaOnly) {
+    document.getElementById('invoiceTextEn').value = tf('Passenger transfer {pickup} → {dropoff}.\nTotal route: {totalKm}. VAT {vatRate}%: {vatAmount}. Total: {totalAmount}.', replacements);
+    document.getElementById('invoiceTextSl').value = tf('Prevoz potnikov {pickup} → {dropoff}.\nSkupna pot: {totalKm}. DDV {vatRate}%: {vatAmount}. Skupaj: {totalAmount}.', replacements);
+    return;
+  }
   document.getElementById('invoiceTextEn').value = tf('International passenger transfer {pickup} → {dropoff}.\nTotal route: {totalKm}. Estimated Slovenia part: {siKm}. Outside Slovenia: {outsideKm}.\nSlovenian VAT is calculated only on the part of the route performed in Slovenia, proportionate to kilometres driven in Slovenia.\nTaxable base Slovenia: {taxableBase}. Outside Slovenia part: {outsideBase}.{outsideVatText} VAT {vatRate}%: {vatAmount}. Total: {totalAmount}.', { ...replacements, outsideVatText: Number(outsideVatRate) ? tf(' Outside VAT {outsideVatRate}%: {outsideVatAmount}.', { outsideVatRate, outsideVatAmount: fmtEur(outsideVatAmount) }) : '' });
   document.getElementById('invoiceTextSl').value = tf('Mednarodni prevoz potnikov {pickup} → {dropoff}.\nSkupna pot: {totalKm}. Ocenjen del poti po Sloveniji: {siKm}. Del poti izven Slovenije: {outsideKm}.\nDDV je obračunan samo od dela poti, opravljenega na ozemlju Slovenije, sorazmerno glede na kilometre v Sloveniji.\nDavčna osnova Slovenija: {taxableBase}. Del izven Slovenije: {outsideBase}.{outsideVatText} DDV {vatRate}%: {vatAmount}. Skupaj: {totalAmount}.', { ...replacements, outsideVatText: Number(outsideVatRate) ? tf(' DDV izven: {outsideVatRate}%: {outsideVatAmount}.', { outsideVatRate, outsideVatAmount: fmtEur(outsideVatAmount) }) : '' });
 }

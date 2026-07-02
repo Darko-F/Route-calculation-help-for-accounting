@@ -32,6 +32,12 @@ class PlgInstallerRoutecalculationupdatekey extends CMSPlugin
      */
     public function onInstallerBeforePackageDownload(&$url, &$headers = [])
     {
+        $event = is_object($url) && method_exists($url, 'getUrl') ? $url : null;
+
+        if ($event !== null) {
+            $url = $event->getUrl();
+        }
+
         $key = trim((string) $this->params->get('download_key', ''));
 
         if ($key === '' || !is_string($url) || $url === '') {
@@ -42,7 +48,7 @@ class PlgInstallerRoutecalculationupdatekey extends CMSPlugin
         $host = strtolower($parts['host'] ?? '');
         $path = $parts['path'] ?? '';
 
-        if ($host !== 'builder.topoweryou.com' || strpos($path, '/routecalculationhelp/download.php') === false) {
+        if ($host !== 'builder.topoweryou.com' || strpos($path, '/routecalculationhelp/files/routecalculationhelp/downloads/download.php') === false) {
             return true;
         }
 
@@ -58,6 +64,10 @@ class PlgInstallerRoutecalculationupdatekey extends CMSPlugin
         if ((string) $uri->getVar('key', '') === '' && (string) $uri->getVar('dlid', '') === '') {
             $uri->setVar('key', $key);
             $url = (string) $uri;
+
+            if ($event !== null && method_exists($event, 'updateUrl')) {
+                $event->updateUrl($url);
+            }
         }
 
         return true;
