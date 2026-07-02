@@ -7,10 +7,10 @@
   <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
   <authorEmail>info@topoweryou.com</authorEmail>
   <authorUrl>https://topoweryou.com</authorUrl>
-  <version>1.2.27</version>
+  <version>1.2.39</version>
   <description>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_XML_DESCRIPTION</description>
   <updateservers>
-    <server type="extension" priority="1" name="Route Calculation Help for Accounting Updates">https://builder.topoweryou.com/routecalculationhelp/updates/route-calculation-help-for-accounting.xml</server>
+    <server type="extension" priority="1" name="Route Calculation Help for Accounting Updates">https://builder.topoweryou.com/routecalculationhelp/files/routecalculationhelp/updates/route-calculation-help-for-accounting.xml</server>
   </updateservers>
   <files>
     <filename module="mod_route_calculation_help_for_accounting">mod_route_calculation_help_for_accounting.php</filename>
@@ -50,6 +50,20 @@
           description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_GOOGLE_MAPS_API_KEY_DESC"
           filter="raw"
         />
+        <field
+          name="base_country"
+          type="list"
+          label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_BASE_COUNTRY_LABEL"
+          description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_BASE_COUNTRY_DESC"
+          default="SI"
+        >
+          <option value="SI">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIA</option>
+          <option value="IT">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ITALY</option>
+          <option value="HR">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CROATIA_ZAGREB</option>
+          <option value="AT">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_AUSTRIA</option>
+          <option value="DE">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GERMANY</option>
+          <option value="HU">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_HUNGARY</option>
+        </field>
         <field type="spacer" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_SPACER_COMPANY_DETAILS" />
         <field name="company_name" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_NAME_LABEL" default="Example Transfer Ltd." />
         <field name="company_address" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_ADDRESS_LABEL" default="Example Street 1" />
@@ -66,6 +80,7 @@
         <field name="revenue_account_croatia" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_CROATIA_LABEL" default="7603" />
         <field name="revenue_account_austria" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_AUSTRIA_LABEL" default="7604" />
         <field name="revenue_account_germany" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_GERMANY_LABEL" default="7605" />
+        <field name="revenue_account_hungary" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_HUNGARY_LABEL" default="7606" />
       </fieldset>
     </fields>
   </config>
