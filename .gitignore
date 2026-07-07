@@ -4,6 +4,7 @@
 # Local test/prototype files
 test.html
 download-keys.local.php
+docs/PRIVATE_UPDATE_SERVER.md
 
 # OS/editor files
 .DS_Store

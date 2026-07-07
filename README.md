@@ -29,48 +29,20 @@ Demo: https://builder.topoweryou.com/routecalculationhelp/
   - Places API
   - Geocoding API, if using Google reverse geocoding split mode
 
-## Automatic Updates for Subscribers
+## Updates
 
-The module manifest includes this Joomla update server:
+Subscribers receive extension updates through the Joomla updater. A subscriber
+download key is required for private update downloads.
 
-```text
-https://builder.topoweryou.com/routecalculationhelp/files/routecalculationhelp/updates/route-calculation-help-for-accounting.xml
-```
-
-Private update downloads use the separate installer plugin:
-
-```text
-plg_installer_routecalculationupdatekey_vx.x.x.zip
-```
-
-The plugin can be installed before the customer has a subscription key. Install
-and enable the plugin with an empty key, then enter the subscriber download key
-after purchase in:
+After purchase, install and enable the update-key plugin, then enter your
+subscriber key in:
 
 ```text
 System -> Manage -> Plugins -> Installer - Route Calculation Help update key
 ```
 
-The plugin appends the key when Joomla downloads this module's update package.
-The plugin also has its own update server:
-
-```text
-https://builder.topoweryou.com/routecalculationhelp/files/routecalculationhelp/updates/routecalculationupdatekey.xml
-```
-
-On the update server, `/routecalculationhelp/files/routecalculationhelp/downloads/download.php`
-validates package names by pattern and reads
-allowed subscriber key hashes from either:
-
-```text
-DOWNLOAD_KEY_HASHES
-download-keys.local.php
-```
-
-Use `download-keys.example.php` as the template for the local file. Keep
-`download-keys.local.php` private; it is ignored by Git. Upload module and plugin
-release zips into the server `/routecalculationhelp/files/routecalculationhelp/downloads/`
-directory.
+The plugin appends the subscriber key when Joomla downloads this module's update
+package.
 
 ## Default Configuration
 
