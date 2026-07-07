@@ -27,6 +27,7 @@
     .invoice-history-grid > span { min-width: 0; overflow-wrap: anywhere; }
     .customer-picker-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .5rem; align-items: center; }
     .customer-picker-row > span { min-width: 0; overflow-wrap: anywhere; }
+    #invoiceDraft button[onclick*="exportDraftMinimaxXml"] { display: none !important; }
     @media (max-width: 575.98px) { .action-grid { grid-template-columns: 1fr; } }
     @media (max-width: 1199.98px) { .country-split-main-row { grid-template-columns: minmax(0, 1fr) minmax(5rem, .55fr); } .country-split-main-row .country-vat-wrap { grid-column: 1 / -1; } }
     @media (max-width: 575.98px) { .country-split-main-row { grid-template-columns: 1fr; } }
@@ -114,7 +115,7 @@
               <label for="outsideCountry" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OUTSIDE_COUNTRY</label>
               <select id="outsideCountry" class="form-select" onchange="onOutsideCountryChange()">
                 <option value="IT" selected>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ITALY</option>
-                <option value="HR">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CROATIA_ZAGREB</option>
+                <option value="HR">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CROATIA</option>
                 <option value="AT">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_AUSTRIA</option>
                 <option value="DE">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GERMANY</option>
                 <option value="HU">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_HUNGARY</option>
@@ -223,11 +224,13 @@
             <div class="col-12 mt-2 d-flex flex-wrap gap-2">
               <button class="btn btn-sm btn-primary" type="button" onclick="saveCustomerDetails()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAVE_DETAILS</button>
               <button class="btn btn-sm btn-outline-secondary" type="button" onclick="openCustomerPicker()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMERS</button>
+              <button class="btn btn-sm btn-outline-success" type="button" onclick="addCurrentServiceToDraft()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADD_TO_DRAFT</button>
               <button class="btn btn-sm btn-outline-primary" type="button" onclick="saveInvoiceHistory()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAVE_INVOICE_HISTORY</button>
               <button class="btn btn-sm btn-outline-secondary" type="button" onclick="loadInvoiceHistory()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_LOAD_HISTORY</button>
             </div>
             <div class="col-12 mt-2">
               <div id="databaseStatus" class="alert alert-secondary small mb-2 d-none"></div>
+              <div id="invoiceDraft" class="small mb-2"></div>
               <div id="invoiceHistory" class="small"></div>
             </div>
           </div>
@@ -240,7 +243,7 @@
           <div class="mb-3"><label for="invoiceTextSl" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIAN</label><textarea id="invoiceTextSl" class="form-control"></textarea></div>
           <div class="action-grid">
             <button class="btn btn-info" onclick="generatePdf()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GENERATE_PDF</button>
-            <button class="btn btn-success" onclick="exportMinimaxXml()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_EXPORT_MINIMAX_XML</button>
+            <button class="btn btn-success" onclick="exportCurrentMinimaxXml()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_EXPORT_MINIMAX_XML</button>
           </div>
         </div>
       </div>
@@ -286,6 +289,7 @@ const ROADFARE_TRANSLATIONS = ROADFARE_FRAME_CONFIG.translations || {};
 const GOOGLE_MAPS_API_KEY = normalizeGoogleMapsApiKey(ROADFARE_CONFIG.googleMapsApiKey);
 const COMPANY = ROADFARE_CONFIG.company || {};
 const REVENUE_ACCOUNTS = ROADFARE_CONFIG.revenueAccounts || {};
+const VAT_ACCOUNTS = ROADFARE_CONFIG.vatAccounts || {};
 
 let map, geocoder, Route, PlaceAutocompleteElement;
 let routePolylines = [];
@@ -293,9 +297,13 @@ let routeStopCounter = 0;
 let autoRouteTimer = null;
 let lastRouteData = null;
 let lastCalculatedData = null;
+let activeDraftRef = '';
 let savedCustomers = [];
 let countryBoundaryPromise = null;
 let countryBoundaryPolygons = {};
+let pdfUnicodeFontBase64 = {};
+let pdfImageDataUrls = {};
+let pdfUnicodeFontActive = false;
 
 function t(text) {
   const value = String(text ?? '');
@@ -359,13 +367,13 @@ const COUNTRY_MAP_DEFAULTS = {
   DE: { center: { lat: 51.1657, lng: 10.4515 }, zoom: 6 },
   HU: { center: { lat: 47.1625, lng: 19.5033 }, zoom: 7 }
 };
-const SLOVENIA_PDF_NOTE = 'Kraj opravljanja storitve je zunaj Slovenije v skladu s 1. odstavkom 28. člena ZDDV-1 - DDV ni obračunan.';
+const SLOVENIA_PDF_NOTE = 'The place of supply is outside Slovenia under Article 28(1) of the Slovenian VAT Act (ZDDV-1) - (Slovenian) VAT is not charged.';
 const OUTSIDE_COUNTRY_DEFAULTS = {
-  IT: { name: 'Italy', label: 'Italy', vatRate: 0, revenueAccount: REVENUE_ACCOUNTS.italy || '7602', note: SLOVENIA_PDF_NOTE },
-  HR: { name: 'Croatia', label: 'Croatia / Zagreb', vatRate: 25, revenueAccount: REVENUE_ACCOUNTS.croatia || '7603', note: 'Hrvaška davčna številka: OIB39387192794. Obračunan 25% DDV, smo davčni zavezanci.' },
-  AT: { name: 'Austria', label: 'Austria', vatRate: 10, revenueAccount: REVENUE_ACCOUNTS.austria || '7604', note: 'Avstrijska davčna številka: AT686058199. Obračunan 10% DDV, smo davčni zavezanci.' },
-  DE: { name: 'Germany', label: 'Germany', vatRate: 19, revenueAccount: REVENUE_ACCOUNTS.germany || '7605', note: 'Nemška davčna številka: 053/659/50131. Obračunan 19% DDV, smo davčni zavezanci.' },
-  HU: { name: 'Hungary', label: 'Hungary', vatRate: 0, revenueAccount: REVENUE_ACCOUNTS.hungary || '7606', note: SLOVENIA_PDF_NOTE },
+  IT: { name: 'Italy', label: 'Italy', vatRate: 0, revenueAccount: REVENUE_ACCOUNTS.italy || '7610', note: SLOVENIA_PDF_NOTE },
+  HR: { name: 'Croatia', label: 'Croatia', vatRate: 25, revenueAccount: REVENUE_ACCOUNTS.croatia || '7610', vatAccount: VAT_ACCOUNTS.croatia || '260011', note: 'Croatian VAT number: OIB39387192794. 25% VAT charged; we are VAT registered.' },
+  AT: { name: 'Austria', label: 'Austria', vatRate: 10, revenueAccount: REVENUE_ACCOUNTS.austria || '7610', vatAccount: VAT_ACCOUNTS.austria || '260012', note: 'Austrian VAT number: AT686058199. 10% VAT charged; we are VAT registered.' },
+  DE: { name: 'Germany', label: 'Germany', vatRate: 19, revenueAccount: REVENUE_ACCOUNTS.germany || '7605', vatAccount: VAT_ACCOUNTS.germany || '260010', note: 'German VAT number: 053/659/50131. 19% VAT charged; we are VAT registered.' },
+  HU: { name: 'Hungary', label: 'Hungary', vatRate: 0, revenueAccount: REVENUE_ACCOUNTS.hungary || '7610', note: SLOVENIA_PDF_NOTE },
   OTHER: { name: 'Custom', label: 'Other / custom', vatRate: 0, revenueAccount: '', note: SLOVENIA_PDF_NOTE }
 };
 const BASE_COUNTRY_CODE = COUNTRY_OPTION_ORDER.includes(String(ROADFARE_CONFIG.baseCountry || '').toUpperCase())
@@ -388,12 +396,16 @@ window.addEventListener('DOMContentLoaded', () => {
       event.currentTarget.dataset.generated = '0';
     });
     document.getElementById('outsideVatRate')?.addEventListener('input', () => {
-      if (lastCalculatedData) calculateVatSplitFromSloveniaKm(lastCalculatedData.sloveniaKm, 'VAT rate changed. Totals recalculated.');
+      markRouteCalculationStale();
     });
     document.getElementById('vatRate')?.addEventListener('input', () => {
-      if (lastCalculatedData) calculateVatSplitFromSloveniaKm(lastCalculatedData.sloveniaKm, 'VAT rate changed. Totals recalculated.');
+      markRouteCalculationStale();
     });
-    document.getElementById('returnTrip')?.addEventListener('change', scheduleAutoRouteCalculation);
+    document.getElementById('customerCode')?.addEventListener('input', event => {
+      event.currentTarget.dataset.generatedFromVat = '0';
+    });
+    document.getElementById('customerVatId')?.addEventListener('input', syncCustomerCodeFromVatId);
+    document.getElementById('returnTrip')?.addEventListener('change', markRouteCalculationStale);
     setTimeout(() => ensureSavedCustomersLoaded().catch(() => {}), 500);
   } catch (e) { /* ignore */ }
 });
@@ -460,7 +472,7 @@ function setupPlaceAutocomplete(inputId, mountId, placeholder) {
     const value = place.formattedAddress || place.displayName || input.value;
     input.value = value;
     if ('value' in placeAutocomplete) placeAutocomplete.value = value;
-    scheduleAutoRouteCalculation();
+    markRouteCalculationStale();
   });
 }
 
@@ -481,7 +493,7 @@ function addRouteStop(value = '') {
   row.className = 'route-stop-row';
   row.innerHTML = `<div id="${id}Autocomplete"><input id="${id}" class="route-stop-input form-control" placeholder="${xmlEscape(t('Add stop or place'))}" autocomplete="off" value=""></div><button class="btn btn-sm btn-outline-danger" type="button">${xmlEscape(t('Remove'))}</button>`;
   list.appendChild(row);
-  row.querySelector('button').addEventListener('click', () => { row.remove(); scheduleAutoRouteCalculation(); });
+  row.querySelector('button').addEventListener('click', () => { row.remove(); markRouteCalculationStale(); });
   setupPlaceAutocomplete(id, `${id}Autocomplete`, t('Add stop or place'));
   if (value) {
     const input = document.getElementById(id);
@@ -495,10 +507,15 @@ function scheduleAutoRouteCalculation() {
   clearTimeout(autoRouteTimer);
   autoRouteTimer = setTimeout(() => {
     syncAllPlaceAutocompleteValues();
-    const pickup = document.getElementById('pickup')?.value.trim();
-    const dropoff = document.getElementById('dropoff')?.value.trim();
-    if (pickup && dropoff && Route) calculateRoute();
+    markRouteCalculationStale();
   }, 350);
+}
+
+function markRouteCalculationStale() {
+  if (!lastCalculatedData && !lastRouteData) return;
+  lastCalculatedData = null;
+  lastRouteData = null;
+  setStatus('Route settings changed. Click Calculate route to update totals.', 'warning');
 }
 
 function getRouteStops() {
@@ -520,11 +537,11 @@ function setupPriceInputs() {
   if (!grossInput.dataset.priceSource) grossInput.dataset.priceSource = 'gross';
   grossInput.addEventListener('input', () => {
     setPriceSource('gross');
-    if (lastCalculatedData) calculateVatSplitFromSloveniaKm(lastCalculatedData.sloveniaKm, 'Price changed. Totals recalculated.');
+    markRouteCalculationStale();
   });
   netInput.addEventListener('input', () => {
     setPriceSource('net');
-    if (lastCalculatedData) calculateVatSplitFromSloveniaKm(lastCalculatedData.sloveniaKm, 'Price changed. Totals recalculated.');
+    markRouteCalculationStale();
   });
 }
 
@@ -675,7 +692,7 @@ function getCountryOptionConfig(value) {
     const sloveniaVatRate = getBaseCountryCode() === 'SI'
       ? (parseFloat(document.getElementById('vatRate')?.value || '9.5') || 0)
       : 9.5;
-    return { name: 'Slovenia', label: 'Slovenia', vatRate: sloveniaVatRate, revenueAccount: REVENUE_ACCOUNTS.slovenia || '7601', note: '' };
+    return { name: 'Slovenia', label: 'Slovenia', vatRate: sloveniaVatRate, revenueAccount: REVENUE_ACCOUNTS.slovenia || '7601', vatAccount: VAT_ACCOUNTS.slovenia || '26001', note: '' };
   }
   const config = OUTSIDE_COUNTRY_DEFAULTS[value] || OUTSIDE_COUNTRY_DEFAULTS.OTHER;
   if (value === getBaseCountryCode()) {
@@ -888,7 +905,7 @@ function addAdjustment() {
     <input type="number" step="0.01" class="form-control form-control-sm adjustment-amount" value="0" />
     <button class="btn btn-sm btn-outline-danger" type="button">${xmlEscape(t('Remove'))}</button>`;
   row.querySelector('button').addEventListener('click', () => { row.remove(); updateDeductionsDisplay(); });
-  row.querySelector('.adjustment-amount').addEventListener('input', updateDeductionsDisplay);
+  row.querySelector('.adjustment-amount').addEventListener('input', () => { updateDeductionsDisplay(); markRouteCalculationStale(); });
   container.appendChild(row);
   updateDeductionsDisplay();
 }
@@ -901,7 +918,7 @@ function onOutsideCountryChange(recalculate = true) {
   const v = document.getElementById('outsideCountry')?.value || 'IT';
   const config = OUTSIDE_COUNTRY_DEFAULTS[v] || OUTSIDE_COUNTRY_DEFAULTS.OTHER;
   document.getElementById('outsideVatRate').value = String(config.vatRate);
-  if (recalculate && lastCalculatedData) calculateVatSplitFromSloveniaKm(lastCalculatedData.sloveniaKm, 'VAT rate changed. Totals recalculated.');
+  if (recalculate) markRouteCalculationStale();
 }
 
 function getAdjustmentsArray() { const rows = Array.from(document.querySelectorAll('.adjustment-row')); return rows.map(r => ({ description: (r.querySelector('.adjustment-desc') || { value: '' }).value, amount: parseFloat((r.querySelector('.adjustment-amount') || { value: 0 }).value) || 0 })); }
@@ -951,8 +968,12 @@ function getCustomerPayload() {
   const outsideCountry = document.getElementById('outsideCountry')?.value || 'IT';
   const customerName = (document.getElementById('customerName')?.value || '').trim();
   const customerCodeInput = document.getElementById('customerCode');
-  const customerCode = (customerCodeInput?.value || '').trim() || buildCustomerCode(customerName);
-  if (customerCodeInput && !customerCodeInput.value.trim() && customerCode) customerCodeInput.value = customerCode;
+  const customerCode = (customerCodeInput?.value || '').trim() || buildCustomerCodeFromVatId();
+  if (customerCodeInput && !customerCodeInput.value.trim() && customerCode) {
+    customerCodeInput.value = customerCode;
+    customerCodeInput.dataset.generatedFromVat = '1';
+    customerCodeInput.dataset.generatedVatCode = customerCode;
+  }
   return {
     customer_code: customerCode,
     customer_name: customerName,
@@ -964,15 +985,21 @@ function getCustomerPayload() {
   };
 }
 
-function buildCustomerCode(customerName) {
-  const base = String(customerName || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .toUpperCase()
-    .slice(0, 40);
-  return base ? `STR_${base}` : '';
+function buildCustomerCodeFromVatId() {
+  return (document.getElementById('customerVatId')?.value || '').replace(/\D+/g, '').slice(0, 40);
+}
+
+function syncCustomerCodeFromVatId() {
+  const customerCodeInput = document.getElementById('customerCode');
+  if (!customerCodeInput) return;
+  const generatedCode = buildCustomerCodeFromVatId();
+  const currentCode = customerCodeInput.value.trim();
+  const previousGeneratedCode = customerCodeInput.dataset.generatedVatCode || '';
+  if (!currentCode || (customerCodeInput.dataset.generatedFromVat === '1' && currentCode === previousGeneratedCode)) {
+    customerCodeInput.value = generatedCode;
+    customerCodeInput.dataset.generatedFromVat = generatedCode ? '1' : '0';
+    customerCodeInput.dataset.generatedVatCode = generatedCode;
+  }
 }
 
 async function saveCustomerDetails() {
@@ -1247,8 +1274,8 @@ async function saveInvoiceHistory() {
   try {
     await resolveCustomerCodeFromName();
     await generateNextInvoiceNumber(false);
-    const payload = getInvoicePayload();
-    if (!payload) { showDatabaseStatus('Calculate a route before saving invoice history.', 'warning'); return; }
+    const payload = getInvoiceHistoryPayload();
+    if (!payload) { showDatabaseStatus('Calculate a route or add draft services before saving invoice history.', 'warning'); return; }
     if (!payload.customer.customer_code) { showDatabaseStatus('Sifra Stranke is required.', 'danger'); return; }
     if (!payload.invoice_number) { showDatabaseStatus('Invoice number is required.', 'danger'); return; }
     showDatabaseStatus('Saving invoice history...', 'warning');
@@ -1260,10 +1287,223 @@ async function saveInvoiceHistory() {
       invoiceNumberInput.dataset.generated = '0';
     }
     showDatabaseStatus('Invoice history saved.', 'success');
+    if (payload.is_draft_invoice) {
+      setActiveDraftRef('');
+      renderDraftLines([]);
+    }
     await loadInvoiceHistory(savedInvoice?.customer_code || payload.customer.customer_code, savedInvoice?.customer_name || payload.customer.customer_name, savedInvoice);
   } catch (err) {
     showDatabaseStatus(err.message, 'danger');
   }
+}
+
+function getInvoiceHistoryPayload() {
+  const draftLines = getRenderedDraftLines();
+  if (draftLines.length) return getDraftInvoiceHistoryPayload(draftLines);
+  return getInvoicePayload();
+}
+
+function getDraftInvoiceHistoryPayload(draftLines) {
+  const invoiceNumberInput = document.getElementById('invoiceNumber');
+  const payloads = draftLines.map(line => {
+    try { return JSON.parse(line.payload_json || '{}'); } catch (e) { return null; }
+  }).filter(payload => payload && payload.calculated_data);
+  if (!payloads.length) return null;
+  const combinedData = combinedCalculatedDataFromDraft(payloads);
+  return {
+    customer: getCustomerPayload(),
+    invoice_number: (invoiceNumberInput?.value || '').trim(),
+    invoice_number_auto: invoiceNumberInput?.dataset.generated === '1',
+    service_date: payloads[0]?.service_date || getServiceDateIso(),
+    output_file_name: (document.getElementById('outputFileName')?.value || '').trim(),
+    project_ref: getDraftProjectRef(),
+    calculated_data: combinedData,
+    invoice_text_en: document.getElementById('invoiceTextEn')?.value || combinedData.invoiceTextEn || '',
+    invoice_text_sl: document.getElementById('invoiceTextSl')?.value || combinedData.invoiceTextSl || '',
+    draft_lines: draftLines,
+    is_draft_invoice: true
+  };
+}
+
+function getDraftProjectRef() {
+  return activeDraftRef || '';
+}
+
+function ensureActiveDraftRef() {
+  if (!activeDraftRef) {
+    activeDraftRef = 'draft-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+  }
+  return activeDraftRef;
+}
+
+function setActiveDraftRef(value = '') {
+  activeDraftRef = String(value || '').trim();
+}
+
+function getDraftLinePayload() {
+  const payload = getInvoicePayload();
+  if (!payload) return null;
+  payload.project_ref = ensureActiveDraftRef();
+  payload.line_label = [payload.service_date, lastCalculatedData?.pickup, lastCalculatedData?.dropoff]
+    .filter(Boolean)
+    .join(' - ');
+  return payload;
+}
+
+async function addCurrentServiceToDraft() {
+  try {
+    await resolveCustomerCodeFromName();
+    const payload = getDraftLinePayload();
+    if (!payload) { showDatabaseStatus('Calculate a route before adding a draft line.', 'warning'); return; }
+    if (!payload.customer.customer_code) { showDatabaseStatus('Sifra Stranke is required.', 'danger'); return; }
+    showDatabaseStatus('Adding service to draft invoice...', 'warning');
+    const data = await postJoomlaAjax('addDraftLine', payload);
+    renderDraftLines(data.draft_lines || []);
+    resetCurrentServiceAfterDraftAdd();
+    showDatabaseStatus('Service added to draft invoice.', 'success');
+  } catch (err) {
+    showDatabaseStatus(err.message, 'danger');
+  }
+}
+
+function resetCurrentServiceAfterDraftAdd() {
+  lastCalculatedData = null;
+  lastRouteData = null;
+  document.getElementById('countrySplitRows')?.replaceChildren();
+  document.getElementById('invoiceTextEn').value = '';
+  document.getElementById('invoiceTextSl').value = '';
+  showRouteOnly(0);
+  ['totalKm', 'siKm', 'outsideKm', 'netTotal', 'taxableBase', 'outsideBase', 'vatAmount', 'outsideVatAmount', 'totalAmount'].forEach(id => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = '-';
+  });
+}
+
+async function loadDraftLines() {
+  const draftEl = document.getElementById('invoiceDraft');
+  if (!draftEl) return [];
+  try {
+    const customerCode = await resolveCustomerCodeFromName();
+    if (!customerCode) {
+      draftEl.textContent = t('Select or save a customer before loading draft invoice.');
+      return [];
+    }
+    if (!getDraftProjectRef()) {
+      renderDraftLines([]);
+      return [];
+    }
+    draftEl.textContent = t('Loading draft invoice...');
+    const data = await postJoomlaAjax('listDraftLines', { customer_code: customerCode, project_ref: getDraftProjectRef() });
+    const lines = data.draft_lines || [];
+    renderDraftLines(lines);
+    return lines;
+  } catch (err) {
+    draftEl.textContent = '';
+    showDatabaseStatus(err.message, 'danger');
+    return [];
+  }
+}
+
+function renderDraftLines(lines) {
+  const draftEl = document.getElementById('invoiceDraft');
+  if (!draftEl) return;
+  draftEl.dataset.lines = JSON.stringify(lines || []);
+  if (!lines.length) {
+    draftEl.innerHTML = `<div class="text-muted">${xmlEscape(t('No draft invoice services for this customer/project.'))}</div>`;
+    return;
+  }
+  const total = lines.reduce((sum, line) => sum + Number(line.total_amount || 0), 0);
+  const rows = lines.map(line => {
+    const amount = Number(line.total_amount || 0).toLocaleString('sl-SI', { style: 'currency', currency: 'EUR' });
+    return `<div class="d-flex gap-2 align-items-center border-bottom py-1">
+      <span class="flex-grow-1">${xmlEscape(line.service_date || '')} ${xmlEscape(line.line_label || '')}</span>
+      <span class="text-nowrap">${amount}</span>
+      <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteDraftLine(${Number(line.id) || 0})">${xmlEscape(t('Remove'))}</button>
+    </div>`;
+  }).join('');
+  draftEl.innerHTML = `<div class="fw-semibold mb-1">${xmlEscape(t('Draft invoice services'))}</div>
+    ${rows}
+    <div class="d-flex flex-wrap gap-2 align-items-center mt-2">
+      <span class="fw-semibold me-auto">${xmlEscape(t('Total'))}: ${total.toLocaleString('sl-SI', { style: 'currency', currency: 'EUR' })}</span>
+      <button class="btn btn-sm btn-outline-danger" type="button" onclick="clearDraftLines()">${xmlEscape(t('Clear draft'))}</button>
+    </div>`;
+}
+
+async function deleteDraftLine(id) {
+  if (!id) return;
+  try {
+    await postJoomlaAjax('deleteDraftLine', { id });
+    const lines = await loadDraftLines();
+    if (!lines.length) setActiveDraftRef('');
+  } catch (err) {
+    showDatabaseStatus(err.message, 'danger');
+  }
+}
+
+async function clearDraftLines() {
+  try {
+    const customerCode = await resolveCustomerCodeFromName();
+    if (!customerCode) { showDatabaseStatus('Sifra Stranke is required.', 'danger'); return; }
+    await postJoomlaAjax('clearDraftLines', { customer_code: customerCode, project_ref: getDraftProjectRef() });
+    setActiveDraftRef('');
+    renderDraftLines([]);
+    showDatabaseStatus('Draft invoice cleared.', 'success');
+  } catch (err) {
+    showDatabaseStatus(err.message, 'danger');
+  }
+}
+
+function getRenderedDraftPayloads() {
+  return getRenderedDraftLines().map(line => {
+    try { return JSON.parse(line.payload_json || '{}'); } catch (e) { return null; }
+  }).filter(payload => payload && payload.calculated_data);
+}
+
+function getRenderedDraftLines() {
+  const draftEl = document.getElementById('invoiceDraft');
+  return JSON.parse(draftEl?.dataset.lines || '[]');
+}
+
+function combinedCalculatedDataFromDraft(payloads) {
+  const segments = [];
+  let totalKm = 0, siKm = 0, outsideKm = 0, taxableBase = 0, outsideBase = 0, vatAmount = 0, outsideVatAmount = 0, totalAmount = 0;
+  payloads.forEach(payload => {
+    const d = payload.calculated_data || {};
+    totalKm += Number(d.totalKm || 0);
+    siKm += Number(d.sloveniaKm || 0);
+    outsideKm += Number(d.outsideSloveniaKm || 0);
+    taxableBase += Number(d.taxableBaseSlovenia || 0);
+    outsideBase += Number(d.outsideSloveniaBase || 0);
+    vatAmount += Number(d.vatAmount || 0);
+    outsideVatAmount += Number(d.outsideVatAmount || 0);
+    totalAmount += Number(d.totalAmount || 0);
+    (Array.isArray(d.countrySegments) ? d.countrySegments : []).forEach(segment => {
+      segments.push({ ...segment, serviceDate: payload.service_date || '', routeLabel: [d.pickup, d.dropoff].filter(Boolean).join(' - ') });
+    });
+  });
+  return {
+    createdAt: new Date().toISOString(),
+    baseCountry: getBaseCountryCode(),
+    pickup: t('Multiple services'),
+    dropoff: (document.getElementById('outputFileName')?.value || '').trim() || t('Draft invoice'),
+    totalKm, sloveniaKm: siKm, outsideSloveniaKm: outsideKm,
+    taxableBaseSlovenia: taxableBase, outsideSloveniaBase: outsideBase,
+    vatRate: 0, vatAmount, outsideVatRate: 0, outsideVatAmount, totalAmount,
+    countrySegments: segments,
+    deductions: [],
+    deductionsTotal: 0,
+    isDomesticSloveniaOnly: outsideBase <= 0.004
+  };
+}
+
+async function ensureDraftPayloads() {
+  let payloads = getRenderedDraftPayloads();
+  if (!payloads.length) {
+    await loadDraftLines();
+    payloads = getRenderedDraftPayloads();
+  }
+  if (!payloads.length) showDatabaseStatus('No draft invoice services for this customer/project.', 'warning');
+  return payloads;
 }
 
 function renderInvoiceHistory(invoices) {
@@ -1375,6 +1615,13 @@ function restoreInvoiceFromHistory(index) {
     showDatabaseStatus('Saved invoice has no calculated route data.', 'danger');
     return;
   }
+  if (Array.isArray(payload.draft_lines) && payload.draft_lines.length) {
+    setActiveDraftRef(payload.project_ref || payload.draft_lines[0]?.project_ref || '');
+    renderDraftLines(payload.draft_lines);
+  } else {
+    setActiveDraftRef('');
+    renderDraftLines([]);
+  }
 
   showResults(
     Number(lastCalculatedData.totalKm || 0),
@@ -1394,12 +1641,17 @@ function restoreInvoiceFromHistory(index) {
   showDatabaseStatus('Saved invoice restored. PDF and XML can be generated without recalculating the route.', 'success');
 }
 
-function generatePdf() {
+async function generatePdf() {
+  if (getRenderedDraftLines().length) {
+    await generateDraftPdf();
+    return;
+  }
   if (!lastCalculatedData) { setStatus('Calculate a route first, then generate PDF.', 'warning'); return; }
   lastCalculatedData.invoiceTextEn = document.getElementById('invoiceTextEn').value;
   lastCalculatedData.invoiceTextSl = document.getElementById('invoiceTextSl').value;
   const d = lastCalculatedData;
   const doc = new jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+  await configurePdfFont(doc);
   const invoiceNo = (document.getElementById('invoiceNumber')?.value || '26-0007').trim();
   const customerName = (document.getElementById('customerName')?.value || '').trim();
   const customerAddress = (document.getElementById('customerAddress')?.value || '').trim();
@@ -1414,13 +1666,13 @@ function generatePdf() {
   const right = pageWidth - 14;
   let y = 15;
 
-  doc.setFont('helvetica', 'normal');
+  setPdfFont(doc, 'normal');
   doc.setFontSize(9);
-  doc.text(tf('Racun st.: {invoiceNo}', { invoiceNo }), 14, y); y += 5;
+  doc.text(pdfText(tf('Racun st.: {invoiceNo}', { invoiceNo })), 14, y); y += 5;
   const issuePlace = String(COMPANY.issueCity || '').trim();
-  doc.text(tf('Datum izdaje: {issuePlace}{issueDate}', { issuePlace: issuePlace ? pdfText(issuePlace) + ', ' : '', issueDate }), 14, y); y += 5;
-  doc.text(tf('Datum opr. storitve: {serviceDate}', { serviceDate }), 14, y); y += 5;
-  doc.text(tf('Rok placila: {dueDate}', { dueDate }), 14, y);
+  doc.text(pdfText(tf('Datum izdaje: {issuePlace}{issueDate}', { issuePlace: issuePlace ? pdfText(issuePlace) + ', ' : '', issueDate })), 14, y); y += 5;
+  doc.text(pdfText(tf('Datum opr. storitve: {serviceDate}', { serviceDate })), 14, y); y += 5;
+  doc.text(pdfText(tf('Rok placila: {dueDate}', { dueDate })), 14, y);
 
   y = 15;
   const companyLines = [
@@ -1445,13 +1697,13 @@ function generatePdf() {
   const tableTop = y;
   const cols = { desc: 14, price: 108, qty: 132, unit: 148, vat: 164, amount: right };
   doc.setFontSize(7.8);
-  doc.setFont('helvetica', 'bold');
-  doc.text(t('Opis'), cols.desc, y);
-  doc.text(t('Cena'), cols.price, y, { align: 'right' });
-  doc.text(t('Kolicina'), cols.qty, y, { align: 'right' });
-  doc.text(t('Enota'), cols.unit, y, { align: 'right' });
-  doc.text(t('DDV'), cols.vat, y, { align: 'right' });
-  doc.text(t('Znesek'), cols.amount, y, { align: 'right' });
+  setPdfFont(doc, 'bold');
+  doc.text(pdfText(t('Opis')), cols.desc, y);
+  doc.text(pdfText(t('Cena')), cols.price, y, { align: 'right' });
+  doc.text(pdfText(t('Kolicina')), cols.qty, y, { align: 'right' });
+  doc.text(pdfText(t('Enota')), cols.unit, y, { align: 'right' });
+  doc.text(pdfText(t('DDV')), cols.vat, y, { align: 'right' });
+  doc.text(pdfText(t('Znesek')), cols.amount, y, { align: 'right' });
   doc.setLineWidth(0.2);
   doc.line(14, y + 2, right, y + 2);
   y += 8;
@@ -1466,8 +1718,11 @@ function generatePdf() {
   if (d.isDomesticSloveniaOnly) {
     y = drawInvoiceRow(doc, y, routeTitle, d.taxableBaseSlovenia, 1, t('kos'), d.vatRate, d.taxableBaseSlovenia);
   } else {
-    countrySegments.filter(segment => Number(segment.base) > 0.004).forEach(segment => {
-      const description = tf('{routeTitle}, del poti {country} ({km} km)', { routeTitle, country: segment.countryName, km: round2(segment.km) });
+    countrySegments.filter(segment => Number(segment.base) > 0.004).forEach((segment, index) => {
+      const routePrefix = index === 0 ? routeTitle : '';
+      const description = routePrefix
+        ? tf('{routeTitle}, country part {country} ({km} km)', { routeTitle: routePrefix, country: segment.countryName, km: round2(segment.km) })
+        : tf('country part {country} ({km} km)', { country: segment.countryName, km: round2(segment.km) });
       y = drawInvoiceRow(doc, y, description, segment.base, 1, t('kos'), segment.vatRate, segment.base);
     });
   }
@@ -1478,21 +1733,21 @@ function generatePdf() {
   y += 4;
   const netTotal = d.taxableBaseSlovenia + d.outsideSloveniaBase + (d.deductionsTotal || 0);
   const vatTotal = d.vatAmount + d.outsideVatAmount;
-  doc.setFont('helvetica', 'bold');
-  doc.text(t('Skupaj'), cols.vat, y, { align: 'right' });
+  setPdfFont(doc, 'bold');
+  doc.text(pdfText(t('Skupaj')), cols.vat, y, { align: 'right' });
   doc.text(fmtPdfEur(netTotal), right, y, { align: 'right' }); y += 6;
-  doc.text(t('DDV'), cols.vat, y, { align: 'right' });
+  doc.text(pdfText(t('DDV')), cols.vat, y, { align: 'right' });
   doc.text(fmtPdfEur(vatTotal), right, y, { align: 'right' }); y += 6;
-  doc.text(t('Za placilo'), cols.vat, y, { align: 'right' });
+  doc.text(pdfText(t('Za placilo')), cols.vat, y, { align: 'right' });
   doc.text(fmtPdfEur(d.totalAmount + (d.deductionsTotal || 0)), right, y, { align: 'right' });
 
   y = Math.max(y + 18, tableTop + 58);
   doc.setFontSize(8.5);
-  doc.text(t('Davcna stopnja'), 14, y);
-  doc.text(t('Osnova za DDV'), 82, y, { align: 'right' });
-  doc.text(t('DDV'), 124, y, { align: 'right' });
-  doc.text(t('Znesek z DDV'), right, y, { align: 'right' });
-  doc.setFont('helvetica', 'normal');
+  doc.text(pdfText(t('Davcna stopnja')), 14, y);
+  doc.text(pdfText(t('Osnova za DDV')), 82, y, { align: 'right' });
+  doc.text(pdfText(t('DDV')), 124, y, { align: 'right' });
+  doc.text(pdfText(t('Znesek z DDV')), right, y, { align: 'right' });
+  setPdfFont(doc, 'normal');
   y += 7;
   y = drawVatSummaryRow(doc, y, 0, d.deductionsTotal || 0, 0);
   countrySegments.filter(segment => Number(segment.base) > 0.004 || Number(segment.vatAmount) > 0.004).forEach(segment => {
@@ -1501,7 +1756,7 @@ function generatePdf() {
 
   y += 10;
   setPdfFooterFont(doc);
-  doc.text(tf('Pri placilu se sklicujte na stevilko SI00 {paymentReference}.', { paymentReference }), 14, y); y += 8;
+  doc.text(pdfText(tf('Pri placilu se sklicujte na stevilko SI00 {paymentReference}.', { paymentReference })), 14, y); y += 8;
   if (customInvoiceMessage) y = writeWrapped(doc, customInvoiceMessage, 14, y, 180, 5) + 3;
   const countryNotes = d.isDomesticSloveniaOnly ? [] : countrySegments.map(segment => segment.pdfNote).filter(Boolean);
   if (countryNotes.length) {
@@ -1513,10 +1768,116 @@ function generatePdf() {
     y = writeWrapped(doc, note, 14, y, 180, 5);
   }
   y = writeWrapped(doc, t('Zahvaljujemo se vam za vase zaupanje in se veselimo nadaljnjega sodelovanja!'), 14, y + 5, 180, 5);
-  doc.text(t('Zig in podpis:'), 158, 275);
+  await drawPdfSignature(doc);
 
   doc.save(getOutputFileName('racun_' + (invoiceNo || '26-0007'), 'pdf'));
   setStatus('PDF generated.', 'success');
+}
+
+async function generateDraftPdf() {
+  const payloads = await ensureDraftPayloads();
+  if (!payloads.length) return;
+  const combined = combinedCalculatedDataFromDraft(payloads);
+  const doc = new jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+  await configurePdfFont(doc);
+  const invoiceNo = (document.getElementById('invoiceNumber')?.value || '26-0007').trim();
+  const customerName = (document.getElementById('customerName')?.value || '').trim();
+  const customerAddress = (document.getElementById('customerAddress')?.value || '').trim();
+  const customerVatId = (document.getElementById('customerVatId')?.value || '').trim();
+  const customInvoiceMessage = (document.getElementById('customInvoiceMessage')?.value || '').trim();
+  const paymentReference = invoiceNo.replace(/[^0-9]/g, '');
+  const issueDate = new Date().toLocaleDateString('sl-SI');
+  const dueDate = new Date(Date.now() + 30 * 86400000).toLocaleDateString('sl-SI');
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const right = pageWidth - 14;
+  let y = 15;
+
+  setPdfFont(doc, 'normal');
+  doc.setFontSize(9);
+  doc.text(pdfText(tf('Racun st.: {invoiceNo}', { invoiceNo })), 14, y); y += 5;
+  const issuePlace = String(COMPANY.issueCity || '').trim();
+  doc.text(pdfText(tf('Datum izdaje: {issuePlace}{issueDate}', { issuePlace: issuePlace ? pdfText(issuePlace) + ', ' : '', issueDate })), 14, y); y += 5;
+  doc.text(pdfText(tf('Rok placila: {dueDate}', { dueDate })), 14, y);
+
+  y = 15;
+  [COMPANY.name, COMPANY.address, COMPANY.postcodeCity, COMPANY.taxNumber ? tf('ID za DDV: {taxNumber}', { taxNumber: COMPANY.taxNumber }) : '', COMPANY.iban ? tf('IBAN st.: {iban}', { iban: COMPANY.iban }) : '']
+    .filter(Boolean)
+    .forEach(line => { doc.text(pdfText(line), right, y, { align: 'right' }); y += 5; });
+
+  y = 55;
+  doc.setFontSize(10);
+  if (customerName) { doc.text(pdfText(customerName), 14, y); y += 5; }
+  if (customerAddress) y = writeWrapped(doc, customerAddress, 14, y, 90, 5);
+  if (customerVatId) y = writeWrapped(doc, tf('ID za DDV: {taxNumber}', { taxNumber: customerVatId }), 14, y, 90, 5);
+
+  y = 93;
+  const cols = { desc: 14, price: 108, qty: 132, unit: 148, vat: 164, amount: right };
+  doc.setFontSize(7.8);
+  setPdfFont(doc, 'bold');
+  doc.text(pdfText(t('Opis')), cols.desc, y);
+  doc.text(pdfText(t('Cena')), cols.price, y, { align: 'right' });
+  doc.text(pdfText(t('Kolicina')), cols.qty, y, { align: 'right' });
+  doc.text(pdfText(t('Enota')), cols.unit, y, { align: 'right' });
+  doc.text(pdfText(t('DDV')), cols.vat, y, { align: 'right' });
+  doc.text(pdfText(t('Znesek')), cols.amount, y, { align: 'right' });
+  doc.line(14, y + 2, right, y + 2);
+  y += 8;
+
+  const vatSummary = {};
+  const countryNotes = [];
+  let lastRouteLabel = '';
+  payloads.forEach(payload => {
+    const d = payload.calculated_data || {};
+    const serviceDate = payload.service_date ? formatIsoDateSl(payload.service_date) + ' - ' : '';
+    const routeLabel = pdfRouteText([d.pickup, d.dropoff].filter(Boolean).join(' - '));
+    const routeTitle = serviceDate + tf('Prevoz {route}', { route: routeLabel });
+    const segments = Array.isArray(d.countrySegments) && d.countrySegments.length
+      ? d.countrySegments
+      : [{ countryName: getBaseCountryConfig().name, base: d.taxableBaseSlovenia, vatRate: d.vatRate, vatAmount: d.vatAmount }];
+    segments.filter(segment => Number(segment.base) > 0.004).forEach(segment => {
+      if (y > 260) { doc.addPage(); y = 20; }
+      const routePrefix = routeLabel === lastRouteLabel ? serviceDate.trim() : routeTitle;
+      const description = routePrefix
+        ? tf('{routeTitle}, country part {country} ({km} km)', { routeTitle: routePrefix, country: segment.countryName || '', km: round2(segment.km || 0) })
+        : tf('country part {country} ({km} km)', { country: segment.countryName || '', km: round2(segment.km || 0) });
+      y = drawInvoiceRow(doc, y, description, Number(segment.base || 0), 1, t('kos'), Number(segment.vatRate || 0), Number(segment.base || 0));
+      lastRouteLabel = routeLabel;
+      const key = String(Number(segment.vatRate || 0));
+      vatSummary[key] = vatSummary[key] || { rate: Number(segment.vatRate || 0), base: 0, vat: 0 };
+      vatSummary[key].base += Number(segment.base || 0);
+      vatSummary[key].vat += Number(segment.vatAmount || 0);
+      const note = segment.pdfNote || (!(segment.isBaseCountry ?? segment.isSlovenia) && Number(segment.vatRate || 0) === 0 ? SLOVENIA_PDF_NOTE : '');
+      if (note && !countryNotes.includes(note)) countryNotes.push(note);
+    });
+  });
+
+  y += 4;
+  setPdfFont(doc, 'bold');
+  doc.text(pdfText(t('Skupaj')), cols.vat, y, { align: 'right' });
+  doc.text(fmtPdfEur(combined.taxableBaseSlovenia + combined.outsideSloveniaBase), right, y, { align: 'right' }); y += 6;
+  doc.text(pdfText(t('DDV')), cols.vat, y, { align: 'right' });
+  doc.text(fmtPdfEur(combined.vatAmount + combined.outsideVatAmount), right, y, { align: 'right' }); y += 6;
+  doc.text(pdfText(t('Za placilo')), cols.vat, y, { align: 'right' });
+  doc.text(fmtPdfEur(combined.totalAmount), right, y, { align: 'right' });
+
+  y += 14;
+  setPdfFont(doc, 'normal');
+  Object.values(vatSummary).forEach(row => {
+    if (y > 270) { doc.addPage(); y = 20; }
+    y = drawVatSummaryRow(doc, y, row.rate, row.base, row.vat);
+  });
+  y += 8;
+  setPdfFooterFont(doc);
+  doc.text(pdfText(tf('Pri placilu se sklicujte na stevilko SI00 {paymentReference}.', { paymentReference })), 14, y); y += 8;
+  if (customInvoiceMessage) y = writeWrapped(doc, customInvoiceMessage, 14, y, 180, 5) + 3;
+  countryNotes.forEach(note => {
+    if (y > 265) { doc.addPage(); y = 20; }
+    y = writeWrapped(doc, note, 14, y, 180, 5) + 2;
+  });
+  await drawPdfSignature(doc);
+
+  doc.save(getOutputFileName('racun_' + (invoiceNo || '26-0007'), 'pdf'));
+  setStatus('Draft PDF generated.', 'success');
 }
 
 function drawInvoiceRow(doc, y, description, price, quantity, unit, vatRate, amount) {
@@ -1531,7 +1892,7 @@ function drawInvoiceRow(doc, y, description, price, quantity, unit, vatRate, amo
   setPdfTableFont(doc);
   doc.text(fmtPdfEur(price), cols.price, y, { align: 'right' });
   doc.text(String(quantity), cols.qty, y, { align: 'right' });
-  doc.text(unit, cols.unit, y, { align: 'right' });
+  doc.text(pdfText(unit), cols.unit, y, { align: 'right' });
   doc.text(`${formatRate(vatRate)}%`, cols.vat, y, { align: 'right' });
   doc.text(fmtPdfEur(amount), cols.amount, y, { align: 'right' });
   return y + Math.max(8, descLines.length * 4 + 3);
@@ -1541,7 +1902,7 @@ function drawVatSummaryRow(doc, y, vatRate, base, vat) {
   if (!base && !vat) return y;
   const right = doc.internal.pageSize.getWidth() - 14;
   setPdfFooterFont(doc);
-  doc.text(`DDV ${formatRate(vatRate)}%`, 14, y);
+  doc.text(pdfText(`DDV ${formatRate(vatRate)}%`), 14, y);
   doc.text(fmtPdfEur(base), 82, y, { align: 'right' });
   doc.text(fmtPdfEur(vat), 124, y, { align: 'right' });
   doc.text(fmtPdfEur(base + vat), right, y, { align: 'right' });
@@ -1578,19 +1939,86 @@ function writeWrapped(doc, text, x, y, maxWidth, lineHeight) {
 }
 
 function setPdfTableFont(doc) {
-  doc.setFont('helvetica', 'normal');
+  setPdfFont(doc, 'normal');
   doc.setFontSize(7.8);
 }
 
 function setPdfFooterFont(doc) {
-  doc.setFont('helvetica', 'normal');
+  setPdfFont(doc, 'normal');
   doc.setFontSize(8.5);
 }
 
+async function configurePdfFont(doc) {
+  pdfUnicodeFontActive = false;
+  try {
+    const regularFont = await loadPdfFontBase64('NotoSans-Regular.ttf');
+    const boldFont = await loadPdfFontBase64('NotoSans-Bold.ttf');
+    doc.addFileToVFS('NotoSans-Regular.ttf', regularFont);
+    doc.addFileToVFS('NotoSans-Bold.ttf', boldFont);
+    doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+    doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
+    doc.setFont('NotoSans', 'normal');
+    pdfUnicodeFontActive = true;
+  } catch (error) {
+    doc.setFont('helvetica', 'normal');
+  }
+}
+
+async function loadPdfFontBase64(fileName) {
+  if (!pdfUnicodeFontBase64[fileName]) {
+    const response = await fetch('fonts/' + fileName);
+    if (!response.ok) throw new Error('PDF font request failed');
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+    }
+    pdfUnicodeFontBase64[fileName] = btoa(binary);
+  }
+  return pdfUnicodeFontBase64[fileName];
+}
+
+async function drawPdfSignature(doc) {
+  setPdfFooterFont(doc);
+  doc.text(pdfText(t('Zig in podpis:')), 158, 255);
+  const signatureImageUrl = String(COMPANY.signatureImageUrl || '').trim();
+  if (!signatureImageUrl) return;
+  try {
+    const signatureDataUrl = await loadPdfImageDataUrl(signatureImageUrl);
+    doc.addImage(signatureDataUrl, 'PNG', 151, 258, 45, 29);
+  } catch (error) {
+    // Keep PDF generation working if the optional signature image is unavailable.
+  }
+}
+
+async function loadPdfImageDataUrl(imageUrl) {
+  const normalizedUrl = String(imageUrl || '').trim();
+  if (!normalizedUrl) throw new Error('PDF image URL is empty');
+  if (!pdfImageDataUrls[normalizedUrl]) {
+    const response = await fetch(normalizedUrl);
+    if (!response.ok) throw new Error('PDF image request failed');
+    const blob = await response.blob();
+    pdfImageDataUrls[normalizedUrl] = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+  return pdfImageDataUrls[normalizedUrl];
+}
+
+function setPdfFont(doc, style = 'normal') {
+  doc.setFont(pdfUnicodeFontActive ? 'NotoSans' : 'helvetica', style);
+}
+
 function pdfText(value) {
-  return String(value || '')
+  const normalized = String(value || '')
     .replace(/[→↦➜➔]/g, ' - ')
-    .replace(/[–—]/g, '-')
+    .replace(/[–—]/g, '-');
+  if (pdfUnicodeFontActive) return normalized;
+  return normalized
     .replace(/[čć]/g, 'c').replace(/[ČĆ]/g, 'C')
     .replace(/[š]/g, 's').replace(/[Š]/g, 'S')
     .replace(/[ž]/g, 'z').replace(/[Ž]/g, 'Z')
@@ -1609,6 +2037,27 @@ function formatRate(n) {
   return Number(n || 0).toLocaleString('sl-SI', { maximumFractionDigits: 2 });
 }
 
+async function exportDraftMinimaxXml() {
+  const payloads = await ensureDraftPayloads();
+  if (!payloads.length) return;
+  const previousData = lastCalculatedData;
+  lastCalculatedData = combinedCalculatedDataFromDraft(payloads);
+  try {
+    exportMinimaxXml();
+    setStatus('Draft Minimax XML exported.', 'success');
+  } finally {
+    lastCalculatedData = previousData;
+  }
+}
+
+async function exportCurrentMinimaxXml() {
+  if (getRenderedDraftLines().length) {
+    await exportDraftMinimaxXml();
+    return;
+  }
+  exportMinimaxXml();
+}
+
 function exportMinimaxXml() {
   if (!lastCalculatedData) { setStatus('Calculate a route first, then export Minimax XML.', 'warning'); return; }
   const d = lastCalculatedData;
@@ -1620,7 +2069,9 @@ function exportMinimaxXml() {
   const naslov = (document.getElementById('customerAddress')?.value || '');
   const vatId = (document.getElementById('customerVatId')?.value || '').trim();
   const calculationBaseCountryCode = String(d.baseCountry || getBaseCountryCode()).toUpperCase();
-  const baseRevenueAccount = String(getCountryOptionConfig(calculationBaseCountryCode).revenueAccount || '').trim();
+  const baseCountryConfig = getCountryOptionConfig(calculationBaseCountryCode);
+  const baseRevenueAccount = String(baseCountryConfig.revenueAccount || '').trim();
+  const baseVatAccount = String(baseCountryConfig.vatAccount || VAT_ACCOUNTS.slovenia || '26001').trim();
   const countrySegments = Array.isArray(d.countrySegments) ? d.countrySegments : [];
   let outsideSegments = countrySegments.filter(segment => !(segment.isBaseCountry ?? segment.isSlovenia) && roundMoney(segment.base) > 0);
   const siBaseAmount = roundMoney(d.taxableBaseSlovenia);
@@ -1633,7 +2084,7 @@ function exportMinimaxXml() {
   if (!outsideSegments.length && outsideBaseAmount > 0) {
     const outsideCountry = document.getElementById('outsideCountry')?.value || 'IT';
     const config = getCountryOptionConfig(outsideCountry);
-    outsideSegments = [{ base: outsideBaseAmount, revenueAccount: config.revenueAccount, isSlovenia: false }];
+    outsideSegments = [{ countryValue: outsideCountry, base: outsideBaseAmount, vatAmount: outsideVatAmount, vatRate: config.vatRate, revenueAccount: config.revenueAccount, isSlovenia: false }];
   }
   if (siBaseAmount > 0 && !baseRevenueAccount) {
     setStatus('Enter Slovenia SifraKonta in the module options before exporting Minimax XML.', 'danger');
@@ -1643,20 +2094,63 @@ function exportMinimaxXml() {
     setStatus('Enter SifraKonta in every outside country split row before exporting Minimax XML.', 'danger');
     return;
   }
-  const outsideRevenueAmountsByAccount = {};
+  if (siVatAmount > 0 && !baseVatAccount) {
+    setStatus('Enter Slovenia VAT account in the module options before exporting Minimax XML.', 'danger');
+    return;
+  }
+  const revenueAmountsByAccount = {};
+  const vatAmountsByAccount = {};
+  const ddvAmountsByCode = {};
+  const addAmount = (target, key, amount) => {
+    const normalizedKey = String(key || '').trim();
+    const rounded = roundMoney(amount);
+    if (!normalizedKey || rounded <= 0) return;
+    target[normalizedKey] = roundMoney((target[normalizedKey] || 0) + rounded);
+  };
+  const addDdvAmount = (code, base, vat) => {
+    const ddvCode = String(code || '').trim();
+    const baseAmount = roundMoney(base);
+    const vatAmount = roundMoney(vat);
+    if (!ddvCode || (baseAmount <= 0 && vatAmount <= 0)) return;
+    const current = ddvAmountsByCode[ddvCode] || { base: 0, vat: 0 };
+    current.base = roundMoney(current.base + baseAmount);
+    current.vat = roundMoney(current.vat + vatAmount);
+    ddvAmountsByCode[ddvCode] = current;
+  };
+  addAmount(revenueAmountsByAccount, baseRevenueAccount, siBaseAmount);
+  addAmount(vatAmountsByAccount, baseVatAccount, siVatAmount);
+  if (siBaseAmount > 0 || siVatAmount > 0) {
+    addDdvAmount(calculationBaseCountryCode === 'SI' ? 'Z' : (siVatAmount > 0 ? 'S' : 'N'), siBaseAmount, siVatAmount);
+  }
+  let missingOutsideVatAccount = false;
   outsideSegments.forEach((segment, index) => {
+    const countryValue = String(segment.countryValue || '').toUpperCase();
+    const config = getCountryOptionConfig(countryValue);
     const account = String(segment.revenueAccount || '').trim();
     const amount = roundMoney(segment.base + (index === 0 ? balanceDiff : 0));
-    if (!account || amount <= 0) return;
-    outsideRevenueAmountsByAccount[account] = roundMoney((outsideRevenueAmountsByAccount[account] || 0) + amount);
+    const vatAmount = roundMoney(segment.vatAmount || 0);
+    const vatAccount = String(segment.vatAccount || config.vatAccount || '').trim();
+    addAmount(revenueAmountsByAccount, account, amount);
+    if (vatAmount > 0) {
+      if (!vatAccount) {
+        missingOutsideVatAccount = true;
+        return;
+      }
+      addAmount(vatAmountsByAccount, vatAccount, vatAmount);
+      addDdvAmount('S', amount, vatAmount);
+    } else if (amount > 0) {
+      addDdvAmount('N', amount, 0);
+    }
   });
-  const osnovna = moneyXml(siBaseAmount);
-  const ddv = moneyXml(siVatAmount);
-  const zunajDdv = moneyXml(outsideVatAmount);
+  if (missingOutsideVatAccount) {
+    setStatus('Enter VAT account for every taxed outside country before exporting Minimax XML.', 'danger');
+    return;
+  }
   const total = moneyXml(totalAmount);
-  const outsideRevenueLine = Object.entries(outsideRevenueAmountsByAccount).map(([account, amount]) => `\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)} - izven Slovenije</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(account)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>`).join('');
-  const outsideVatLine = outsideVatAmount > 0 ? `\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)} - DDV izven Slovenije</OpisVrsticeTemeljnice>\n          <SifraKonta>26000</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${zunajDdv}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${zunajDdv}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>` : '';
-  const xml = `<?xml version="1.0" encoding="utf-8"?>\n<miniMAXUvozKnjigovodstvo xmlns="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo.xsd">\n\n  <Temeljnice>\n    <Temeljnica>\n      <GlavaTemeljnice>\n        <SifraVrsteTemeljnice>IR</SifraVrsteTemeljnice>\n        <DatumTemeljnice>${today}</DatumTemeljnice>\n        <OpisGlaveTemeljnice>${xmlEscape(invoiceRef)}</OpisGlaveTemeljnice>\n      </GlavaTemeljnice>\n\n      <DDV>\n        <DDVVrstica>\n          <DDVGlava>\n            <DatumDDV>${today}</DatumDDV>\n            <KnjigaDDV>IR</KnjigaDDV>\n            <DatumKnjizenjaDDV>${today}</DatumKnjizenjaDDV>\n            <SifraStranke>${sifraStranke}</SifraStranke>\n            <Listina>${xmlEscape(invoiceRef)}</Listina>\n            <DatumListine>${today}</DatumListine>\n            <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n            <VrstaPorocanja>Obračun</VrstaPorocanja>\n          </DDVGlava>\n\n          <DDVStopnje>\n            <DDVStopnja>\n              <SifraStopnjeDDV>S</SifraStopnjeDDV>\n              <StoritevOsnova>${osnovna}</StoritevOsnova>\n              <StoritevDDV>${ddv}</StoritevDDV>\n            </DDVStopnja>\n          </DDVStopnje>\n        </DDVVrstica>\n      </DDV>\n\n      <VrsticeTemeljnice>\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>1200</SifraKonta>\n          <SifraStranke>${sifraStranke}</SifraStranke>\n          <DatumZapadlosti>${today}</DatumZapadlosti>\n          <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>${total}</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>0.00</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>${total}</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>0.00</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(baseRevenueAccount)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${osnovna}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${osnovna}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${outsideRevenueLine}\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>26000</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${ddv}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${ddv}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${outsideVatLine}\n      </VrsticeTemeljnice>\n    </Temeljnica>\n  </Temeljnice>\n\n  <Stranke>\n    <Stranka>\n      <Sifra>${xmlEscape(sifraStranke)}</Sifra>\n      <Naziv>${xmlEscape(naziv)}</Naziv>\n      <Naslov>${xmlEscape(naslov)}</Naslov>\n      <KraticaDrzave>SI</KraticaDrzave>\n      <PostnaStevilka>1000</PostnaStevilka>\n      <NazivPoste>Ljubljana</NazivPoste>\n      <DavcniZavezanec>${vatId ? 'D' : 'N'}</DavcniZavezanec>\n      <IdentifikacijskaStevilka>${xmlEscape(vatId)}</IdentifikacijskaStevilka>\n    </Stranka>\n  </Stranke>\n\n</miniMAXUvozKnjigovodstvo>`;
+  const ddvStopnjeXml = Object.entries(ddvAmountsByCode).map(([code, amounts]) => `\n            <DDVStopnja>\n              <SifraStopnjeDDV>${xmlEscape(code)}</SifraStopnjeDDV>\n              <StoritevOsnova>${moneyXml(amounts.base)}</StoritevOsnova>\n              <StoritevDDV>${moneyXml(amounts.vat)}</StoritevDDV>\n            </DDVStopnja>`).join('');
+  const revenueLines = Object.entries(revenueAmountsByAccount).map(([account, amount]) => `\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)} - storitev</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(account)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>`).join('');
+  const vatLines = Object.entries(vatAmountsByAccount).map(([account, amount]) => `\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)} - DDV</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(account)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>`).join('');
+  const xml = `<?xml version="1.0" encoding="utf-8"?>\n<miniMAXUvozKnjigovodstvo xmlns="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo.xsd">\n\n  <Temeljnice>\n    <Temeljnica>\n      <GlavaTemeljnice>\n        <SifraVrsteTemeljnice>IR</SifraVrsteTemeljnice>\n        <DatumTemeljnice>${today}</DatumTemeljnice>\n        <OpisGlaveTemeljnice>${xmlEscape(invoiceRef)}</OpisGlaveTemeljnice>\n      </GlavaTemeljnice>\n\n      <DDV>\n        <DDVVrstica>\n          <DDVGlava>\n            <DatumDDV>${today}</DatumDDV>\n            <KnjigaDDV>IR</KnjigaDDV>\n            <DatumKnjizenjaDDV>${today}</DatumKnjizenjaDDV>\n            <SifraStranke>${sifraStranke}</SifraStranke>\n            <Listina>${xmlEscape(invoiceRef)}</Listina>\n            <DatumListine>${today}</DatumListine>\n            <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n            <VrstaPorocanja>Obračun</VrstaPorocanja>\n          </DDVGlava>\n\n          <DDVStopnje>${ddvStopnjeXml}\n          </DDVStopnje>\n        </DDVVrstica>\n      </DDV>\n\n      <VrsticeTemeljnice>\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>1200</SifraKonta>\n          <SifraStranke>${sifraStranke}</SifraStranke>\n          <DatumZapadlosti>${today}</DatumZapadlosti>\n          <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>${total}</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>0.00</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>${total}</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>0.00</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${revenueLines}${vatLines}\n      </VrsticeTemeljnice>\n    </Temeljnica>\n  </Temeljnice>\n\n  <Stranke>\n    <Stranka>\n      <Sifra>${xmlEscape(sifraStranke)}</Sifra>\n      <Naziv>${xmlEscape(naziv)}</Naziv>\n      <Naslov>${xmlEscape(naslov)}</Naslov>\n      <KraticaDrzave>SI</KraticaDrzave>\n      <PostnaStevilka>1000</PostnaStevilka>\n      <NazivPoste>Ljubljana</NazivPoste>\n      <DavcniZavezanec>${vatId ? 'D' : 'N'}</DavcniZavezanec>\n      <IdentifikacijskaStevilka>${xmlEscape(vatId)}</IdentifikacijskaStevilka>\n    </Stranka>\n  </Stranke>\n\n</miniMAXUvozKnjigovodstvo>`;
   const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = getOutputFileName('racun_26-0007', 'xml'); document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
