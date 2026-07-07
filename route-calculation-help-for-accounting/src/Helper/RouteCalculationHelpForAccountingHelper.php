@@ -126,6 +126,117 @@ class RouteCalculationHelpForAccountingHelper
         return ['invoice_number' => $invoiceNumber, 'year' => $year];
     }
 
+    public function addDraftLineAjax()
+    {
+        Session::checkToken('post') or throw new RuntimeException('Invalid Joomla session token.');
+        $payload = self::payload();
+        $customerPayload = is_array($payload['customer'] ?? null) ? $payload['customer'] : [];
+        $data = is_array($payload['calculated_data'] ?? null) ? $payload['calculated_data'] : [];
+
+        if (!$data) {
+            throw new RuntimeException('Calculate a route before adding a draft line.');
+        }
+
+        $customer = self::saveCustomer($customerPayload);
+        self::ensureTables();
+
+        $db = self::db();
+        $now = Factory::getDate()->toSql();
+        $serviceDate = trim((string) ($payload['service_date'] ?? ''));
+        $projectRef = trim((string) ($payload['project_ref'] ?? ''));
+        $lineLabel = trim((string) ($payload['line_label'] ?? ''));
+
+        if ($lineLabel === '') {
+            $lineLabel = trim((string) ($data['pickup'] ?? '') . ' - ' . (string) ($data['dropoff'] ?? ''));
+        }
+
+        $payloadJson = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $columns = [
+            'customer_id', 'customer_code', 'customer_name', 'project_ref', 'service_date',
+            'line_label', 'total_amount', 'payload_json', 'created_by', 'created_at', 'updated_at',
+        ];
+        $values = [
+            (int) $customer['id'],
+            $db->quote($customer['customer_code']),
+            $db->quote((string) ($customerPayload['customer_name'] ?? '')),
+            $db->quote($projectRef),
+            $serviceDate !== '' ? $db->quote($serviceDate) : 'NULL',
+            $db->quote($lineLabel),
+            self::num($data['totalAmount'] ?? 0),
+            $db->quote($payloadJson),
+            (int) Factory::getApplication()->getIdentity()->id,
+            $db->quote($now),
+            $db->quote($now),
+        ];
+
+        $query = $db->getQuery(true)
+            ->insert($db->quoteName('#__route_calculation_help_for_accounting_invoice_draft_lines'))
+            ->columns($db->quoteName($columns))
+            ->values(implode(',', $values));
+        $db->setQuery($query)->execute();
+
+        return [
+            'draft_line_id' => (int) $db->insertid(),
+            'draft_lines' => self::draftLines($customer['customer_code'], $projectRef),
+        ];
+    }
+
+    public function listDraftLinesAjax()
+    {
+        Session::checkToken('post') or throw new RuntimeException('Invalid Joomla session token.');
+        $payload = self::payload();
+        $customerCode = trim((string) ($payload['customer_code'] ?? ''));
+        $projectRef = trim((string) ($payload['project_ref'] ?? ''));
+
+        if ($customerCode === '') {
+            throw new RuntimeException('Sifra Stranke is required.');
+        }
+
+        return ['draft_lines' => self::draftLines($customerCode, $projectRef)];
+    }
+
+    public function deleteDraftLineAjax()
+    {
+        Session::checkToken('post') or throw new RuntimeException('Invalid Joomla session token.');
+        $payload = self::payload();
+        $id = (int) ($payload['id'] ?? 0);
+
+        if ($id < 1) {
+            throw new RuntimeException('Draft line id is required.');
+        }
+
+        self::ensureTables();
+        $db = self::db();
+        $query = $db->getQuery(true)
+            ->delete($db->quoteName('#__route_calculation_help_for_accounting_invoice_draft_lines'))
+            ->where($db->quoteName('id') . ' = ' . $id);
+        $db->setQuery($query)->execute();
+
+        return ['deleted_id' => $id];
+    }
+
+    public function clearDraftLinesAjax()
+    {
+        Session::checkToken('post') or throw new RuntimeException('Invalid Joomla session token.');
+        $payload = self::payload();
+        $customerCode = trim((string) ($payload['customer_code'] ?? ''));
+        $projectRef = trim((string) ($payload['project_ref'] ?? ''));
+
+        if ($customerCode === '') {
+            throw new RuntimeException('Sifra Stranke is required.');
+        }
+
+        self::ensureTables();
+        $db = self::db();
+        $query = $db->getQuery(true)
+            ->delete($db->quoteName('#__route_calculation_help_for_accounting_invoice_draft_lines'))
+            ->where($db->quoteName('customer_code') . ' = ' . $db->quote($customerCode))
+            ->where($db->quoteName('project_ref') . ' = ' . $db->quote($projectRef));
+        $db->setQuery($query)->execute();
+
+        return ['deleted' => (int) $db->getAffectedRows()];
+    }
+
     public function loadCustomerAjax()
     {
         Session::checkToken('post') or throw new RuntimeException('Invalid Joomla session token.');
@@ -335,6 +446,23 @@ class RouteCalculationHelpForAccountingHelper
         return (int) $db->setQuery($query)->loadResult() > 0;
     }
 
+    private static function draftLines(string $customerCode, string $projectRef): array
+    {
+        self::ensureTables();
+        $db = self::db();
+        $query = $db->getQuery(true)
+            ->select($db->quoteName([
+                'id', 'customer_code', 'customer_name', 'project_ref', 'service_date',
+                'line_label', 'total_amount', 'payload_json', 'created_at', 'updated_at',
+            ]))
+            ->from($db->quoteName('#__route_calculation_help_for_accounting_invoice_draft_lines'))
+            ->where($db->quoteName('customer_code') . ' = ' . $db->quote($customerCode))
+            ->where($db->quoteName('project_ref') . ' = ' . $db->quote($projectRef))
+            ->order($db->quoteName('service_date') . ' ASC, ' . $db->quoteName('created_at') . ' ASC');
+
+        return $db->setQuery($query)->loadAssocList() ?: [];
+    }
+
     private static function nextInvoiceNumber(int $year): string
     {
         self::ensureTables();
@@ -474,6 +602,26 @@ class RouteCalculationHelpForAccountingHelper
               UNIQUE KEY " . $db->quoteName('idx_invoice_number') . " (" . $db->quoteName('invoice_number') . "),
               KEY " . $db->quoteName('idx_customer_id') . " (" . $db->quoteName('customer_id') . "),
               KEY " . $db->quoteName('idx_customer_code') . " (" . $db->quoteName('customer_code') . ")
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci"
+        )->execute();
+
+        $db->setQuery(
+            "CREATE TABLE IF NOT EXISTS " . $db->quoteName('#__route_calculation_help_for_accounting_invoice_draft_lines') . " (
+              " . $db->quoteName('id') . " int unsigned NOT NULL AUTO_INCREMENT,
+              " . $db->quoteName('customer_id') . " int unsigned NOT NULL,
+              " . $db->quoteName('customer_code') . " varchar(64) NOT NULL,
+              " . $db->quoteName('customer_name') . " varchar(255) NOT NULL DEFAULT '',
+              " . $db->quoteName('project_ref') . " varchar(255) NOT NULL DEFAULT '',
+              " . $db->quoteName('service_date') . " date NULL,
+              " . $db->quoteName('line_label') . " varchar(512) NOT NULL DEFAULT '',
+              " . $db->quoteName('total_amount') . " decimal(12,4) NOT NULL DEFAULT 0,
+              " . $db->quoteName('payload_json') . " mediumtext NULL,
+              " . $db->quoteName('created_by') . " int unsigned NOT NULL DEFAULT 0,
+              " . $db->quoteName('created_at') . " datetime NOT NULL,
+              " . $db->quoteName('updated_at') . " datetime NOT NULL,
+              PRIMARY KEY (" . $db->quoteName('id') . "),
+              KEY " . $db->quoteName('idx_customer_project') . " (" . $db->quoteName('customer_code') . ", " . $db->quoteName('project_ref') . "),
+              KEY " . $db->quoteName('idx_customer_id') . " (" . $db->quoteName('customer_id') . ")
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci"
         )->execute();
 

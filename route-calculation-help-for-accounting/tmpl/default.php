@@ -16,7 +16,8 @@ use Joomla\CMS\Language\Text;
 
 $document = Factory::getApplication()->getDocument();
 $languageTag = Factory::getApplication()->getLanguage()->getTag();
-$calculatorUrl = Uri::root(true) . '/modules/mod_route_calculation_help_for_accounting/media/calculator.html?v=1.2.39';
+$calculatorVersion = (string) (filemtime(__DIR__ . '/../media/calculator.html') ?: '1.2.39');
+$calculatorUrl = Uri::root(true) . '/modules/mod_route_calculation_help_for_accounting/media/calculator.html?v=' . rawurlencode($calculatorVersion);
 $ajaxUrl = Uri::root() . 'index.php?option=com_ajax&module=route_calculation_help_for_accounting&format=json';
 $tokenName = Session::getFormToken();
 $tokenValue = '1';
@@ -45,7 +46,7 @@ $calculatorTextKeys = [
     'Base - {country} VAT rate (%)' => 'CALCULATOR_BASE_COUNTRY_VAT_RATE',
     'Outside Slovenia country' => 'CALCULATOR_OUTSIDE_COUNTRY',
     'Italy' => 'CALCULATOR_ITALY',
-    'Croatia / Zagreb' => 'CALCULATOR_CROATIA_ZAGREB',
+    'Croatia' => 'CALCULATOR_CROATIA',
     'Austria' => 'CALCULATOR_AUSTRIA',
     'Germany' => 'CALCULATOR_GERMANY',
     'Hungary' => 'CALCULATOR_HUNGARY',
@@ -96,9 +97,10 @@ $calculatorTextKeys = [
     'Service date' => 'CALCULATOR_SERVICE_DATE',
     'Customer name' => 'CALCULATOR_CUSTOMER_NAME',
     'Address, post' => 'CALCULATOR_ADDRESS_POST',
-    'ID za DDV kupca: SIxxxx' => 'CALCULATOR_CUSTOMER_VAT_ID',
+    'ID za DDV kupca: XX1234' => 'CALCULATOR_CUSTOMER_VAT_ID',
     'Save details' => 'CALCULATOR_SAVE_DETAILS',
     'Customers' => 'CALCULATOR_CUSTOMERS',
+    'Add to draft invoice' => 'CALCULATOR_ADD_TO_DRAFT',
     'Save invoice history' => 'CALCULATOR_SAVE_INVOICE_HISTORY',
     'Load history' => 'CALCULATOR_LOAD_HISTORY',
     'Auto generated invoice text' => 'CALCULATOR_AUTO_INVOICE_TEXT',
@@ -225,7 +227,8 @@ $calculatorTextKeys = [
     'Prevoz {route}' => 'PDF_TRANSFER_ROUTE',
     '{routeTitle}, del poti Slovenija ({km} km)' => 'PDF_SLOVENIA_ROUTE_PART',
     '{routeTitle}, del poti izven Slovenije ({km} km)' => 'PDF_OUTSIDE_ROUTE_PART',
-    '{routeTitle}, del poti {country} ({km} km)' => 'PDF_COUNTRY_ROUTE_PART',
+    '{routeTitle}, country part {country} ({km} km)' => 'PDF_COUNTRY_ROUTE_PART',
+    'country part {country} ({km} km)' => 'PDF_COUNTRY_PART',
     'kos' => 'PDF_PIECE',
     'Dodatni strosek' => 'PDF_ADDITIONAL_COST',
     'Skupaj' => 'PDF_TOTAL',
@@ -235,7 +238,10 @@ $calculatorTextKeys = [
     'Znesek z DDV' => 'PDF_AMOUNT_WITH_VAT',
     'Pri placilu se sklicujte na stevilko SI00 {paymentReference}.' => 'PDF_PAYMENT_REFERENCE',
     'Za del poti izven Slovenije je uporabljen DDV {outsideVatRate}%, skladno z izbrano drzavo opravljanja storitve.' => 'PDF_OUTSIDE_VAT_NOTE',
-    'Kraj opravljanja storitve je zunaj Slovenije v skladu s 1. odstavkom 28. clena ZDDV-1 - DDV ni obracunan.' => 'PDF_FOREIGN_TRANSPORT_VAT_EXEMPT',
+    'The place of supply is outside Slovenia under Article 28(1) of the Slovenian VAT Act (ZDDV-1) - (Slovenian) VAT is not charged.' => 'PDF_FOREIGN_TRANSPORT_VAT_EXEMPT',
+    'Croatian VAT number: OIB39387192794. 25% VAT charged; we are VAT registered.' => 'PDF_CROATIA_VAT_NOTE',
+    'Austrian VAT number: AT686058199. 10% VAT charged; we are VAT registered.' => 'PDF_AUSTRIA_VAT_NOTE',
+    'German VAT number: 053/659/50131. 19% VAT charged; we are VAT registered.' => 'PDF_GERMANY_VAT_NOTE',
     'Zahvaljujemo se vam za vase zaupanje in se veselimo nadaljnjega sodelovanja!' => 'PDF_THANK_YOU',
     'Zig in podpis:' => 'PDF_STAMP_SIGNATURE',
     'International passenger transfer {pickup} → {dropoff}.\nTotal route: {totalKm}. Estimated Slovenia part: {siKm}. Outside Slovenia: {outsideKm}.\nSlovenian VAT is calculated only on the part of the route performed in Slovenia, proportionate to kilometres driven in Slovenia.\nTaxable base Slovenia: {taxableBase}. Outside Slovenia part: {outsideBase}.{outsideVatText} VAT {vatRate}%: {vatAmount}. Total: {totalAmount}.' => 'INVOICE_TEXT_EN',
@@ -265,14 +271,21 @@ $frontendConfig = [
         'email' => (string) $params->get('company_email', 'office@example.com'),
         'phone' => (string) $params->get('company_phone', '+386 00 000 000'),
         'issueCity' => (string) $params->get('company_issue_city', 'Example City'),
+        'signatureImageUrl' => (string) $params->get('pdf_signature_image_url', 'podpis-transparent.png'),
     ],
     'revenueAccounts' => [
         'slovenia' => (string) $params->get('revenue_account_slovenia', '7601'),
-        'italy' => (string) $params->get('revenue_account_italy', '7602'),
-        'croatia' => (string) $params->get('revenue_account_croatia', '7603'),
-        'austria' => (string) $params->get('revenue_account_austria', '7604'),
+        'italy' => (string) $params->get('revenue_account_italy', '7610'),
+        'croatia' => (string) $params->get('revenue_account_croatia', '7610'),
+        'austria' => (string) $params->get('revenue_account_austria', '7610'),
         'germany' => (string) $params->get('revenue_account_germany', '7605'),
-        'hungary' => (string) $params->get('revenue_account_hungary', '7606'),
+        'hungary' => (string) $params->get('revenue_account_hungary', '7610'),
+    ],
+    'vatAccounts' => [
+        'slovenia' => (string) $params->get('vat_account_slovenia', '26001'),
+        'croatia' => (string) $params->get('vat_account_croatia', '260011'),
+        'austria' => (string) $params->get('vat_account_austria', '260012'),
+        'germany' => (string) $params->get('vat_account_germany', '260010'),
     ],
 ];
 $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;

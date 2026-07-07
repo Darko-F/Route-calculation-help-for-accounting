@@ -7,7 +7,7 @@
   <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
   <authorEmail>info@topoweryou.com</authorEmail>
   <authorUrl>https://topoweryou.com</authorUrl>
-  <version>1.2.39</version>
+  <version>1.2.56</version>
   <description>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_XML_DESCRIPTION</description>
   <updateservers>
     <server type="extension" priority="1" name="Route Calculation Help for Accounting Updates">https://builder.topoweryou.com/routecalculationhelp/files/routecalculationhelp/updates/route-calculation-help-for-accounting.xml</server>
@@ -59,7 +59,7 @@
         >
           <option value="SI">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIA</option>
           <option value="IT">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ITALY</option>
-          <option value="HR">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CROATIA_ZAGREB</option>
+          <option value="HR">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CROATIA</option>
           <option value="AT">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_AUSTRIA</option>
           <option value="DE">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GERMANY</option>
           <option value="HU">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_HUNGARY</option>
@@ -74,13 +74,26 @@
         <field name="company_email" type="email" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_EMAIL_LABEL" default="office@example.com" />
         <field name="company_phone" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_PHONE_LABEL" default="+386 00 000 000" />
         <field name="company_issue_city" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_ISSUE_CITY_LABEL" default="Example City" />
+        <field
+          name="pdf_signature_image_url"
+          type="text"
+          label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_PDF_SIGNATURE_IMAGE_URL_LABEL"
+          description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_PDF_SIGNATURE_IMAGE_URL_DESC"
+          default="podpis-transparent.png"
+          filter="string"
+        />
         <field type="spacer" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_SPACER_REVENUE_ACCOUNTS" />
         <field name="revenue_account_slovenia" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_SLOVENIA_LABEL" default="7601" />
-        <field name="revenue_account_italy" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_ITALY_LABEL" default="7602" />
-        <field name="revenue_account_croatia" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_CROATIA_LABEL" default="7603" />
-        <field name="revenue_account_austria" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_AUSTRIA_LABEL" default="7604" />
+        <field name="revenue_account_italy" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_ITALY_LABEL" default="7610" />
+        <field name="revenue_account_croatia" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_CROATIA_LABEL" default="7610" />
+        <field name="revenue_account_austria" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_AUSTRIA_LABEL" default="7610" />
         <field name="revenue_account_germany" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_GERMANY_LABEL" default="7605" />
-        <field name="revenue_account_hungary" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_HUNGARY_LABEL" default="7606" />
+        <field name="revenue_account_hungary" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_HUNGARY_LABEL" default="7610" />
+        <field type="spacer" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_SPACER_VAT_ACCOUNTS" />
+        <field name="vat_account_slovenia" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_VAT_ACCOUNT_SLOVENIA_LABEL" default="26001" />
+        <field name="vat_account_croatia" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_VAT_ACCOUNT_CROATIA_LABEL" default="260011" />
+        <field name="vat_account_austria" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_VAT_ACCOUNT_AUSTRIA_LABEL" default="260012" />
+        <field name="vat_account_germany" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_VAT_ACCOUNT_GERMANY_LABEL" default="260010" />
       </fieldset>
     </fields>
   </config>
