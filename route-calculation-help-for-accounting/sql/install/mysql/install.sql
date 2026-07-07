@@ -46,3 +46,21 @@ CREATE TABLE IF NOT EXISTS `#__route_calculation_help_for_accounting_invoices` (
   KEY `idx_customer_id` (`customer_id`),
   KEY `idx_customer_code` (`customer_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__route_calculation_help_for_accounting_invoice_draft_lines` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `customer_id` int unsigned NOT NULL,
+  `customer_code` varchar(64) NOT NULL,
+  `customer_name` varchar(255) NOT NULL DEFAULT '',
+  `project_ref` varchar(255) NOT NULL DEFAULT '',
+  `service_date` date NULL,
+  `line_label` varchar(512) NOT NULL DEFAULT '',
+  `total_amount` decimal(12,4) NOT NULL DEFAULT 0,
+  `payload_json` mediumtext NULL,
+  `created_by` int unsigned NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_customer_project` (`customer_code`, `project_ref`),
+  KEY `idx_customer_id` (`customer_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;

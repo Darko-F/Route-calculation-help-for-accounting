@@ -1,6 +1,19 @@
 # Version Summary
 
-## Module 1.2.39
+## Version 1.2.56
+
+- Added a defensive UI rule to hide any legacy draft XML export button so only the bottom XML export button is visible.
+
+## Version 1.2.55
+
+- Removed the duplicate draft XML export button and made the bottom XML export button handle draft invoices.
+
+## Version 1.2.54
+
+- Added configurable PDF stamp/signature image URL with bundled signature image as the default.
+- Updated PDF generation to load the configured signature image for generated and draft invoices.
+
+## Version 1.2.39
 
 - Added configurable base country support for Slovenia, Italy, Croatia, Austria, Germany, and Hungary.
 - Added country boundary GeoJSON files and automatic country split support for the supported countries.
@@ -21,6 +34,6 @@
 
 ## Update Server
 
-- Module update XML now points to `route_calculation_help_for_accounting_v1.2.39.zip`.
+- Version update XML now points to `route_calculation_help_for_accounting_v1.2.39.zip`.
 - Installer plugin update XML now points to `plg_installer_routecalculationupdatekey_v1.0.2.zip`.
 - `download.php` accepts valid keys through `key` or `dlid` and can run from inside the `downloads/` directory.
