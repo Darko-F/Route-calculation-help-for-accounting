@@ -272,27 +272,45 @@ class RouteCalculationHelpForAccountingHelper
         Session::checkToken('post') or throw new RuntimeException('Invalid Joomla session token.');
         $payload = self::payload();
         $search = trim((string) ($payload['query'] ?? ''));
+        $paginate = !empty($payload['paginate']);
+        $page = max(1, (int) ($payload['page'] ?? 1));
+        $perPage = (int) ($payload['per_page'] ?? 50);
+        $perPage = in_array($perPage, [25, 50, 100], true) ? $perPage : 50;
         $db = self::db();
         self::ensureCustomerAddressColumn();
         $query = $db->getQuery(true)
             ->select($db->quoteName(['customer_code', 'customer_name']))
             ->from($db->quoteName('#__route_calculation_help_for_accounting_customers'));
 
+        $condition = '';
         if ($search !== '') {
             $like = $db->quote('%' . $search . '%');
-            $query->where(
-                '('
+            $condition = '('
                 . $db->quoteName('customer_name') . ' LIKE ' . $like
                 . ' OR ' . $db->quoteName('customer_code') . ' LIKE ' . $like
-                . ')'
-            );
+                . ')';
+            $query->where($condition);
         }
 
-        $query->order($db->quoteName('customer_name') . ' ASC')
-            ->setLimit($search === '' ? 500 : 25);
+        $total = 0;
+        if ($paginate) {
+            $countQuery = $db->getQuery(true)
+                ->select('COUNT(*)')
+                ->from($db->quoteName('#__route_calculation_help_for_accounting_customers'));
+            if ($condition !== '') {
+                $countQuery->where($condition);
+            }
+            $total = (int) $db->setQuery($countQuery)->loadResult();
+            $page = min($page, max(1, (int) ceil($total / $perPage)));
+            $query->setLimit($perPage, ($page - 1) * $perPage);
+        } else {
+            $query->setLimit($search === '' ? 500 : 25);
+        }
+
+        $query->order($db->quoteName('customer_name') . ' ASC');
         $customers = $db->setQuery($query)->loadAssocList();
 
-        return ['customers' => $customers ?: []];
+        return ['customers' => $customers ?: [], 'total' => $paginate ? $total : count($customers ?: []), 'page' => $page, 'per_page' => $perPage];
     }
 
     public function deleteCustomerAjax()
@@ -325,8 +343,16 @@ class RouteCalculationHelpForAccountingHelper
         $payload = self::payload();
         $customerCode = trim((string) ($payload['customer_code'] ?? ''));
         $customerName = trim((string) ($payload['customer_name'] ?? ''));
+        $allCustomers = !empty($payload['all_customers']);
+        $loadAll = !empty($payload['load_all']);
+        $invoiceNumber = trim((string) ($payload['invoice_number'] ?? ''));
+        $date = trim((string) ($payload['date'] ?? ''));
+        $paginate = !empty($payload['paginate']);
+        $page = max(1, (int) ($payload['page'] ?? 1));
+        $perPage = (int) ($payload['per_page'] ?? 50);
+        $perPage = in_array($perPage, [25, 50, 100], true) ? $perPage : 50;
 
-        if ($customerCode === '' && $customerName === '') {
+        if (!$allCustomers && $customerCode === '' && $customerName === '') {
             throw new RuntimeException('Sifra Stranke or customer name is required.');
         }
 
@@ -334,24 +360,75 @@ class RouteCalculationHelpForAccountingHelper
         self::ensureInvoiceCustomerColumns();
         $filters = [];
 
-        if ($customerCode !== '') {
+        if (!$allCustomers && $customerCode !== '') {
             $filters[] = $db->quoteName('customer_code') . ' = ' . $db->quote($customerCode);
         }
 
-        if ($customerName !== '') {
+        if (!$allCustomers && $customerCode === '' && $customerName !== '') {
             $filters[] = $db->quoteName('customer_name') . ' = ' . $db->quote($customerName);
             $filters[] = $db->quoteName('customer_name') . ' LIKE ' . $db->quote('%' . $customerName . '%');
         }
 
+        $conditions = [];
+        if ($filters) {
+            $conditions[] = '(' . implode(' OR ', $filters) . ')';
+        }
+        if ($invoiceNumber !== '') {
+            $conditions[] = $db->quoteName('invoice_number') . ' LIKE ' . $db->quote('%' . $invoiceNumber . '%');
+        }
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            $conditions[] = $db->quoteName('created_at') . ' LIKE ' . $db->quote($date . '%');
+        }
+
         $query = $db->getQuery(true)
-            ->select($db->quoteName(['customer_code', 'customer_name', 'customer_address', 'vat_id', 'invoice_number', 'total_amount', 'payload_json', 'created_at']))
-            ->from($db->quoteName('#__route_calculation_help_for_accounting_invoices'))
-            ->where('(' . implode(' OR ', $filters) . ')')
-            ->order($db->quoteName('created_at') . ' DESC')
-            ->setLimit(25);
+            ->select($db->quoteName(['id', 'customer_code', 'customer_name', 'customer_address', 'vat_id', 'invoice_number', 'total_amount', 'payload_json', 'created_at']))
+            ->from($db->quoteName('#__route_calculation_help_for_accounting_invoices'));
+        foreach ($conditions as $condition) {
+            $query->where($condition);
+        }
+
+        $query->order($db->quoteName('created_at') . ' DESC');
+        $total = 0;
+        if ($paginate) {
+            $countQuery = $db->getQuery(true)
+                ->select('COUNT(*)')
+                ->from($db->quoteName('#__route_calculation_help_for_accounting_invoices'));
+            foreach ($conditions as $condition) {
+                $countQuery->where($condition);
+            }
+            $total = (int) $db->setQuery($countQuery)->loadResult();
+            $page = min($page, max(1, (int) ceil($total / $perPage)));
+            $query->setLimit($perPage, ($page - 1) * $perPage);
+        } elseif (!$loadAll) {
+            $query->setLimit(25);
+        }
         $invoices = $db->setQuery($query)->loadAssocList();
 
-        return ['invoices' => $invoices ?: []];
+        return ['invoices' => $invoices ?: [], 'total' => $paginate ? $total : count($invoices ?: []), 'page' => $page, 'per_page' => $perPage];
+    }
+
+    public function deleteInvoiceAjax()
+    {
+        Session::checkToken('post') or throw new RuntimeException('Invalid Joomla session token.');
+        $payload = self::payload();
+        $invoiceId = (int) ($payload['id'] ?? 0);
+
+        if ($invoiceId < 1) {
+            throw new RuntimeException('A valid invoice ID is required.');
+        }
+
+        self::ensureTables();
+        $db = self::db();
+        $query = $db->getQuery(true)
+            ->delete($db->quoteName('#__route_calculation_help_for_accounting_invoices'))
+            ->where($db->quoteName('id') . ' = ' . $invoiceId);
+        $db->setQuery($query)->execute();
+
+        if ((int) $db->getAffectedRows() < 1) {
+            throw new RuntimeException('Invoice was not found.');
+        }
+
+        return ['deleted_invoice_id' => $invoiceId];
     }
 
     private static function saveCustomer(array $payload): array

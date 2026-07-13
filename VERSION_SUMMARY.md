@@ -1,5 +1,50 @@
 # Version Summary
 
+## Version 1.2.64
+
+- Removed the separate manual base-country kilometre override, button, and split mode.
+- Country-row recalculation now preserves edited kilometres and automatically adjusts remaining country rows to equal the total route.
+- Removed the country-kilometre total mismatch warning and updated fallback guidance to use editable country rows.
+
+## Version 1.2.63
+
+- Added server-backed pagination to the Customers and Invoices modals.
+- Both modals default to 50 rows and allow 25, 50, or 100 rows per page.
+- Added Previous, Next, and numbered page controls for larger result sets.
+
+## Version 1.2.62
+
+- Added confirmed invoice deletion exclusively inside the Invoices modal.
+- Added a calendar picker to the invoice date filter while preserving the visible `DD/MM/YYYY` format.
+
+## Version 1.2.61
+
+- Customers, Invoices, and All now scroll the Joomla page to the top of the calculator before opening their modal lists.
+
+## Version 1.2.60
+
+- Reordered the invoice workflow buttons to Save customer, Add to draft invoice, and Save invoice.
+- Removed the redundant Load history button.
+- Moved Customers and Invoices to a separate row below a divider.
+
+## Version 1.2.59
+
+- Moved Actions directly below Transfer details, followed by Results.
+- Kept the initial customer invoice history at 25 records and added an All button that loads every invoice for that customer in a modal.
+- Added an Invoices modal for searching all saved invoices by invoice number or saved date.
+- Updated the Saved customers modal to open at the top of its content.
+
+## Version 1.2.58
+
+- Standardized all user-visible dates to `DD/MM/YYYY`, including service date, draft lines, invoice history, and PDF invoice dates.
+- Kept database and Minimax XML date values in ISO `YYYY-MM-DD` format for compatibility.
+
+## Version 1.2.57
+
+- Removed the duplicate foreign-country and foreign-country VAT inputs from the transfer form.
+- Kept country and VAT editing in the per-country split rows, which fast calculation populates automatically.
+- Manual and fallback calculations now use an explicit custom-country row instead of silently assuming Italy.
+
 ## Version 1.2.56
 
 - Added a defensive UI rule to hide any legacy draft XML export button so only the bottom XML export button is visible.
