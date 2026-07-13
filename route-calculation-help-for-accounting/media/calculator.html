@@ -25,6 +25,8 @@
     .country-note-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: .25rem; }
     .invoice-history-grid { display: grid; grid-template-columns: minmax(9rem, 1fr) 7rem 8.5rem; gap: .5rem; align-items: center; }
     .invoice-history-grid > span { min-width: 0; overflow-wrap: anywhere; }
+    .invoice-browser-grid { display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(8rem, 1fr) 7rem 7rem auto; gap: .5rem; align-items: center; }
+    .invoice-browser-grid > span { min-width: 0; overflow-wrap: anywhere; }
     .customer-picker-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .5rem; align-items: center; }
     .customer-picker-row > span { min-width: 0; overflow-wrap: anywhere; }
     #invoiceDraft button[onclick*="exportDraftMinimaxXml"] { display: none !important; }
@@ -32,6 +34,7 @@
     @media (max-width: 1199.98px) { .country-split-main-row { grid-template-columns: minmax(0, 1fr) minmax(5rem, .55fr); } .country-split-main-row .country-vat-wrap { grid-column: 1 / -1; } }
     @media (max-width: 575.98px) { .country-split-main-row { grid-template-columns: 1fr; } }
     @media (max-width: 575.98px) { .invoice-history-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 767.98px) { .invoice-browser-grid { grid-template-columns: 1fr; } }
     @media (max-width: 575.98px) { .customer-picker-row { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -110,24 +113,6 @@
             <label for="vatRate" class="form-label fw-semibold" data-base-country-label="vat-rate">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIAN_VAT_RATE</label>
             <input id="vatRate" type="number" step="0.1" class="form-control form-control-lg" value="9.5" />
           </div>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label for="outsideCountry" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OUTSIDE_COUNTRY</label>
-              <select id="outsideCountry" class="form-select" onchange="onOutsideCountryChange()">
-                <option value="IT" selected>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ITALY</option>
-                <option value="HR">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CROATIA</option>
-                <option value="AT">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_AUSTRIA</option>
-                <option value="DE">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GERMANY</option>
-                <option value="HU">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_HUNGARY</option>
-                <option value="OTHER">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OTHER_CUSTOM</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label for="outsideVatRate" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OUTSIDE_VAT_RATE</label>
-              <input id="outsideVatRate" type="number" step="0.1" class="form-control" value="0" />
-              <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_COUNTRY_DEFAULTS_HELP</div>
-            </div>
-          </div>
           <div class="border rounded p-3 mt-3">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <h3 class="h6 mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_COUNTRY_VAT_SPLIT</h3>
@@ -140,36 +125,24 @@
           <div id="status" class="alert alert-secondary small mt-3 mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_WAITING_GOOGLE_MAPS</div>
         </div>
       </div>
-    </div>
-    <div class="col-lg-7">
       <div class="card shadow-sm mb-4">
         <div class="card-header bg-white"><h2 class="h5 mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ACTIONS</h2></div>
         <div class="card-body">
-          <div class="action-grid">
+          <div class="d-grid">
             <button class="btn btn-primary" onclick="calculateRoute()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CALCULATE_ROUTE</button>
-            <button class="btn btn-outline-secondary" onclick="calculateWithManualKm()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_RECALCULATE_MANUAL</button>
           </div>
           <div class="row g-3 mt-2">
             <div class="col-md-6">
               <label for="splitMethod" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_METHOD</label>
-              <select id="splitMethod" class="form-select"><option value="fast" selected>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_FAST</option><option value="geocode">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_GEOCODE</option><option value="manual">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_MANUAL</option></select>
+              <select id="splitMethod" class="form-select"><option value="fast" selected>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_FAST</option><option value="geocode">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_GEOCODE</option></select>
               <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SPLIT_HELP</div>
             </div>
             <div class="col-md-6">
               <label for="sampleKm" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLING_ACCURACY</label>
               <select id="sampleKm" class="form-select"><option value="10">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_10</option><option value="5">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_5</option><option value="2" selected>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_2</option><option value="1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_1</option><option value="0.5">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAMPLE_05</option></select>
             </div>
-            <div class="col-12">
-              <label for="manualSiKm" class="form-label fw-semibold" data-base-country-label="manual-km">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_MANUAL_SI_KM</label>
-              <input id="manualSiKm" type="number" step="0.01" class="form-control" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OPTIONAL_KM" />
-              <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_MANUAL_SI_KM_HELP</div>
-            </div>
           </div>
         </div>
-      </div>
-      <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center"><h2 class="h5 mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_MAP</h2><span class="badge text-bg-light">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_DRIVING_ROUTE</span></div>
-        <div class="card-body"><div id="map"></div></div>
       </div>
       <div class="card shadow-sm mb-4">
         <div class="card-header bg-white"><h2 class="h5 mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_RESULTS</h2></div>
@@ -186,6 +159,12 @@
             <tr class="table-dark"><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_TOTAL_INVOICE_AMOUNT</th><td id="totalAmount" class="result-value text-end">-</td></tr>
           </tbody></table>
         </div>
+      </div>
+    </div>
+    <div class="col-lg-7">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center"><h2 class="h5 mb-0">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_MAP</h2><span class="badge text-bg-light">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_DRIVING_ROUTE</span></div>
+        <div class="card-body"><div id="map"></div></div>
       </div>
       <div class="mt-3">
         <div class="card border p-3 mb-4">
@@ -204,7 +183,7 @@
             </div>
             <div class="col-md-6 mt-2">
               <label for="serviceDate" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SERVICE_DATE</label>
-              <input id="serviceDate" class="form-control form-control-sm" type="date" />
+              <input id="serviceDate" class="form-control form-control-sm" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" />
             </div>
             <div class="col-12 mt-2"><input id="outputFileName" class="form-control form-control-sm" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_FILE_NAME" /></div>
             <div class="col-12 mt-2">
@@ -223,10 +202,15 @@
             <div class="col-12 mt-2"><textarea id="customInvoiceMessage" class="form-control form-control-sm" rows="2" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_CUSTOM_MESSAGE"></textarea></div>
             <div class="col-12 mt-2 d-flex flex-wrap gap-2">
               <button class="btn btn-sm btn-primary" type="button" onclick="saveCustomerDetails()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAVE_DETAILS</button>
-              <button class="btn btn-sm btn-outline-secondary" type="button" onclick="openCustomerPicker()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMERS</button>
               <button class="btn btn-sm btn-outline-success" type="button" onclick="addCurrentServiceToDraft()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADD_TO_DRAFT</button>
               <button class="btn btn-sm btn-outline-primary" type="button" onclick="saveInvoiceHistory()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAVE_INVOICE_HISTORY</button>
-              <button class="btn btn-sm btn-outline-secondary" type="button" onclick="loadInvoiceHistory()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_LOAD_HISTORY</button>
+            </div>
+            <div class="col-12">
+              <hr class="my-3" />
+              <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-sm btn-outline-secondary" type="button" onclick="openCustomerPicker()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMERS</button>
+                <button class="btn btn-sm btn-outline-secondary" type="button" onclick="openInvoiceBrowser()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_INVOICES</button>
+              </div>
             </div>
             <div class="col-12 mt-2">
               <div id="databaseStatus" class="alert alert-secondary small mb-2 d-none"></div>
@@ -251,17 +235,73 @@
   </div>
 </main>
 <div class="modal fade" id="customerPickerModal" tabindex="-1" aria-labelledby="customerPickerTitle" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h2 class="modal-title fs-5" id="customerPickerTitle">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAVED_CUSTOMERS</h2>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CLOSE"></button>
       </div>
       <div class="modal-body">
-        <label for="customerSearch" class="form-label">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SEARCH_CUSTOMER</label>
-        <input id="customerSearch" class="form-control mb-3" type="search" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_START_TYPING" oninput="filterCustomerPicker()" autocomplete="off" />
+        <div class="row g-2 mb-3">
+          <div class="col-md-8">
+            <label for="customerSearch" class="form-label">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SEARCH_CUSTOMER</label>
+            <input id="customerSearch" class="form-control" type="search" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_START_TYPING" oninput="scheduleCustomerPickerSearch()" autocomplete="off" />
+          </div>
+          <div class="col-md-4">
+            <label for="customerPickerPerPage" class="form-label">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PER_PAGE</label>
+            <select id="customerPickerPerPage" class="form-select" onchange="changeCustomerPickerPerPage()"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select>
+          </div>
+        </div>
         <div id="customerPickerStatus" class="text-muted small mb-2"></div>
         <div id="customerPickerList" class="list-group" style="max-height: 50vh; overflow-y: auto;"></div>
+        <div id="customerPickerPagination" class="mt-3"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="customerInvoiceHistoryModal" tabindex="-1" aria-labelledby="customerInvoiceHistoryTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title fs-5" id="customerInvoiceHistoryTitle">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ALL_CUSTOMER_INVOICES</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CLOSE"></button>
+      </div>
+      <div class="modal-body">
+        <div id="customerInvoiceHistoryStatus" class="text-muted small mb-2"></div>
+        <div id="customerInvoiceHistoryList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="invoiceBrowserModal" tabindex="-1" aria-labelledby="invoiceBrowserTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title fs-5" id="invoiceBrowserTitle">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_INVOICES</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CLOSE"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-2 mb-3">
+          <div class="col-md-5">
+            <label for="invoiceBrowserNumber" class="form-label small">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_FILTER_INVOICE</label>
+            <input id="invoiceBrowserNumber" class="form-control" autocomplete="off" oninput="scheduleInvoiceBrowserSearch()" />
+          </div>
+          <div class="col-md-4">
+            <label for="invoiceBrowserDate" class="form-label small">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_DATE</label>
+            <div class="input-group">
+              <input id="invoiceBrowserDate" class="form-control" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" oninput="scheduleInvoiceBrowserSearch()" onblur="normalizeVisibleDateInput(this)" />
+              <button class="btn btn-outline-secondary" type="button" onclick="openInvoiceDatePicker()" aria-label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CHOOSE_DATE">&#128197;</button>
+              <input id="invoiceBrowserDatePicker" type="date" tabindex="-1" aria-hidden="true" onchange="onInvoiceBrowserDatePicked()" style="position:absolute; width:1px; height:1px; opacity:0; right:0; bottom:0; pointer-events:none;" />
+            </div>
+          </div>
+          <div class="col-md-3">
+            <label for="invoiceBrowserPerPage" class="form-label small">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PER_PAGE</label>
+            <select id="invoiceBrowserPerPage" class="form-select" onchange="changeInvoiceBrowserPerPage()"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select>
+          </div>
+        </div>
+        <div id="invoiceBrowserStatus" class="text-muted small mb-2"></div>
+        <div id="invoiceBrowserList"></div>
+        <div id="invoiceBrowserPagination" class="mt-3"></div>
       </div>
     </div>
   </div>
@@ -299,6 +339,18 @@ let lastRouteData = null;
 let lastCalculatedData = null;
 let activeDraftRef = '';
 let savedCustomers = [];
+let customerPickerCustomers = [];
+let customerPickerPage = 1;
+let customerPickerTotal = 0;
+let customerPickerTimer = null;
+let customerPickerRequestId = 0;
+let allCustomerInvoices = [];
+let invoiceBrowserInvoices = [];
+let invoiceBrowserTimer = null;
+let invoiceBrowserRequestId = 0;
+let invoiceBrowserPage = 1;
+let invoiceBrowserTotal = 0;
+let lastEditedCountrySplitRow = null;
 let countryBoundaryPromise = null;
 let countryBoundaryPolygons = {};
 let pdfUnicodeFontBase64 = {};
@@ -390,14 +442,11 @@ window.addEventListener('DOMContentLoaded', () => {
     updateBaseCountryUiText();
     setupPriceInputs();
     updateDeductionsDisplay();
-    onOutsideCountryChange(false);
     generateNextInvoiceNumber(false).catch(() => {});
     document.getElementById('invoiceNumber')?.addEventListener('input', event => {
       event.currentTarget.dataset.generated = '0';
     });
-    document.getElementById('outsideVatRate')?.addEventListener('input', () => {
-      markRouteCalculationStale();
-    });
+    document.getElementById('serviceDate')?.addEventListener('blur', event => normalizeVisibleDateInput(event.currentTarget));
     document.getElementById('vatRate')?.addEventListener('input', () => {
       markRouteCalculationStale();
     });
@@ -575,7 +624,6 @@ async function calculateRoute() {
   const vatRate = parseFloat(document.getElementById('vatRate').value || '0');
   const sampleKm = parseFloat(document.getElementById('sampleKm').value || '2');
   const splitMethod = document.getElementById('splitMethod').value;
-  const manualSiKm = parseFloat(document.getElementById('manualSiKm').value || '');
   if (!pickup || !dropoff) { setStatus('Pickup and drop-off are required.', 'danger'); return; }
   if (intermediates.length > 25) { setStatus('Routes API supports a maximum of 25 additional places.', 'danger'); return; }
   if ((priceSource === 'gross' && (!grossPrice || grossPrice <= 0)) || (priceSource === 'net' && (!netPriceInput || netPriceInput <= 0))) { setStatus('Enter a valid final price or price without tax.', 'danger'); return; }
@@ -610,17 +658,14 @@ async function calculateRoute() {
     const allGeocodedCountriesAreBase = allRouteCountriesAreKnown && routeCountries.every(isBaseCountry);
     const bothRouteEndpointsLookInsideBase = !returnTrip && !stops.length && startPoint && endPoint && await arePointsInsideBaseCountry(startPoint, endPoint);
     if (allGeocodedCountriesAreBase || bothRouteEndpointsLookInsideBase) { calculateVatSplitFromSloveniaKm(totalKm, 'Domestic Slovenia route detected. Outside Slovenia set to 0 km.'); return; }
-    if (splitMethod === 'manual' || (!Number.isNaN(manualSiKm) && manualSiKm >= 0)) {
-      if (Number.isNaN(manualSiKm) || manualSiKm < 0) { showRouteOnly(totalKm); setStatus('Route calculated. Enter manual Slovenia km and click “Recalculate with manual Slovenia km”.', 'warning'); return; }
-      calculateVatSplitFromSloveniaKm(manualSiKm, 'Manual Slovenia km used.'); return;
-    }
     if (splitMethod === 'fast') {
       const countryMeters = await estimateCountryMetersFast(path, sampleKm * 1000);
       if (countryMeters.length) {
         calculateVatSplitFromCountryMeters(countryMeters, 'Done. Fast Slovenia border polygon split used.');
       } else if (getBaseCountryCode() !== 'SI') {
+        seedCountrySplitRows(0, totalKm);
         showRouteOnly(totalKm);
-        setStatus('Route calculated, but country boundaries could not be loaded. Enter manual Slovenia km.', 'warning');
+        setStatus('Route calculated, but country boundaries could not be loaded. Edit the country rows and recalculate.', 'warning');
       } else {
         const siMeters = estimateSloveniaMetersFast(path, sampleKm * 1000);
         calculateVatSplitFromSloveniaKm(siMeters / 1000, 'Done. Fast Slovenia border polygon split used.');
@@ -629,18 +674,11 @@ async function calculateRoute() {
     }
     setStatus('Using slower Google reverse geocoding method...', 'warning');
     try { const siMeters = await estimateBaseCountryMetersByGeocoding(path, sampleKm * 1000); calculateVatSplitFromSloveniaKm(siMeters / 1000, 'Done. Google reverse geocoding split used.'); }
-    catch (err) { console.error(err); showRouteOnly(totalKm); setStatus(tf('Route calculated, but Google Geocoding split failed: {error}. Use fast method or enter manual Slovenia km.', { error: err.message }), 'warning'); }
+    catch (err) { console.error(err); seedCountrySplitRows(0, totalKm); showRouteOnly(totalKm); setStatus(tf('Route calculated, but Google Geocoding split failed: {error}. Edit the country rows and recalculate.', { error: err.message }), 'warning'); }
   } catch (err) {
     console.error(err);
     setStatus(tf('Route error: {error}. Check that Routes API is enabled for this Google key.', { error: err.message || err }), 'danger');
   }
-}
-
-function calculateWithManualKm() {
-  if (!lastRouteData) { setStatus('Calculate the route first, then enter manual Slovenia km.', 'warning'); return; }
-  const manualSiKm = parseFloat(document.getElementById('manualSiKm').value || '');
-  if (Number.isNaN(manualSiKm) || manualSiKm < 0) { setStatus('Enter a valid Slovenia km number.', 'danger'); return; }
-  calculateVatSplitFromSloveniaKm(manualSiKm, 'Manual Slovenia km used.');
 }
 
 function calculateVatSplitFromSloveniaKm(siKm, successMessage) {
@@ -669,7 +707,6 @@ function updateBaseCountryUiText() {
   document.querySelectorAll('[data-base-country-label]').forEach(element => {
     const type = element.dataset.baseCountryLabel;
     if (type === 'vat-rate') element.textContent = tf('Base - {country} VAT rate (%)', { country });
-    if (type === 'manual-km') element.textContent = tf('Manual {country} km override', { country });
     if (type === 'estimated-km') element.textContent = tf('Estimated km in {country}', { country });
     if (type === 'taxable-base') element.textContent = tf('{country} taxable base', { country });
     if (type === 'vat-amount') element.textContent = tf('{country} VAT', { country });
@@ -750,6 +787,7 @@ function addCountrySplitRow(segment = {}) {
   list.appendChild(row);
   const select = row.querySelector('.country-split-select');
   const nameInput = row.querySelector('.country-split-name');
+  const kmInput = row.querySelector('.country-split-km');
   select.addEventListener('change', () => {
     const selectedConfig = getCountryOptionConfig(select.value);
     nameInput.value = selectedConfig.name;
@@ -757,22 +795,31 @@ function addCountrySplitRow(segment = {}) {
     row.querySelector('.country-split-account').value = selectedConfig.revenueAccount;
     row.querySelector('.country-split-note').value = selectedConfig.note || '';
   });
-  row.querySelector('button').addEventListener('click', () => row.remove());
+  kmInput.addEventListener('input', () => {
+    row.dataset.userEditedKm = '1';
+    lastEditedCountrySplitRow = row;
+  });
+  row.querySelector('button').addEventListener('click', () => {
+    if (lastEditedCountrySplitRow === row) lastEditedCountrySplitRow = null;
+    row.remove();
+  });
 }
 
 function seedCountrySplitRows(siKm, outsideKm) {
   const list = document.getElementById('countrySplitRows');
   if (!list) return;
+  lastEditedCountrySplitRow = null;
   list.innerHTML = '';
   if (siKm > 0.004) addCountrySplitRow({ countryValue: getBaseCountryCode(), km: siKm });
   if (outsideKm > 0.004) {
-    const outsideCountry = document.getElementById('outsideCountry')?.value || 'IT';
+    const outsideCountry = 'OTHER';
+    const config = getCountryOptionConfig(outsideCountry);
     addCountrySplitRow({
       countryValue: outsideCountry,
       km: outsideKm,
-      vatRate: parseFloat(document.getElementById('outsideVatRate')?.value || '0') || 0,
-      revenueAccount: getCountryOptionConfig(outsideCountry).revenueAccount,
-      countryName: getCountryOptionConfig(outsideCountry).name
+      vatRate: config.vatRate,
+      revenueAccount: config.revenueAccount,
+      countryName: config.name
     });
   }
 }
@@ -797,19 +844,20 @@ function calculateVatSplitFromCountryMeters(countryMeters, successMessage) {
   const knownKm = rows.reduce((sum, segment) => sum + segment.km, 0);
   const remainderKm = Math.max(0, totalKm - knownKm);
   if (remainderKm > 0.1) {
-    const outsideCountry = document.getElementById('outsideCountry')?.value || 'IT';
+    const outsideCountry = 'OTHER';
     const config = getCountryOptionConfig(outsideCountry);
     rows.push({
       countryValue: outsideCountry,
       countryName: config.name,
       km: remainderKm,
-      vatRate: parseFloat(document.getElementById('outsideVatRate')?.value || String(config.vatRate)) || 0,
+      vatRate: config.vatRate,
       revenueAccount: config.revenueAccount,
       pdfNote: config.note || ''
     });
   }
   const list = document.getElementById('countrySplitRows');
   if (list) {
+    lastEditedCountrySplitRow = null;
     list.innerHTML = '';
     rows.forEach(addCountrySplitRow);
   }
@@ -840,7 +888,48 @@ function readCountrySplitRows() {
 
 function recalculateFromCountrySplit() {
   if (!lastRouteData) { setStatus('Calculate a route before recalculating country rows.', 'warning'); return; }
-  calculateFromCountrySegments(readCountrySplitRows(), 'Country VAT split recalculated.');
+  rebalanceCountrySplitRows();
+  calculateFromCountrySegments(readCountrySplitRows(), 'Country VAT split recalculated. Remaining km adjusted to route total.');
+}
+
+function rebalanceCountrySplitRows() {
+  const rows = Array.from(document.querySelectorAll('.country-split-item'));
+  const totalKm = Number(lastRouteData?.totalKm || 0);
+  if (!rows.length || totalKm <= 0) return;
+  const getKm = row => Math.max(0, parseFloat(row.querySelector('.country-split-km')?.value || '0') || 0);
+  const setKm = (row, value) => { row.querySelector('.country-split-km').value = round2(Math.max(0, value)); };
+  if (rows.length === 1) {
+    setKm(rows[0], totalKm);
+    rows[0].dataset.userEditedKm = '';
+    lastEditedCountrySplitRow = null;
+    return;
+  }
+
+  const editedRow = rows.includes(lastEditedCountrySplitRow) ? lastEditedCountrySplitRow : rows[rows.length - 1];
+  const uneditedRows = rows.filter(row => row !== editedRow && row.dataset.userEditedKm !== '1');
+  const otherRows = rows.filter(row => row !== editedRow);
+  const baseRow = uneditedRows.find(row => row.querySelector('.country-split-select')?.value === getBaseCountryCode());
+  const balanceRow = baseRow || uneditedRows.sort((a, b) => getKm(b) - getKm(a))[0] || otherRows.sort((a, b) => getKm(b) - getKm(a))[0];
+  let difference = totalKm - rows.reduce((sum, row) => sum + getKm(row), 0);
+
+  if (difference >= 0) {
+    setKm(balanceRow, getKm(balanceRow) + difference);
+  } else {
+    let excess = -difference;
+    const reductionRows = [balanceRow, ...rows.filter(row => row !== editedRow && row !== balanceRow), editedRow];
+    reductionRows.forEach(row => {
+      if (excess <= 0) return;
+      const currentKm = getKm(row);
+      const reduction = Math.min(currentKm, excess);
+      setKm(row, currentKm - reduction);
+      excess -= reduction;
+    });
+  }
+
+  const adjustedTotal = rows.reduce((sum, row) => sum + getKm(row), 0);
+  setKm(balanceRow, getKm(balanceRow) + (totalKm - adjustedTotal));
+  rows.forEach(row => { row.dataset.userEditedKm = ''; });
+  lastEditedCountrySplitRow = null;
 }
 
 function calculateFromCountrySegments(countrySegments, successMessage) {
@@ -849,10 +938,6 @@ function calculateFromCountrySegments(countrySegments, successMessage) {
   const segmentKmTotal = countrySegments.reduce((sum, segment) => sum + segment.km, 0);
   if (!countrySegments.length || segmentKmTotal <= 0) {
     setStatus('Enter at least one country row with km.', 'danger');
-    return;
-  }
-  if (Math.abs(segmentKmTotal - totalKm) > 0.1) {
-    setStatus(tf('Country km total must match route total. Country rows: {countryKm}, route: {totalKm}.', { countryKm: fmtKm(segmentKmTotal), totalKm: fmtKm(totalKm) }), 'danger');
     return;
   }
   // apply deductions from adjustments
@@ -914,13 +999,6 @@ function clearAdjustments() { document.getElementById('adjustmentsList').innerHT
 
 function updateDeductionsDisplay() { const total = getAdjustmentsTotal(); document.getElementById('deductionsTotal').textContent = Number(total || 0).toFixed(2); }
 
-function onOutsideCountryChange(recalculate = true) {
-  const v = document.getElementById('outsideCountry')?.value || 'IT';
-  const config = OUTSIDE_COUNTRY_DEFAULTS[v] || OUTSIDE_COUNTRY_DEFAULTS.OTHER;
-  document.getElementById('outsideVatRate').value = String(config.vatRate);
-  if (recalculate) markRouteCalculationStale();
-}
-
 function getAdjustmentsArray() { const rows = Array.from(document.querySelectorAll('.adjustment-row')); return rows.map(r => ({ description: (r.querySelector('.adjustment-desc') || { value: '' }).value, amount: parseFloat((r.querySelector('.adjustment-amount') || { value: 0 }).value) || 0 })); }
 
 function getAdjustmentsTotal() { return getAdjustmentsArray().reduce((s, a) => s + (Number(a.amount) || 0), 0); }
@@ -965,7 +1043,6 @@ async function postJoomlaAjax(method, payload) {
 }
 
 function getCustomerPayload() {
-  const outsideCountry = document.getElementById('outsideCountry')?.value || 'IT';
   const customerName = (document.getElementById('customerName')?.value || '').trim();
   const customerCodeInput = document.getElementById('customerCode');
   const customerCode = (customerCodeInput?.value || '').trim() || buildCustomerCodeFromVatId();
@@ -979,8 +1056,8 @@ function getCustomerPayload() {
     customer_name: customerName,
     customer_address: (document.getElementById('customerAddress')?.value || '').trim(),
     vat_id: (document.getElementById('customerVatId')?.value || '').trim(),
-    outside_country: outsideCountry,
-    outside_vat_rate: parseFloat(document.getElementById('outsideVatRate')?.value || '0') || 0,
+    outside_country: '',
+    outside_vat_rate: 0,
     custom_invoice_message: (document.getElementById('customInvoiceMessage')?.value || '').trim()
   };
 }
@@ -1024,19 +1101,22 @@ async function openCustomerPicker() {
   const status = document.getElementById('customerPickerStatus');
   if (!modalElement || !window.bootstrap) return;
 
+  scrollCalculatorToTop();
   search.value = '';
+  document.getElementById('customerPickerPerPage').value = '50';
+  customerPickerPage = 1;
   status.textContent = t('Loading saved customers...');
   document.getElementById('customerPickerList').replaceChildren();
+  modalElement.addEventListener('shown.bs.modal', () => {
+    modalElement.querySelector('.modal-body')?.scrollTo({ top: 0 });
+    const list = document.getElementById('customerPickerList');
+    if (list) list.scrollTop = 0;
+    document.getElementById('customerPickerTitle')?.scrollIntoView({ block: 'start' });
+  }, { once: true });
   bootstrap.Modal.getOrCreateInstance(modalElement).show();
 
-  try {
-    const data = await postJoomlaAjax('listCustomers', {});
-    savedCustomers = data.customers || [];
-    renderCustomerPicker(savedCustomers);
-    setTimeout(() => search.focus(), 150);
-  } catch (err) {
-    status.textContent = err.message;
-  }
+  await loadCustomerPickerPage(1);
+  setTimeout(() => search.focus(), 150);
 }
 
 async function ensureSavedCustomersLoaded() {
@@ -1122,14 +1202,39 @@ async function resolveCustomerCodeFromName() {
   return match.customer_code || currentCode;
 }
 
-function filterCustomerPicker() {
-  const query = (document.getElementById('customerSearch')?.value || '').trim().toLocaleLowerCase();
-  const filtered = savedCustomers.filter(customer => {
-    const name = String(customer.customer_name || '').toLocaleLowerCase();
-    const code = String(customer.customer_code || '').toLocaleLowerCase();
-    return !query || name.includes(query) || code.includes(query);
-  });
-  renderCustomerPicker(filtered);
+function scheduleCustomerPickerSearch() {
+  clearTimeout(customerPickerTimer);
+  customerPickerTimer = setTimeout(() => loadCustomerPickerPage(1), 300);
+}
+
+function changeCustomerPickerPerPage() {
+  loadCustomerPickerPage(1);
+}
+
+async function loadCustomerPickerPage(page = 1) {
+  const status = document.getElementById('customerPickerStatus');
+  const pagination = document.getElementById('customerPickerPagination');
+  const query = (document.getElementById('customerSearch')?.value || '').trim();
+  const perPage = Number(document.getElementById('customerPickerPerPage')?.value || 50);
+  const requestId = ++customerPickerRequestId;
+  if (status) status.textContent = t('Loading saved customers...');
+  try {
+    const data = await postJoomlaAjax('listCustomers', { query, paginate: true, page, per_page: perPage });
+    if (requestId !== customerPickerRequestId) return;
+    customerPickerCustomers = data.customers || [];
+    customerPickerPage = Number(data.page || page);
+    customerPickerTotal = Number(data.total || 0);
+    mergeSavedCustomers(customerPickerCustomers);
+    renderCustomerPicker(customerPickerCustomers);
+    if (status) status.textContent = customerPickerTotal
+      ? tf('Showing {shown} of {total} customers.', { shown: customerPickerCustomers.length, total: customerPickerTotal })
+      : t('No matching customers found.');
+    if (pagination) pagination.innerHTML = paginationHtml(customerPickerPage, customerPickerTotal, perPage, 'loadCustomerPickerPage');
+  } catch (err) {
+    if (requestId !== customerPickerRequestId) return;
+    if (status) status.textContent = err.message;
+    if (pagination) pagination.replaceChildren();
+  }
 }
 
 function renderCustomerPicker(customers) {
@@ -1137,9 +1242,7 @@ function renderCustomerPicker(customers) {
   const status = document.getElementById('customerPickerStatus');
   list.replaceChildren();
 
-  status.textContent = customers.length
-    ? `${customers.length} ${t(customers.length === 1 ? 'customer found. Select one to load.' : 'customers found. Select one to load.')}`
-    : t('No matching customers found.');
+  if (!customers.length) status.textContent = t('No matching customers found.');
 
   customers.forEach(customer => {
     const code = String(customer.customer_code || '');
@@ -1178,7 +1281,7 @@ async function deleteSavedCustomer(customerCode, customerName = '') {
       clearCurrentCustomerForm();
     }
 
-    renderCustomerPicker(savedCustomers);
+    await loadCustomerPickerPage(customerPickerPage);
     document.getElementById('savedCustomerSuggestions')?.replaceChildren();
     showDatabaseStatus('Customer deleted.', 'success');
   } catch (err) {
@@ -1216,9 +1319,6 @@ async function loadCustomerDetails(selectedCustomerCode = '') {
     document.getElementById('customerName').value = customer.customer_name || '';
     document.getElementById('customerAddress').value = customer.customer_address || '';
     document.getElementById('customerVatId').value = customer.vat_id || '';
-    document.getElementById('outsideCountry').value = customer.outside_country || 'IT';
-    onOutsideCountryChange(false);
-    document.getElementById('outsideVatRate').value = String(customer.outside_vat_rate ?? 0);
     document.getElementById('customInvoiceMessage').value = customer.custom_invoice_message || '';
 
     showDatabaseStatus('Customer details loaded.', 'success');
@@ -1344,7 +1444,7 @@ function getDraftLinePayload() {
   const payload = getInvoicePayload();
   if (!payload) return null;
   payload.project_ref = ensureActiveDraftRef();
-  payload.line_label = [payload.service_date, lastCalculatedData?.pickup, lastCalculatedData?.dropoff]
+  payload.line_label = [lastCalculatedData?.pickup, lastCalculatedData?.dropoff]
     .filter(Boolean)
     .join(' - ');
   return payload;
@@ -1415,8 +1515,10 @@ function renderDraftLines(lines) {
   const total = lines.reduce((sum, line) => sum + Number(line.total_amount || 0), 0);
   const rows = lines.map(line => {
     const amount = Number(line.total_amount || 0).toLocaleString('sl-SI', { style: 'currency', currency: 'EUR' });
+    const serviceDate = formatIsoDateDisplay(line.service_date || '');
+    const lineLabel = String(line.line_label || '').replace(/^\d{4}-\d{2}-\d{2}\s*-?\s*/, '');
     return `<div class="d-flex gap-2 align-items-center border-bottom py-1">
-      <span class="flex-grow-1">${xmlEscape(line.service_date || '')} ${xmlEscape(line.line_label || '')}</span>
+      <span class="flex-grow-1">${xmlEscape([serviceDate, lineLabel].filter(Boolean).join(' - '))}</span>
       <span class="text-nowrap">${amount}</span>
       <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteDraftLine(${Number(line.id) || 0})">${xmlEscape(t('Remove'))}</button>
     </div>`;
@@ -1517,14 +1619,14 @@ function renderInvoiceHistory(invoices) {
 
   if (!invoices.length) {
     historyEl.dataset.invoices = '[]';
-    historyEl.textContent = t('No saved invoice history for this customer. Use "Save invoice history" after calculating a route to store reusable route details.');
+    historyEl.textContent = t('No saved invoice history for this customer. Use "Save Invoice" after calculating a route to store reusable route details.');
     return;
   }
 
-  const filterHtml = `<div class="fw-semibold mb-2">${xmlEscape(t('Invoice history'))}</div>
+  const filterHtml = `<div class="d-flex justify-content-between align-items-center gap-2 mb-2"><div class="fw-semibold">${xmlEscape(t('Invoice history'))}</div><button class="btn btn-sm btn-outline-primary" type="button" onclick="openAllCustomerInvoices()">${xmlEscape(t('All'))}</button></div>
     <div class="row g-2 mb-2">
       <div class="col-sm-7"><input id="invoiceHistoryOrderFilter" class="form-control form-control-sm" placeholder="${xmlEscape(t('Filter by invoice / order number'))}" value="${xmlEscape(orderFilterValue)}" oninput="filterInvoiceHistory()" /></div>
-      <div class="col-sm-5"><input id="invoiceHistoryDateFilter" class="form-control form-control-sm" type="date" value="${xmlEscape(dateFilter)}" onchange="filterInvoiceHistory()" /></div>
+      <div class="col-sm-5"><input id="invoiceHistoryDateFilter" class="form-control form-control-sm" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" value="${xmlEscape(dateFilter)}" oninput="filterInvoiceHistory()" onblur="normalizeVisibleDateInput(this)" /></div>
     </div>
     <div class="invoice-history-grid small fw-semibold text-muted border-bottom pb-1 mb-1">
       <span>${xmlEscape(t('Invoice Name'))}</span><span class="text-sm-end">${xmlEscape(t('Price'))}</span><span>${xmlEscape(t('Date'))}</span>
@@ -1543,10 +1645,11 @@ function filterInvoiceHistory() {
 }
 
 function invoiceHistoryRowsHtml(invoices, orderFilter, dateFilter) {
+  const dateFilterIso = normalizeIsoDate(dateFilter);
   const filteredInvoices = invoices.filter(inv => {
     const invoiceNumber = String(inv.invoice_number || '').toLocaleLowerCase();
     const createdAt = String(inv.created_at || '');
-    return (!orderFilter || invoiceNumber.includes(orderFilter)) && (!dateFilter || createdAt.slice(0, 10) === dateFilter);
+    return (!orderFilter || invoiceNumber.includes(orderFilter)) && (!dateFilterIso || createdAt.slice(0, 10) === dateFilterIso);
   });
 
   if (!filteredInvoices.length) {
@@ -1556,7 +1659,7 @@ function invoiceHistoryRowsHtml(invoices, orderFilter, dateFilter) {
   return filteredInvoices.map(inv => {
     const index = invoices.indexOf(inv);
     const total = Number(inv.total_amount || 0).toLocaleString('sl-SI', { style: 'currency', currency: 'EUR' });
-    return `<button class="btn btn-sm btn-outline-secondary w-100 text-start mb-1 invoice-history-grid" type="button" onclick="restoreInvoiceFromHistory(${index})"><span class="fw-semibold">${xmlEscape(inv.invoice_number)}</span><span class="text-sm-end">${total}</span><span class="text-muted">${xmlEscape(inv.created_at || '')}</span></button>`;
+    return `<button class="btn btn-sm btn-outline-secondary w-100 text-start mb-1 invoice-history-grid" type="button" onclick="restoreInvoiceFromHistory(${index})"><span class="fw-semibold">${xmlEscape(inv.invoice_number)}</span><span class="text-sm-end">${total}</span><span class="text-muted">${xmlEscape(formatIsoDateDisplay(inv.created_at || ''))}</span></button>`;
   }).join('');
 }
 
@@ -1581,11 +1684,179 @@ async function loadInvoiceHistory(customerCodeOverride = '', customerNameOverrid
   }
 }
 
+function modalInvoiceRowsHtml(invoices, source, includeCustomer = false) {
+  if (!invoices.length) {
+    return `<div class="small text-muted py-2">${xmlEscape(t('No invoice history matches this filter.'))}</div>`;
+  }
+  const gridClass = includeCustomer ? 'invoice-browser-grid' : 'invoice-history-grid';
+  const header = includeCustomer
+    ? `<div class="${gridClass} small fw-semibold text-muted border-bottom pb-1 mb-1"><span>${xmlEscape(t('Invoice Name'))}</span><span>${xmlEscape(t('Customer'))}</span><span class="text-md-end">${xmlEscape(t('Price'))}</span><span>${xmlEscape(t('Date'))}</span><span>${xmlEscape(t('Actions'))}</span></div>`
+    : `<div class="${gridClass} small fw-semibold text-muted border-bottom pb-1 mb-1"><span>${xmlEscape(t('Invoice Name'))}</span><span class="text-sm-end">${xmlEscape(t('Price'))}</span><span>${xmlEscape(t('Date'))}</span></div>`;
+  const rows = invoices.map((invoice, index) => {
+    const total = Number(invoice.total_amount || 0).toLocaleString('sl-SI', { style: 'currency', currency: 'EUR' });
+    const date = formatIsoDateDisplay(invoice.created_at || '');
+    if (includeCustomer) {
+      return `<div class="border rounded p-2 mb-1 ${gridClass}"><button class="btn btn-sm btn-link p-0 text-start fw-semibold" type="button" onclick="restoreInvoiceFromModal('${source}', ${index})">${xmlEscape(invoice.invoice_number || '')}</button><span>${xmlEscape(invoice.customer_name || invoice.customer_code || '')}</span><span class="text-md-end">${total}</span><span class="text-muted">${xmlEscape(date)}</span><span class="d-flex gap-1"><button class="btn btn-sm btn-outline-primary" type="button" onclick="restoreInvoiceFromModal('${source}', ${index})">${xmlEscape(t('Load'))}</button><button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteInvoiceFromBrowser(${index})">${xmlEscape(t('Delete'))}</button></span></div>`;
+    }
+    return `<button class="btn btn-sm btn-outline-secondary w-100 text-start mb-1 ${gridClass}" type="button" onclick="restoreInvoiceFromModal('${source}', ${index})"><span class="fw-semibold">${xmlEscape(invoice.invoice_number || '')}</span><span class="text-sm-end">${total}</span><span class="text-muted">${xmlEscape(date)}</span></button>`;
+  }).join('');
+  return header + rows;
+}
+
+async function openAllCustomerInvoices() {
+  const modalElement = document.getElementById('customerInvoiceHistoryModal');
+  const status = document.getElementById('customerInvoiceHistoryStatus');
+  const list = document.getElementById('customerInvoiceHistoryList');
+  if (!modalElement || !status || !list || !window.bootstrap) return;
+  scrollCalculatorToTop();
+  const customerCode = await resolveCustomerCodeFromName();
+  const customerName = (document.getElementById('customerName')?.value || '').trim();
+  if (!customerCode && !customerName) {
+    showDatabaseStatus('Select or save a customer before loading invoice history.', 'warning');
+    return;
+  }
+  status.textContent = t('Loading all invoices...');
+  list.replaceChildren();
+  bootstrap.Modal.getOrCreateInstance(modalElement).show();
+  try {
+    const data = await postJoomlaAjax('listInvoices', { customer_code: customerCode, customer_name: customerName, load_all: true });
+    allCustomerInvoices = data.invoices || [];
+    status.textContent = tf('{count} invoices found.', { count: allCustomerInvoices.length });
+    list.innerHTML = modalInvoiceRowsHtml(allCustomerInvoices, 'customer', false);
+  } catch (err) {
+    status.textContent = err.message;
+  }
+}
+
+async function openInvoiceBrowser() {
+  const modalElement = document.getElementById('invoiceBrowserModal');
+  if (!modalElement || !window.bootstrap) return;
+  scrollCalculatorToTop();
+  document.getElementById('invoiceBrowserNumber').value = '';
+  document.getElementById('invoiceBrowserDate').value = '';
+  document.getElementById('invoiceBrowserDatePicker').value = '';
+  document.getElementById('invoiceBrowserPerPage').value = '50';
+  invoiceBrowserPage = 1;
+  bootstrap.Modal.getOrCreateInstance(modalElement).show();
+  await searchInvoiceBrowser(1);
+}
+
+function scheduleInvoiceBrowserSearch() {
+  clearTimeout(invoiceBrowserTimer);
+  invoiceBrowserTimer = setTimeout(() => searchInvoiceBrowser(1), 300);
+}
+
+function changeInvoiceBrowserPerPage() {
+  searchInvoiceBrowser(1);
+}
+
+function openInvoiceDatePicker() {
+  const picker = document.getElementById('invoiceBrowserDatePicker');
+  if (!picker) return;
+  try {
+    if (typeof picker.showPicker === 'function') picker.showPicker();
+    else picker.click();
+  } catch (err) {
+    picker.click();
+  }
+}
+
+function onInvoiceBrowserDatePicked() {
+  const picker = document.getElementById('invoiceBrowserDatePicker');
+  const visibleInput = document.getElementById('invoiceBrowserDate');
+  if (!picker || !visibleInput) return;
+  visibleInput.value = formatIsoDateDisplay(picker.value);
+  scheduleInvoiceBrowserSearch();
+}
+
+async function searchInvoiceBrowser(page = 1) {
+  const status = document.getElementById('invoiceBrowserStatus');
+  const list = document.getElementById('invoiceBrowserList');
+  const pagination = document.getElementById('invoiceBrowserPagination');
+  if (!status || !list || !pagination) return;
+  const invoiceNumber = (document.getElementById('invoiceBrowserNumber')?.value || '').trim();
+  const dateInput = (document.getElementById('invoiceBrowserDate')?.value || '').trim();
+  const date = normalizeIsoDate(dateInput);
+  const perPage = Number(document.getElementById('invoiceBrowserPerPage')?.value || 50);
+  const requestId = ++invoiceBrowserRequestId;
+  status.textContent = t('Loading invoices...');
+  try {
+    const data = await postJoomlaAjax('listInvoices', { all_customers: true, invoice_number: invoiceNumber, date, paginate: true, page, per_page: perPage });
+    if (requestId !== invoiceBrowserRequestId) return;
+    invoiceBrowserInvoices = data.invoices || [];
+    invoiceBrowserPage = Number(data.page || page);
+    invoiceBrowserTotal = Number(data.total || 0);
+    status.textContent = invoiceBrowserTotal
+      ? tf('Showing {shown} of {total} invoices.', { shown: invoiceBrowserInvoices.length, total: invoiceBrowserTotal })
+      : t('No invoice history matches this filter.');
+    list.innerHTML = modalInvoiceRowsHtml(invoiceBrowserInvoices, 'browser', true);
+    pagination.innerHTML = paginationHtml(invoiceBrowserPage, invoiceBrowserTotal, perPage, 'searchInvoiceBrowser');
+  } catch (err) {
+    if (requestId !== invoiceBrowserRequestId) return;
+    status.textContent = err.message;
+    list.replaceChildren();
+    pagination.replaceChildren();
+  }
+}
+
+function paginationHtml(page, total, perPage, callbackName) {
+  const totalPages = Math.max(1, Math.ceil(Number(total || 0) / Number(perPage || 50)));
+  if (totalPages <= 1) return '';
+  const currentPage = Math.min(Math.max(1, Number(page || 1)), totalPages);
+  const pageNumbers = [];
+  for (let number = 1; number <= totalPages; number++) {
+    if (number === 1 || number === totalPages || Math.abs(number - currentPage) <= 2) pageNumbers.push(number);
+  }
+  let previousNumber = 0;
+  const numberedButtons = pageNumbers.map(number => {
+    const gap = previousNumber && number - previousNumber > 1 ? '<span class="px-1">…</span>' : '';
+    previousNumber = number;
+    const activeClass = number === currentPage ? 'btn-primary' : 'btn-outline-secondary';
+    return `${gap}<button class="btn btn-sm ${activeClass}" type="button" onclick="${callbackName}(${number})"${number === currentPage ? ' aria-current="page"' : ''}>${number}</button>`;
+  }).join('');
+  return `<nav class="d-flex flex-wrap align-items-center justify-content-center gap-1" aria-label="${xmlEscape(t('Pagination'))}"><button class="btn btn-sm btn-outline-secondary" type="button" onclick="${callbackName}(${currentPage - 1})"${currentPage <= 1 ? ' disabled' : ''}>${xmlEscape(t('Previous'))}</button>${numberedButtons}<button class="btn btn-sm btn-outline-secondary" type="button" onclick="${callbackName}(${currentPage + 1})"${currentPage >= totalPages ? ' disabled' : ''}>${xmlEscape(t('Next'))}</button></nav>`;
+}
+
+async function deleteInvoiceFromBrowser(index) {
+  const invoice = invoiceBrowserInvoices[index];
+  const invoiceId = Number(invoice?.id || 0);
+  if (!invoice || !invoiceId) return;
+  const invoiceNumber = String(invoice.invoice_number || '');
+  if (!window.confirm(tf('Delete invoice {invoiceNumber}? This cannot be undone.', { invoiceNumber }))) return;
+  const status = document.getElementById('invoiceBrowserStatus');
+  try {
+    if (status) status.textContent = t('Deleting invoice...');
+    await postJoomlaAjax('deleteInvoice', { id: invoiceId });
+    await searchInvoiceBrowser(invoiceBrowserPage);
+    if (status) status.textContent = t('Invoice deleted.');
+    const currentCustomerCode = (document.getElementById('customerCode')?.value || '').trim();
+    if (currentCustomerCode && currentCustomerCode === String(invoice.customer_code || '')) {
+      loadInvoiceHistory().catch(() => {});
+    }
+  } catch (err) {
+    if (status) status.textContent = err.message;
+  }
+}
+
+function restoreInvoiceFromModal(source, index) {
+  const invoices = source === 'customer' ? allCustomerInvoices : invoiceBrowserInvoices;
+  const invoice = invoices[index];
+  if (!invoice) return;
+  const modalId = source === 'customer' ? 'customerInvoiceHistoryModal' : 'invoiceBrowserModal';
+  bootstrap.Modal.getInstance(document.getElementById(modalId))?.hide();
+  restoreInvoiceRecord(invoice);
+}
+
 function restoreInvoiceFromHistory(index) {
   const historyEl = document.getElementById('invoiceHistory');
   const invoices = JSON.parse(historyEl?.dataset.invoices || '[]');
   const invoice = invoices[index];
   if (!invoice) return;
+
+  restoreInvoiceRecord(invoice);
+}
+
+function restoreInvoiceRecord(invoice) {
 
   let payload = {};
   try {
@@ -1597,17 +1868,14 @@ function restoreInvoiceFromHistory(index) {
 
   const customer = payload.customer || {};
   document.getElementById('customerCode').value = customer.customer_code || invoice.customer_code || '';
-  document.getElementById('customerName').value = customer.customer_name || '';
-  document.getElementById('customerAddress').value = customer.customer_address || '';
-  document.getElementById('customerVatId').value = customer.vat_id || '';
+  document.getElementById('customerName').value = customer.customer_name || invoice.customer_name || '';
+  document.getElementById('customerAddress').value = customer.customer_address || invoice.customer_address || '';
+  document.getElementById('customerVatId').value = customer.vat_id || invoice.vat_id || '';
   const invoiceNumberInput = document.getElementById('invoiceNumber');
   invoiceNumberInput.value = payload.invoice_number || invoice.invoice_number || '';
   invoiceNumberInput.dataset.generated = '0';
-  document.getElementById('serviceDate').value = normalizeIsoDate(payload.service_date || '') || getTodayIsoDate();
+  document.getElementById('serviceDate').value = formatIsoDateDisplay(payload.service_date || getTodayIsoDate());
   document.getElementById('outputFileName').value = payload.output_file_name || '';
-  if (customer.outside_country) document.getElementById('outsideCountry').value = customer.outside_country;
-  onOutsideCountryChange(false);
-  document.getElementById('outsideVatRate').value = String(customer.outside_vat_rate ?? 0);
   document.getElementById('customInvoiceMessage').value = customer.custom_invoice_message || '';
 
   lastCalculatedData = payload.calculated_data || null;
@@ -1659,9 +1927,9 @@ async function generatePdf() {
   const customInvoiceMessage = (document.getElementById('customInvoiceMessage')?.value || '').trim();
   const paymentReference = invoiceNo.replace(/[^0-9]/g, '');
   const today = new Date();
-  const issueDate = today.toLocaleDateString('sl-SI');
-  const serviceDate = formatIsoDateSl(getServiceDateIso());
-  const dueDate = new Date(today.getTime() + 30 * 86400000).toLocaleDateString('sl-SI');
+  const issueDate = formatDateDisplay(today);
+  const serviceDate = formatIsoDateDisplay(getServiceDateIso());
+  const dueDate = formatDateDisplay(new Date(today.getTime() + 30 * 86400000));
   const pageWidth = doc.internal.pageSize.getWidth();
   const right = pageWidth - 14;
   let y = 15;
@@ -1786,8 +2054,8 @@ async function generateDraftPdf() {
   const customerVatId = (document.getElementById('customerVatId')?.value || '').trim();
   const customInvoiceMessage = (document.getElementById('customInvoiceMessage')?.value || '').trim();
   const paymentReference = invoiceNo.replace(/[^0-9]/g, '');
-  const issueDate = new Date().toLocaleDateString('sl-SI');
-  const dueDate = new Date(Date.now() + 30 * 86400000).toLocaleDateString('sl-SI');
+  const issueDate = formatDateDisplay(new Date());
+  const dueDate = formatDateDisplay(new Date(Date.now() + 30 * 86400000));
   const pageWidth = doc.internal.pageSize.getWidth();
   const right = pageWidth - 14;
   let y = 15;
@@ -1828,7 +2096,7 @@ async function generateDraftPdf() {
   let lastRouteLabel = '';
   payloads.forEach(payload => {
     const d = payload.calculated_data || {};
-    const serviceDate = payload.service_date ? formatIsoDateSl(payload.service_date) + ' - ' : '';
+    const serviceDate = payload.service_date ? formatIsoDateDisplay(payload.service_date) + ' - ' : '';
     const routeLabel = pdfRouteText([d.pickup, d.dropoff].filter(Boolean).join(' - '));
     const routeTitle = serviceDate + tf('Prevoz {route}', { route: routeLabel });
     const segments = Array.isArray(d.countrySegments) && d.countrySegments.length
@@ -2082,7 +2350,7 @@ function exportMinimaxXml() {
   const balanceDiff = roundMoney(totalAmount - siBaseAmount - outsideBaseAmount - siVatAmount - outsideVatAmount);
   const balancedOutsideBaseAmount = roundMoney(outsideBaseAmount + balanceDiff);
   if (!outsideSegments.length && outsideBaseAmount > 0) {
-    const outsideCountry = document.getElementById('outsideCountry')?.value || 'IT';
+    const outsideCountry = 'OTHER';
     const config = getCountryOptionConfig(outsideCountry);
     outsideSegments = [{ countryValue: outsideCountry, base: outsideBaseAmount, vatAmount: outsideVatAmount, vatRate: config.vatRate, revenueAccount: config.revenueAccount, isSlovenia: false }];
   }
@@ -2159,7 +2427,7 @@ function exportMinimaxXml() {
 
 function showRouteOnly(totalKm) {
   document.getElementById('totalKm').textContent = fmtKm(totalKm);
-  document.getElementById('siKm').textContent = t('Enter manually');
+  document.getElementById('siKm').textContent = t('Edit country rows');
   document.getElementById('outsideKm').textContent = '-';
   document.getElementById('netTotal').textContent = '-';
   document.getElementById('taxableBase').textContent = '-';
@@ -2381,7 +2649,7 @@ function setDefaultOutputFileName() {
 function setDefaultServiceDate() {
   const serviceDate = document.getElementById('serviceDate');
   if (!serviceDate || serviceDate.value) return;
-  serviceDate.value = getTodayIsoDate();
+  serviceDate.value = formatIsoDateDisplay(getTodayIsoDate());
 }
 function getTodayIsoDate() {
   const today = new Date();
@@ -2390,20 +2658,45 @@ function getTodayIsoDate() {
 }
 function normalizeIsoDate(value) {
   const raw = String(value || '').trim();
-  return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : '';
+  const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T].*)?$/);
+  if (isoMatch && isValidDateParts(Number(isoMatch[1]), Number(isoMatch[2]), Number(isoMatch[3]))) {
+    return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+  }
+  const displayMatch = raw.match(/^(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})$/);
+  if (!displayMatch) return '';
+  const day = Number(displayMatch[1]);
+  const month = Number(displayMatch[2]);
+  const year = Number(displayMatch[3]);
+  if (!isValidDateParts(year, month, day)) return '';
+  return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+function isValidDateParts(year, month, day) {
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 function getServiceDateIso() {
   const serviceDate = document.getElementById('serviceDate');
   const value = normalizeIsoDate(serviceDate?.value || '');
   if (value) return value;
   const today = getTodayIsoDate();
-  if (serviceDate) serviceDate.value = today;
+  if (serviceDate) serviceDate.value = formatIsoDateDisplay(today);
   return today;
 }
-function formatIsoDateSl(value) {
-  const normalized = normalizeIsoDate(value) || getTodayIsoDate();
+function formatIsoDateDisplay(value) {
+  const normalized = normalizeIsoDate(value);
+  if (!normalized) return '';
   const parts = normalized.split('-');
-  return `${parts[2]}. ${parts[1]}. ${parts[0]}`;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+function normalizeVisibleDateInput(input) {
+  if (!input) return;
+  const normalized = normalizeIsoDate(input.value);
+  if (normalized) input.value = formatIsoDateDisplay(normalized);
+}
+function formatDateDisplay(value) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
 }
 function getOutputFileName(fallbackBaseName, extension) {
   const rawName = (document.getElementById('outputFileName')?.value || fallbackBaseName || 'racun').trim();
@@ -2420,6 +2713,13 @@ function fmtEur(n) { return n.toLocaleString('sl-SI', { style: 'currency', curre
 function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 function setApiStatus(msg, type) { const el = document.getElementById('apiStatus'); el.textContent = t(msg); el.className = 'alert alert-' + type + ' small mb-0'; }
 function setStatus(msg, type) { const el = document.getElementById('status'); el.textContent = t(msg); el.className = 'alert alert-' + type + ' small mt-3 mb-0'; }
+
+function scrollCalculatorToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: 'routeCalculationHelpForAccountingScrollToTop' }, '*');
+  }
+}
 
 function postFrameHeight() {
   if (window.parent === window) return;
