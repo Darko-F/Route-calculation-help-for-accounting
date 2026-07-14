@@ -33,18 +33,23 @@ class RouteCalculationHelpForAccountingHelper
         $payload = self::payload();
         $customerPayload = is_array($payload['customer'] ?? null) ? $payload['customer'] : [];
         $invoiceNumber = trim((string) ($payload['invoice_number'] ?? ''));
-        $autoInvoiceNumber = !empty($payload['invoice_number_auto']);
 
         if ($invoiceNumber === '') {
             $invoiceNumber = self::nextInvoiceNumber((int) Factory::getDate()->format('Y'));
             $payload['invoice_number'] = $invoiceNumber;
         }
 
+        if (mb_strlen($invoiceNumber) > 30) {
+            throw new RuntimeException('Invoice number must be 30 characters or fewer for Minimax XML.');
+        }
+
         self::ensureInvoiceCustomerColumns();
 
         if (self::invoiceExists($invoiceNumber)) {
-            if ($autoInvoiceNumber && preg_match('/^RCHA-(\d{4})-\d+$/', $invoiceNumber, $matches)) {
-                $invoiceNumber = self::nextInvoiceNumber((int) $matches[1]);
+            if (preg_match('/^RCHA-(\d{2})-\d+(?:[-\s].+)?$/', $invoiceNumber, $matches)) {
+                $currentYear = (int) Factory::getDate()->format('Y');
+                $invoiceYear = ((int) floor($currentYear / 100) * 100) + (int) $matches[1];
+                $invoiceNumber = self::nextInvoiceNumber($invoiceYear);
                 $payload['invoice_number'] = $invoiceNumber;
             } else {
                 throw new RuntimeException('Invoice number "' . $invoiceNumber . '" already exists in invoice history. Use a different invoice number to save a new record.');
@@ -83,7 +88,7 @@ class RouteCalculationHelpForAccountingHelper
             self::num($data['vatAmount'] ?? 0),
             self::num($data['outsideVatRate'] ?? 0),
             self::num($data['outsideVatAmount'] ?? 0),
-            self::num($data['totalAmount'] ?? 0),
+            self::num(self::invoiceTotal($data)),
             $db->quote($payloadJson),
             $userId,
             $db->quote($now),
@@ -104,7 +109,7 @@ class RouteCalculationHelpForAccountingHelper
                 'customer_address' => (string) ($customerPayload['customer_address'] ?? ''),
                 'vat_id' => (string) ($customerPayload['vat_id'] ?? ''),
                 'invoice_number' => $invoiceNumber,
-                'total_amount' => self::num($data['totalAmount'] ?? 0),
+                'total_amount' => self::num(self::invoiceTotal($data)),
                 'payload_json' => $payloadJson,
                 'created_at' => $now,
             ],
@@ -162,7 +167,7 @@ class RouteCalculationHelpForAccountingHelper
             $db->quote($projectRef),
             $serviceDate !== '' ? $db->quote($serviceDate) : 'NULL',
             $db->quote($lineLabel),
-            self::num($data['totalAmount'] ?? 0),
+            self::num(self::invoiceTotal($data)),
             $db->quote($payloadJson),
             (int) Factory::getApplication()->getIdentity()->id,
             $db->quote($now),
@@ -250,7 +255,8 @@ class RouteCalculationHelpForAccountingHelper
         self::ensureCustomerAddressColumn();
         $db = self::db();
         $columns = [
-            'customer_code', 'customer_name', 'customer_address', 'vat_id', 'outside_country',
+            'customer_code', 'customer_name', 'customer_address', 'customer_postcode',
+            'customer_city', 'customer_country_code', 'vat_id', 'outside_country',
             'custom_country_name', 'outside_vat_rate', 'outside_revenue_account',
             'custom_invoice_message',
         ];
@@ -400,7 +406,7 @@ class RouteCalculationHelpForAccountingHelper
             $page = min($page, max(1, (int) ceil($total / $perPage)));
             $query->setLimit($perPage, ($page - 1) * $perPage);
         } elseif (!$loadAll) {
-            $query->setLimit(25);
+            $query->setLimit(7);
         }
         $invoices = $db->setQuery($query)->loadAssocList();
 
@@ -444,6 +450,25 @@ class RouteCalculationHelpForAccountingHelper
             throw new RuntimeException('Customer name is required.');
         }
 
+        if (mb_strlen($customerCode) > 10) {
+            throw new RuntimeException('Customer code must be 10 characters or fewer for Minimax XML.');
+        }
+
+        if (mb_strlen($customerName) > 100) {
+            throw new RuntimeException('Customer name must be 100 characters or fewer for Minimax XML.');
+        }
+
+        $customerAddress = trim((string) ($payload['customer_address'] ?? ''));
+        $customerPostcode = trim((string) ($payload['customer_postcode'] ?? ''));
+        $customerCity = trim((string) ($payload['customer_city'] ?? ''));
+        $customerCountryCode = strtoupper(trim((string) ($payload['customer_country_code'] ?? 'SI')));
+        if (mb_strlen($customerAddress) > 50 || mb_strlen($customerPostcode) > 30 || mb_strlen($customerCity) > 250) {
+            throw new RuntimeException('Customer address data exceeds a Minimax XML field length.');
+        }
+        if (!preg_match('/^[A-Z]{2}$/', $customerCountryCode)) {
+            throw new RuntimeException('Customer country code must contain exactly two letters.');
+        }
+
         self::ensureCustomerAddressColumn();
         $db = self::db();
         $now = Factory::getDate()->toSql();
@@ -452,7 +477,10 @@ class RouteCalculationHelpForAccountingHelper
         $data = [
             'customer_code' => $customerCode,
             'customer_name' => $customerName,
-            'customer_address' => trim((string) ($payload['customer_address'] ?? '')),
+            'customer_address' => $customerAddress,
+            'customer_postcode' => $customerPostcode,
+            'customer_city' => $customerCity,
+            'customer_country_code' => $customerCountryCode,
             'vat_id' => trim((string) ($payload['vat_id'] ?? '')),
             'outside_country' => trim((string) ($payload['outside_country'] ?? '')),
             'custom_country_name' => trim((string) ($payload['custom_country_name'] ?? '')),
@@ -480,6 +508,9 @@ class RouteCalculationHelpForAccountingHelper
                 $db->quote($data['customer_code']),
                 $db->quote($data['customer_name']),
                 $db->quote($data['customer_address']),
+                $db->quote($data['customer_postcode']),
+                $db->quote($data['customer_city']),
+                $db->quote($data['customer_country_code']),
                 $db->quote($data['vat_id']),
                 $db->quote($data['outside_country']),
                 $db->quote($data['custom_country_name']),
@@ -544,7 +575,8 @@ class RouteCalculationHelpForAccountingHelper
     {
         self::ensureTables();
         $db = self::db();
-        $prefix = 'RCHA-' . $year . '-';
+        $shortYear = substr(str_pad((string) $year, 4, '0', STR_PAD_LEFT), -2);
+        $prefix = 'RCHA-' . $shortYear . '-';
         $query = $db->getQuery(true)
             ->select($db->quoteName('invoice_number'))
             ->from($db->quoteName('#__route_calculation_help_for_accounting_invoices'))
@@ -553,14 +585,14 @@ class RouteCalculationHelpForAccountingHelper
         $maxSequence = 0;
 
         foreach ($existing as $invoiceNumber) {
-            if (preg_match('/^RCHA-' . preg_quote((string) $year, '/') . '-(\d+)$/', (string) $invoiceNumber, $matches)) {
+            if (preg_match('/^' . preg_quote($prefix, '/') . '(\d+)(?:[-\s].+)?$/', (string) $invoiceNumber, $matches)) {
                 $maxSequence = max($maxSequence, (int) $matches[1]);
             }
         }
 
         $sequence = $maxSequence + 1;
         do {
-            $candidate = $prefix . str_pad((string) $sequence, 3, '0', STR_PAD_LEFT);
+            $candidate = $prefix . str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
             $sequence++;
         } while (self::invoiceExists($candidate));
 
@@ -572,17 +604,24 @@ class RouteCalculationHelpForAccountingHelper
         self::ensureTables();
         $db = self::db();
         $table = $db->replacePrefix('#__route_calculation_help_for_accounting_customers');
-        $db->setQuery('SHOW COLUMNS FROM ' . $db->quoteName($table) . ' LIKE ' . $db->quote('customer_address'));
+        $columns = [
+            'customer_address' => ["varchar(512) NOT NULL DEFAULT ''", 'customer_name'],
+            'customer_postcode' => ["varchar(30) NOT NULL DEFAULT ''", 'customer_address'],
+            'customer_city' => ["varchar(250) NOT NULL DEFAULT ''", 'customer_postcode'],
+            'customer_country_code' => ["varchar(2) NOT NULL DEFAULT 'SI'", 'customer_city'],
+        ];
 
-        if ($db->loadResult()) {
-            return;
+        foreach ($columns as $column => [$definition, $after]) {
+            $db->setQuery('SHOW COLUMNS FROM ' . $db->quoteName($table) . ' LIKE ' . $db->quote($column));
+            if ($db->loadResult()) {
+                continue;
+            }
+            $db->setQuery(
+                'ALTER TABLE ' . $db->quoteName($table)
+                . ' ADD COLUMN ' . $db->quoteName($column) . ' ' . $definition
+                . ' AFTER ' . $db->quoteName($after)
+            )->execute();
         }
-
-        $db->setQuery(
-            'ALTER TABLE ' . $db->quoteName($table)
-            . ' ADD COLUMN ' . $db->quoteName('customer_address')
-            . " varchar(512) NOT NULL DEFAULT '' AFTER " . $db->quoteName('customer_name')
-        )->execute();
     }
 
     private static function ensureInvoiceCustomerColumns(): void
@@ -635,6 +674,9 @@ class RouteCalculationHelpForAccountingHelper
               " . $db->quoteName('customer_code') . " varchar(64) NOT NULL,
               " . $db->quoteName('customer_name') . " varchar(255) NOT NULL DEFAULT '',
               " . $db->quoteName('customer_address') . " varchar(512) NOT NULL DEFAULT '',
+              " . $db->quoteName('customer_postcode') . " varchar(30) NOT NULL DEFAULT '',
+              " . $db->quoteName('customer_city') . " varchar(250) NOT NULL DEFAULT '',
+              " . $db->quoteName('customer_country_code') . " varchar(2) NOT NULL DEFAULT 'SI',
               " . $db->quoteName('vat_id') . " varchar(64) NOT NULL DEFAULT '',
               " . $db->quoteName('outside_country') . " varchar(16) NOT NULL DEFAULT '',
               " . $db->quoteName('custom_country_name') . " varchar(255) NOT NULL DEFAULT '',
@@ -725,5 +767,22 @@ class RouteCalculationHelpForAccountingHelper
     private static function num($value): string
     {
         return number_format((float) $value, 4, '.', '');
+    }
+
+    private static function invoiceTotal(array $data): float
+    {
+        if (array_key_exists('invoiceTotalAmount', $data)) {
+            return (float) $data['invoiceTotalAmount'];
+        }
+
+        $additionalCosts = array_key_exists('deductionsGrossTotal', $data)
+            ? (float) $data['deductionsGrossTotal']
+            : array_reduce(
+                is_array($data['deductions'] ?? null) ? $data['deductions'] : [],
+                static fn (float $sum, $cost): float => $sum + max(0, (float) (is_array($cost) ? ($cost['amount'] ?? 0) : 0)),
+                0.0
+            );
+
+        return (float) ($data['totalAmount'] ?? 0) + $additionalCosts;
     }
 }
