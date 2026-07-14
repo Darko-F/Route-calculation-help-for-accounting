@@ -1,5 +1,72 @@
 # Version Summary
 
+## Version 1.2.76
+
+- Corrected Minimax XML cent rounding so domestic, international, multi-country, and additional-cost journal entries always balance to the invoice total.
+- Saved invoice-history and draft-line totals now include VAT-inclusive additional costs, matching Results, PDF, and XML totals.
+- Added Minimax XML customer postcode, city, and two-letter country-code fields with persistence and required field/length validation.
+- Minimax XML now uses local dates, the service date for accounting/service fields, the invoice issue date for document fields, and the actual due date for `DatumZapadlosti`.
+- Added an editable Due date field with a calendar picker and a default of 15 days after the invoice issue date; saved and historical invoices retain their due dates.
+- Corrected Minimax VAT-code and VAT-account selection when the editable base-country VAT rate is changed.
+- Strengthened money rounding and Minimax XML validation, including safe customer codes and exact field limits.
+
+## Version 1.2.75
+
+- Additional-cost amounts are now treated as VAT-inclusive gross values; the taxable base and VAT are extracted from the entered total across results, PDFs, drafts, and Minimax XML.
+- Additional-cost VAT is now selected as `22% S` by default, `9.5% Z`, or a custom rate.
+- Minimax XML now includes additional costs under `S` (general), `Z` (reduced), or `N` (custom/non-taxable), with matching journal and invoice totals.
+- Reduced the quick invoice history displayed under a customer to the 7 most recent invoices; the All view and full invoice browser remain unrestricted.
+- Shortened the dedicated historical invoice action label to `PDF` in both English and Slovenian without changing its no-save behavior.
+
+## Version 1.2.72
+
+- Minimax XML filenames now use the currently displayed invoice number, for example `temeljnica-RCHA-26-0008.xml`, without saving the invoice or advancing its number.
+- Added an independently configurable XML filename prefix in both English and Slovenian language INI files, with `temeljnica` as the default in both languages.
+
+## Version 1.2.71
+
+- Added a dedicated Invoice PDF action to every Invoice History view so a saved invoice can be reproduced without creating a new invoice, advancing its number, or writing another database record.
+- Historical PDFs retain the saved invoice number and original issue date, with the due date calculated from that original date.
+- Added English `Invoice PDF` and Slovenian `PDF računa` labels while keeping the main Generate PDF / Save action unchanged for new invoices.
+
+## Version 1.2.70
+
+- Minimax XML now imports every route portion outside the selected base country as `N` (`Neobdavčeno`) with zero VAT, while PDFs retain the configured foreign-country VAT calculation.
+- Foreign gross amounts are booked as non-taxable revenue in XML so the journal remains balanced, and foreign VAT-account entries are no longer generated.
+
+## Version 1.2.69
+
+- Minimax XML now adds `<VrstaObracunaDDV>PS</VrstaObracunaDDV>` when a route contains kilometres outside the configured base country and omits it for base-country-only routes.
+- Added a manual tax-rate field to additional costs, with taxable cost bases and VAT included in regular and draft PDF line items, totals, and VAT summaries.
+- Expanded Results with a per-cost breakdown showing description, base, tax rate, tax amount, and gross amount.
+- Added combined additional-cost totals, total invoice VAT, invoice-wide net total, and invoice-wide final amount to Results.
+
+## Version 1.2.68
+
+- Removed the obsolete generated output filename field displayed below Service date.
+- Added a calendar button for selecting Service date while preserving the visible `DD/MM/YYYY` format and ISO database/XML values.
+- Removed remaining invoice and draft dependencies on the deleted output filename field.
+
+## Version 1.2.67
+
+- PDF filenames now use the saved invoice number, producing names such as `racun-RCHA-26-0003.pdf` in Slovenian and `invoice-RCHA-26-0003.pdf` in English.
+- Moved the localized PDF filename prefixes into the English and Slovenian language files, with a safe English fallback for future translations.
+- Strengthened customer and invoice deletion confirmations in modal windows with explicit irreversible-action warnings in English and Slovenian.
+
+## Version 1.2.66
+
+- Renamed the combined invoice action to Generate PDF / Save in English and Ustvari PDF / Shrani in Slovenian.
+- Every press now saves a new invoice; when the displayed `RCHA-YY-NNNN` number already exists, the server assigns the next available database number before generating the PDF.
+
+## Version 1.2.65
+
+- Changed automatic invoice numbering to the yearly `RCHA-YY-NNNN` format, starting at `RCHA-26-0001` for 2026 and resetting the sequence for each new year.
+- The next invoice number is loaded from saved database records when the calculator opens and rechecked when an automatically numbered invoice is saved.
+- Invoice numbers with custom suffixes separated by a hyphen or whitespace, such as `RCHA-26-0007-(custom text)` or `RCHA-26-0007 (custom text)`, now advance the sequence to `RCHA-26-0008`.
+- Removed the separate Save Invoice button and replaced Generate PDF with Invoice PDF / Save, which saves the invoice before generating its PDF.
+- Applied the combined save-and-PDF workflow to regular and draft invoices while allowing saved invoices to be downloaded again without duplicate records.
+- Added a SHA-256 package checksum to the Joomla update feed for update integrity verification.
+
 ## Version 1.2.64
 
 - Removed the separate manual base-country kilometre override, button, and split mode.

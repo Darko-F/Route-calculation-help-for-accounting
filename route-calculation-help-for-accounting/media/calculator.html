@@ -23,7 +23,7 @@
     .country-split-item .form-select { width: 100%; min-width: 0; }
     .country-remove-wrap .btn { width: 100%; min-width: 5rem; white-space: nowrap; }
     .country-note-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: .25rem; }
-    .invoice-history-grid { display: grid; grid-template-columns: minmax(9rem, 1fr) 7rem 8.5rem; gap: .5rem; align-items: center; }
+    .invoice-history-grid { display: grid; grid-template-columns: minmax(9rem, 1fr) 7rem 8.5rem auto; gap: .5rem; align-items: center; }
     .invoice-history-grid > span { min-width: 0; overflow-wrap: anywhere; }
     .invoice-browser-grid { display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(8rem, 1fr) 7rem 7rem auto; gap: .5rem; align-items: center; }
     .invoice-browser-grid > span { min-width: 0; overflow-wrap: anywhere; }
@@ -156,6 +156,8 @@
             <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OUTSIDE_PART</th><td id="outsideBase" class="result-value text-end">-</td></tr>
             <tr><th scope="row" data-base-country-label="vat-amount">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIAN_VAT</th><td id="vatAmount" class="result-value text-end">-</td></tr>
             <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_OUTSIDE_VAT</th><td id="outsideVatAmount" class="result-value text-end">-</td></tr>
+          </tbody><tbody id="additionalCostResults"></tbody><tbody>
+            <tr><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_TOTAL_VAT</th><td id="totalVatAmount" class="result-value text-end">-</td></tr>
             <tr class="table-dark"><th scope="row">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_TOTAL_INVOICE_AMOUNT</th><td id="totalAmount" class="result-value text-end">-</td></tr>
           </tbody></table>
         </div>
@@ -173,37 +175,59 @@
             <div class="col-md-6">
               <label for="invoiceNumber" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_INVOICE_NO</label>
               <div class="input-group input-group-sm">
-                <input id="invoiceNumber" class="form-control" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_INVOICE" />
+                <input id="invoiceNumber" class="form-control" maxlength="30" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_INVOICE" />
                 <button class="btn btn-outline-secondary" type="button" onclick="generateNextInvoiceNumber(true)">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GENERATE</button>
               </div>
             </div>
             <div class="col-md-6">
               <label for="customerCode" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SIFRA_STRANKE</label>
-              <input id="customerCode" class="form-control form-control-sm" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_CUSTOMER_CODE" />
+              <input id="customerCode" class="form-control form-control-sm" maxlength="10" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_CUSTOMER_CODE" />
             </div>
             <div class="col-md-6 mt-2">
               <label for="serviceDate" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SERVICE_DATE</label>
-              <input id="serviceDate" class="form-control form-control-sm" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" />
+              <div class="input-group input-group-sm">
+                <input id="serviceDate" class="form-control" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" />
+                <button class="btn btn-outline-secondary" type="button" onclick="openServiceDatePicker()" aria-label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CHOOSE_DATE">&#128197;</button>
+                <input id="serviceDatePicker" type="date" tabindex="-1" aria-hidden="true" onchange="onServiceDatePicked()" style="position:absolute; width:1px; height:1px; opacity:0; right:0; bottom:0; pointer-events:none;" />
+              </div>
             </div>
-            <div class="col-12 mt-2"><input id="outputFileName" class="form-control form-control-sm" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_FILE_NAME" /></div>
+            <div class="col-md-6 mt-2">
+              <label for="dueDate" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_DUE_DATE</label>
+              <div class="input-group input-group-sm">
+                <input id="dueDate" class="form-control" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" />
+                <button class="btn btn-outline-secondary" type="button" onclick="openDueDatePicker()" aria-label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CHOOSE_DATE">&#128197;</button>
+                <input id="dueDatePicker" type="date" tabindex="-1" aria-hidden="true" onchange="onDueDatePicked()" style="position:absolute; width:1px; height:1px; opacity:0; right:0; bottom:0; pointer-events:none;" />
+              </div>
+            </div>
             <div class="col-12 mt-2">
               <label for="customerName" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMER_NAME</label>
-              <input id="customerName" class="form-control form-control-sm" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMER_NAME" autocomplete="off" onfocus="onCustomerNameInput()" oninput="onCustomerNameInput()" />
+              <input id="customerName" class="form-control form-control-sm" maxlength="100" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMER_NAME" autocomplete="off" onfocus="onCustomerNameInput()" oninput="onCustomerNameInput()" />
               <div id="savedCustomerSuggestions" class="list-group mt-1"></div>
             </div>
             <div class="col-12 mt-2">
               <label for="customerAddress" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADDRESS_POST</label>
-              <input id="customerAddress" class="form-control form-control-sm" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADDRESS_POST" autocomplete="off" />
+              <input id="customerAddress" class="form-control form-control-sm" maxlength="50" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADDRESS_POST" autocomplete="off" />
+            </div>
+            <div class="col-md-4 mt-2">
+              <label for="customerPostcode" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMER_POSTCODE</label>
+              <input id="customerPostcode" class="form-control form-control-sm" maxlength="30" inputmode="numeric" autocomplete="off" />
+            </div>
+            <div class="col-md-5 mt-2">
+              <label for="customerCity" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMER_CITY</label>
+              <input id="customerCity" class="form-control form-control-sm" maxlength="250" autocomplete="off" />
+            </div>
+            <div class="col-md-3 mt-2">
+              <label for="customerCountryCode" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMER_COUNTRY_CODE</label>
+              <input id="customerCountryCode" class="form-control form-control-sm text-uppercase" maxlength="2" value="SI" autocomplete="off" />
             </div>
             <div class="col-12 mt-2">
               <label for="customerVatId" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMER_VAT_ID</label>
-              <input id="customerVatId" class="form-control form-control-sm" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMER_VAT_ID" autocomplete="off" />
+              <input id="customerVatId" class="form-control form-control-sm" maxlength="14" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMER_VAT_ID" autocomplete="off" />
             </div>
             <div class="col-12 mt-2"><textarea id="customInvoiceMessage" class="form-control form-control-sm" rows="2" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_CUSTOM_MESSAGE"></textarea></div>
             <div class="col-12 mt-2 d-flex flex-wrap gap-2">
               <button class="btn btn-sm btn-primary" type="button" onclick="saveCustomerDetails()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAVE_DETAILS</button>
               <button class="btn btn-sm btn-outline-success" type="button" onclick="addCurrentServiceToDraft()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADD_TO_DRAFT</button>
-              <button class="btn btn-sm btn-outline-primary" type="button" onclick="saveInvoiceHistory()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAVE_INVOICE_HISTORY</button>
             </div>
             <div class="col-12">
               <hr class="my-3" />
@@ -337,6 +361,7 @@ let routeStopCounter = 0;
 let autoRouteTimer = null;
 let lastRouteData = null;
 let lastCalculatedData = null;
+let restoredInvoiceIssueDate = '';
 let activeDraftRef = '';
 let savedCustomers = [];
 let customerPickerCustomers = [];
@@ -436,8 +461,8 @@ window.addEventListener('DOMContentLoaded', () => {
   translateStaticUi();
   loadGoogleMaps();
   try {
-    setDefaultOutputFileName();
     setDefaultServiceDate();
+    setDefaultDueDate();
     applyBaseCountryDefaults();
     updateBaseCountryUiText();
     setupPriceInputs();
@@ -447,6 +472,7 @@ window.addEventListener('DOMContentLoaded', () => {
       event.currentTarget.dataset.generated = '0';
     });
     document.getElementById('serviceDate')?.addEventListener('blur', event => normalizeVisibleDateInput(event.currentTarget));
+    document.getElementById('dueDate')?.addEventListener('blur', event => normalizeVisibleDateInput(event.currentTarget));
     document.getElementById('vatRate')?.addEventListener('input', () => {
       markRouteCalculationStale();
     });
@@ -606,7 +632,7 @@ function getPriceSource() {
 function setPriceInputValue(id, value) {
   const input = document.getElementById(id);
   if (!input) return;
-  input.value = Number(value || 0).toFixed(2);
+  input.value = roundMoney(value).toFixed(2);
 }
 
 async function calculateRoute() {
@@ -942,16 +968,19 @@ function calculateFromCountrySegments(countrySegments, successMessage) {
   }
   // apply deductions from adjustments
   const deductions = getAdjustmentsArray();
-  const deductionsTotal = deductions.reduce((s, a) => s + (Number(a.amount) || 0), 0);
+  const deductionTotals = getAdjustmentTotals(deductions);
+  const deductionsTotal = deductionTotals.base;
+  const deductionsVatTotal = deductionTotals.vat;
+  const deductionsGrossTotal = deductionTotals.gross;
   const weightedVatRate = countrySegments.reduce((sum, segment) => sum + (segment.km / segmentKmTotal) * (segment.vatRate / 100), 0);
   const priceSource = getPriceSource();
   const grossInput = parseFloat(document.getElementById('grossPrice')?.value || String(lastRouteData.grossPrice || '0')) || 0;
   const netInput = parseFloat(document.getElementById('price')?.value || String(lastRouteData.netPriceInput || '0')) || 0;
   const netPrice = priceSource === 'net'
     ? Math.max(0, netInput)
-    : Math.max(0, grossInput - deductionsTotal) / (1 + weightedVatRate);
+    : Math.max(0, grossInput - deductionsGrossTotal) / (1 + weightedVatRate);
   const grossAfterDeductions = netPrice * (1 + weightedVatRate);
-  const grossPrice = grossAfterDeductions + deductionsTotal;
+  const grossPrice = grossAfterDeductions + deductionsGrossTotal;
   const calculatedSegments = countrySegments.map(segment => {
     const base = netPrice * (segment.km / segmentKmTotal);
     const vatAmount = base * (segment.vatRate / 100);
@@ -972,9 +1001,11 @@ function calculateFromCountrySegments(countrySegments, successMessage) {
   setPriceInputValue('price', netPrice);
   setPriceInputValue('grossPrice', grossPrice);
   setPriceSource(priceSource);
-  lastCalculatedData = { createdAt: new Date().toISOString(), baseCountry: getBaseCountryCode(), pickup, dropoff, totalKm, sloveniaKm: siKm, outsideSloveniaKm: outsideKm, grossPrice, priceSource, deductions, deductionsTotal, grossAfterDeductions, netPrice, taxableBaseSlovenia: taxableBase, outsideSloveniaBase: outsideBase, vatRate, vatAmount, outsideVatRate, outsideVatAmount, totalAmount, splitMethod: document.getElementById('splitMethod').value, currency: 'EUR', invoiceTextEn: '', invoiceTextSl: '', countrySegments: calculatedSegments, isDomesticSloveniaOnly };
-  showResults(totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate, calculatedSegments);
-  buildInvoiceText(pickup, dropoff, totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate, isDomesticSloveniaOnly);
+  const invoiceTotalAmount = totalAmount + deductionsGrossTotal;
+  restoredInvoiceIssueDate = '';
+  lastCalculatedData = { createdAt: new Date().toISOString(), baseCountry: getBaseCountryCode(), pickup, dropoff, totalKm, sloveniaKm: siKm, outsideSloveniaKm: outsideKm, grossPrice, priceSource, deductions, deductionsTotal, deductionsVatTotal, deductionsGrossTotal, grossAfterDeductions, netPrice, taxableBaseSlovenia: taxableBase, outsideSloveniaBase: outsideBase, vatRate, vatAmount, outsideVatRate, outsideVatAmount, totalAmount, invoiceTotalAmount, splitMethod: document.getElementById('splitMethod').value, currency: 'EUR', invoiceTextEn: '', invoiceTextSl: '', countrySegments: calculatedSegments, isDomesticSloveniaOnly };
+  showResults(totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate, calculatedSegments, deductions);
+  buildInvoiceText(pickup, dropoff, totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, invoiceTotalAmount, vatRate, outsideVatRate, isDomesticSloveniaOnly);
   lastCalculatedData.invoiceTextEn = document.getElementById('invoiceTextEn').value;
   lastCalculatedData.invoiceTextSl = document.getElementById('invoiceTextSl').value;
   setStatus(successMessage, 'success');
@@ -987,21 +1018,68 @@ function addAdjustment() {
   row.className = 'input-group mb-2 adjustment-row';
   row.dataset.id = id;
   row.innerHTML = `<input type="text" class="form-control form-control-sm adjustment-desc" placeholder="${xmlEscape(t('Description (e.g. parking)'))}" />
-    <input type="number" step="0.01" class="form-control form-control-sm adjustment-amount" value="0" />
+    <input type="number" step="0.01" class="form-control form-control-sm adjustment-amount" value="0" aria-label="${xmlEscape(t('Amount including VAT (€)'))}" title="${xmlEscape(t('Amount including VAT (€)'))}" />
+    <select class="form-select form-select-sm adjustment-tax-preset" aria-label="${xmlEscape(t('Additional cost VAT'))}">
+      <option value="S" selected>${xmlEscape(t('22% S - General'))}</option>
+      <option value="Z">${xmlEscape(t('9.5% Z - Reduced'))}</option>
+      <option value="N">${xmlEscape(t('Custom - N non-taxable'))}</option>
+    </select>
+    <input type="number" min="0" step="0.01" class="form-control form-control-sm adjustment-tax d-none" value="0" placeholder="${xmlEscape(t('Custom VAT %'))}" aria-label="${xmlEscape(t('Custom VAT %'))}" />
     <button class="btn btn-sm btn-outline-danger" type="button">${xmlEscape(t('Remove'))}</button>`;
   row.querySelector('button').addEventListener('click', () => { row.remove(); updateDeductionsDisplay(); });
   row.querySelector('.adjustment-amount').addEventListener('input', () => { updateDeductionsDisplay(); markRouteCalculationStale(); });
+  row.querySelector('.adjustment-tax-preset').addEventListener('change', () => { updateAdjustmentVatInput(row); updateDeductionsDisplay(); markRouteCalculationStale(); });
+  row.querySelector('.adjustment-tax').addEventListener('input', () => { updateDeductionsDisplay(); markRouteCalculationStale(); });
   container.appendChild(row);
+  updateAdjustmentVatInput(row);
   updateDeductionsDisplay();
+}
+
+function updateAdjustmentVatInput(row) {
+  const customInput = row?.querySelector('.adjustment-tax');
+  if (!customInput) return;
+  const isCustom = row.querySelector('.adjustment-tax-preset')?.value === 'N';
+  customInput.classList.toggle('d-none', !isCustom);
+  customInput.disabled = !isCustom;
 }
 
 function clearAdjustments() { document.getElementById('adjustmentsList').innerHTML = ''; updateDeductionsDisplay(); }
 
 function updateDeductionsDisplay() { const total = getAdjustmentsTotal(); document.getElementById('deductionsTotal').textContent = Number(total || 0).toFixed(2); }
 
-function getAdjustmentsArray() { const rows = Array.from(document.querySelectorAll('.adjustment-row')); return rows.map(r => ({ description: (r.querySelector('.adjustment-desc') || { value: '' }).value, amount: parseFloat((r.querySelector('.adjustment-amount') || { value: 0 }).value) || 0 })); }
+function getAdjustmentsArray() {
+  const rows = Array.from(document.querySelectorAll('.adjustment-row'));
+  return rows.map(row => {
+    const preset = row.querySelector('.adjustment-tax-preset')?.value || '';
+    const customRate = Math.max(0, parseFloat(row.querySelector('.adjustment-tax')?.value || '0') || 0);
+    const vatRate = preset === 'S' ? 22 : preset === 'Z' ? 9.5 : customRate;
+    return {
+      description: row.querySelector('.adjustment-desc')?.value || '',
+      amount: Math.max(0, parseFloat(row.querySelector('.adjustment-amount')?.value || '0') || 0),
+      vatRate,
+      minimaxVatCode: preset === 'S' || preset === 'Z' ? preset : 'N'
+    };
+  });
+}
 
-function getAdjustmentsTotal() { return getAdjustmentsArray().reduce((s, a) => s + (Number(a.amount) || 0), 0); }
+function getAdjustmentTotals(adjustments) {
+  return (adjustments || []).reduce((totals, adjustment) => {
+    const amounts = getAdjustmentAmounts(adjustment);
+    totals.base += amounts.base;
+    totals.vat += amounts.vat;
+    totals.gross += amounts.gross;
+    return totals;
+  }, { base: 0, vat: 0, gross: 0 });
+}
+
+function getAdjustmentAmounts(adjustment) {
+  const gross = Math.max(0, Number(adjustment?.amount) || 0);
+  const vatRate = Math.max(0, Number(adjustment?.vatRate) || 0);
+  const base = vatRate > 0 ? gross / (1 + vatRate / 100) : gross;
+  return { gross, base, vat: gross - base, vatRate };
+}
+
+function getAdjustmentsTotal() { return getAdjustmentTotals(getAdjustmentsArray()).gross; }
 
 function getJoomlaAjaxConfig() {
   return {
@@ -1055,6 +1133,9 @@ function getCustomerPayload() {
     customer_code: customerCode,
     customer_name: customerName,
     customer_address: (document.getElementById('customerAddress')?.value || '').trim(),
+    customer_postcode: (document.getElementById('customerPostcode')?.value || '').trim(),
+    customer_city: (document.getElementById('customerCity')?.value || '').trim(),
+    customer_country_code: (document.getElementById('customerCountryCode')?.value || 'SI').trim().toUpperCase(),
     vat_id: (document.getElementById('customerVatId')?.value || '').trim(),
     outside_country: '',
     outside_vat_rate: 0,
@@ -1063,7 +1144,7 @@ function getCustomerPayload() {
 }
 
 function buildCustomerCodeFromVatId() {
-  return (document.getElementById('customerVatId')?.value || '').replace(/\D+/g, '').slice(0, 40);
+  return (document.getElementById('customerVatId')?.value || '').replace(/\D+/g, '').slice(0, 10);
 }
 
 function syncCustomerCodeFromVatId() {
@@ -1269,7 +1350,7 @@ function renderCustomerPicker(customers) {
 async function deleteSavedCustomer(customerCode, customerName = '') {
   if (!customerCode) return;
   const label = customerName ? `${customerName} (${customerCode})` : customerCode;
-  if (!window.confirm(`${t('Delete this saved customer? Invoice history will stay saved.')}\n\n${label}`)) return;
+  if (!window.confirm(`${t('Warning: Delete this saved customer? The customer will be removed, but invoice history will stay saved. This cannot be undone.')}\n\n${label}`)) return;
 
   const status = document.getElementById('customerPickerStatus');
   try {
@@ -1291,10 +1372,12 @@ async function deleteSavedCustomer(customerCode, customerName = '') {
 }
 
 function clearCurrentCustomerForm() {
-  ['customerCode', 'customerName', 'customerAddress', 'customerVatId', 'customInvoiceMessage'].forEach(id => {
+  ['customerCode', 'customerName', 'customerAddress', 'customerPostcode', 'customerCity', 'customerVatId', 'customInvoiceMessage'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  const countryCode = document.getElementById('customerCountryCode');
+  if (countryCode) countryCode.value = 'SI';
   const historyEl = document.getElementById('invoiceHistory');
   if (historyEl) historyEl.textContent = '';
 }
@@ -1318,6 +1401,9 @@ async function loadCustomerDetails(selectedCustomerCode = '') {
     document.getElementById('customerCode').value = customer.customer_code || customerCode;
     document.getElementById('customerName').value = customer.customer_name || '';
     document.getElementById('customerAddress').value = customer.customer_address || '';
+    document.getElementById('customerPostcode').value = customer.customer_postcode || '';
+    document.getElementById('customerCity').value = customer.customer_city || '';
+    document.getElementById('customerCountryCode').value = customer.customer_country_code || 'SI';
     document.getElementById('customerVatId').value = customer.vat_id || '';
     document.getElementById('customInvoiceMessage').value = customer.custom_invoice_message || '';
 
@@ -1336,7 +1422,8 @@ function getInvoicePayload() {
     invoice_number: (invoiceNumberInput?.value || '').trim(),
     invoice_number_auto: invoiceNumberInput?.dataset.generated === '1',
     service_date: getServiceDateIso(),
-    output_file_name: (document.getElementById('outputFileName')?.value || '').trim(),
+    due_date: getDueDateIso(),
+    output_file_name: '',
     calculated_data: lastCalculatedData,
     invoice_text_en: document.getElementById('invoiceTextEn')?.value || '',
     invoice_text_sl: document.getElementById('invoiceTextSl')?.value || ''
@@ -1345,8 +1432,9 @@ function getInvoicePayload() {
 
 function getInvoiceYear() {
   const currentValue = (document.getElementById('invoiceNumber')?.value || '').trim();
-  const yearMatch = currentValue.match(/^RCHA-(\d{4})-/);
-  return yearMatch ? Number(yearMatch[1]) : new Date().getFullYear();
+  const yearMatch = currentValue.match(/^RCHA-(\d{2})-/);
+  const currentYear = new Date().getFullYear();
+  return yearMatch ? (Math.floor(currentYear / 100) * 100) + Number(yearMatch[1]) : currentYear;
 }
 
 async function generateNextInvoiceNumber(force = false) {
@@ -1372,6 +1460,7 @@ async function generateNextInvoiceNumber(force = false) {
 
 async function saveInvoiceHistory() {
   try {
+    const invoiceNumberInput = document.getElementById('invoiceNumber');
     await resolveCustomerCodeFromName();
     await generateNextInvoiceNumber(false);
     const payload = getInvoiceHistoryPayload();
@@ -1382,7 +1471,6 @@ async function saveInvoiceHistory() {
     const data = await postJoomlaAjax('saveInvoice', payload);
     const savedInvoice = data?.invoice || null;
     if (savedInvoice?.invoice_number) {
-      const invoiceNumberInput = document.getElementById('invoiceNumber');
       invoiceNumberInput.value = savedInvoice.invoice_number;
       invoiceNumberInput.dataset.generated = '0';
     }
@@ -1392,8 +1480,10 @@ async function saveInvoiceHistory() {
       renderDraftLines([]);
     }
     await loadInvoiceHistory(savedInvoice?.customer_code || payload.customer.customer_code, savedInvoice?.customer_name || payload.customer.customer_name, savedInvoice);
+    return savedInvoice;
   } catch (err) {
     showDatabaseStatus(err.message, 'danger');
+    return null;
   }
 }
 
@@ -1415,7 +1505,8 @@ function getDraftInvoiceHistoryPayload(draftLines) {
     invoice_number: (invoiceNumberInput?.value || '').trim(),
     invoice_number_auto: invoiceNumberInput?.dataset.generated === '1',
     service_date: payloads[0]?.service_date || getServiceDateIso(),
-    output_file_name: (document.getElementById('outputFileName')?.value || '').trim(),
+    due_date: getDueDateIso(),
+    output_file_name: '',
     project_ref: getDraftProjectRef(),
     calculated_data: combinedData,
     invoice_text_en: document.getElementById('invoiceTextEn')?.value || combinedData.invoiceTextEn || '',
@@ -1568,6 +1659,7 @@ function getRenderedDraftLines() {
 
 function combinedCalculatedDataFromDraft(payloads) {
   const segments = [];
+  const deductions = [];
   let totalKm = 0, siKm = 0, outsideKm = 0, taxableBase = 0, outsideBase = 0, vatAmount = 0, outsideVatAmount = 0, totalAmount = 0;
   payloads.forEach(payload => {
     const d = payload.calculated_data || {};
@@ -1579,21 +1671,32 @@ function combinedCalculatedDataFromDraft(payloads) {
     vatAmount += Number(d.vatAmount || 0);
     outsideVatAmount += Number(d.outsideVatAmount || 0);
     totalAmount += Number(d.totalAmount || 0);
+    (Array.isArray(d.deductions) ? d.deductions : []).forEach(adjustment => {
+      deductions.push({
+        description: String(adjustment.description || ''),
+        amount: Math.max(0, Number(adjustment.amount) || 0),
+        vatRate: Math.max(0, Number(adjustment.vatRate) || 0),
+        minimaxVatCode: ['S', 'Z', 'N'].includes(adjustment.minimaxVatCode) ? adjustment.minimaxVatCode : undefined
+      });
+    });
     (Array.isArray(d.countrySegments) ? d.countrySegments : []).forEach(segment => {
       segments.push({ ...segment, serviceDate: payload.service_date || '', routeLabel: [d.pickup, d.dropoff].filter(Boolean).join(' - ') });
     });
   });
+  const deductionTotals = getAdjustmentTotals(deductions);
   return {
     createdAt: new Date().toISOString(),
     baseCountry: getBaseCountryCode(),
     pickup: t('Multiple services'),
-    dropoff: (document.getElementById('outputFileName')?.value || '').trim() || t('Draft invoice'),
+    dropoff: t('Draft invoice'),
     totalKm, sloveniaKm: siKm, outsideSloveniaKm: outsideKm,
     taxableBaseSlovenia: taxableBase, outsideSloveniaBase: outsideBase,
     vatRate: 0, vatAmount, outsideVatRate: 0, outsideVatAmount, totalAmount,
     countrySegments: segments,
-    deductions: [],
-    deductionsTotal: 0,
+    deductions,
+    deductionsTotal: deductionTotals.base,
+    deductionsVatTotal: deductionTotals.vat,
+    deductionsGrossTotal: deductionTotals.gross,
     isDomesticSloveniaOnly: outsideBase <= 0.004
   };
 }
@@ -1619,7 +1722,7 @@ function renderInvoiceHistory(invoices) {
 
   if (!invoices.length) {
     historyEl.dataset.invoices = '[]';
-    historyEl.textContent = t('No saved invoice history for this customer. Use "Save Invoice" after calculating a route to store reusable route details.');
+    historyEl.textContent = t('No saved invoice history for this customer. Use "Generate PDF / Save" after calculating a route to save the invoice and generate its PDF.');
     return;
   }
 
@@ -1629,7 +1732,7 @@ function renderInvoiceHistory(invoices) {
       <div class="col-sm-5"><input id="invoiceHistoryDateFilter" class="form-control form-control-sm" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" value="${xmlEscape(dateFilter)}" oninput="filterInvoiceHistory()" onblur="normalizeVisibleDateInput(this)" /></div>
     </div>
     <div class="invoice-history-grid small fw-semibold text-muted border-bottom pb-1 mb-1">
-      <span>${xmlEscape(t('Invoice Name'))}</span><span class="text-sm-end">${xmlEscape(t('Price'))}</span><span>${xmlEscape(t('Date'))}</span>
+      <span>${xmlEscape(t('Invoice Name'))}</span><span class="text-sm-end">${xmlEscape(t('Price'))}</span><span>${xmlEscape(t('Date'))}</span><span>${xmlEscape(t('Actions'))}</span>
     </div>`;
 
   historyEl.innerHTML = filterHtml + `<div id="invoiceHistoryRows">${invoiceHistoryRowsHtml(invoices, orderFilter, dateFilter)}</div>`;
@@ -1659,7 +1762,7 @@ function invoiceHistoryRowsHtml(invoices, orderFilter, dateFilter) {
   return filteredInvoices.map(inv => {
     const index = invoices.indexOf(inv);
     const total = Number(inv.total_amount || 0).toLocaleString('sl-SI', { style: 'currency', currency: 'EUR' });
-    return `<button class="btn btn-sm btn-outline-secondary w-100 text-start mb-1 invoice-history-grid" type="button" onclick="restoreInvoiceFromHistory(${index})"><span class="fw-semibold">${xmlEscape(inv.invoice_number)}</span><span class="text-sm-end">${total}</span><span class="text-muted">${xmlEscape(formatIsoDateDisplay(inv.created_at || ''))}</span></button>`;
+    return `<div class="border rounded p-2 mb-1 invoice-history-grid"><button class="btn btn-sm btn-link p-0 text-start fw-semibold" type="button" onclick="restoreInvoiceFromHistory(${index})">${xmlEscape(inv.invoice_number)}</button><span class="text-sm-end">${total}</span><span class="text-muted">${xmlEscape(formatIsoDateDisplay(inv.created_at || ''))}</span><span class="d-flex gap-1"><button class="btn btn-sm btn-outline-primary" type="button" onclick="restoreInvoiceFromHistory(${index})">${xmlEscape(t('Load'))}</button><button class="btn btn-sm btn-outline-info" type="button" onclick="generateSavedInvoicePdf('history', ${index})">${xmlEscape(t('PDF'))}</button></span></div>`;
   }).join('');
 }
 
@@ -1691,14 +1794,14 @@ function modalInvoiceRowsHtml(invoices, source, includeCustomer = false) {
   const gridClass = includeCustomer ? 'invoice-browser-grid' : 'invoice-history-grid';
   const header = includeCustomer
     ? `<div class="${gridClass} small fw-semibold text-muted border-bottom pb-1 mb-1"><span>${xmlEscape(t('Invoice Name'))}</span><span>${xmlEscape(t('Customer'))}</span><span class="text-md-end">${xmlEscape(t('Price'))}</span><span>${xmlEscape(t('Date'))}</span><span>${xmlEscape(t('Actions'))}</span></div>`
-    : `<div class="${gridClass} small fw-semibold text-muted border-bottom pb-1 mb-1"><span>${xmlEscape(t('Invoice Name'))}</span><span class="text-sm-end">${xmlEscape(t('Price'))}</span><span>${xmlEscape(t('Date'))}</span></div>`;
+    : `<div class="${gridClass} small fw-semibold text-muted border-bottom pb-1 mb-1"><span>${xmlEscape(t('Invoice Name'))}</span><span class="text-sm-end">${xmlEscape(t('Price'))}</span><span>${xmlEscape(t('Date'))}</span><span>${xmlEscape(t('Actions'))}</span></div>`;
   const rows = invoices.map((invoice, index) => {
     const total = Number(invoice.total_amount || 0).toLocaleString('sl-SI', { style: 'currency', currency: 'EUR' });
     const date = formatIsoDateDisplay(invoice.created_at || '');
     if (includeCustomer) {
-      return `<div class="border rounded p-2 mb-1 ${gridClass}"><button class="btn btn-sm btn-link p-0 text-start fw-semibold" type="button" onclick="restoreInvoiceFromModal('${source}', ${index})">${xmlEscape(invoice.invoice_number || '')}</button><span>${xmlEscape(invoice.customer_name || invoice.customer_code || '')}</span><span class="text-md-end">${total}</span><span class="text-muted">${xmlEscape(date)}</span><span class="d-flex gap-1"><button class="btn btn-sm btn-outline-primary" type="button" onclick="restoreInvoiceFromModal('${source}', ${index})">${xmlEscape(t('Load'))}</button><button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteInvoiceFromBrowser(${index})">${xmlEscape(t('Delete'))}</button></span></div>`;
+      return `<div class="border rounded p-2 mb-1 ${gridClass}"><button class="btn btn-sm btn-link p-0 text-start fw-semibold" type="button" onclick="restoreInvoiceFromModal('${source}', ${index})">${xmlEscape(invoice.invoice_number || '')}</button><span>${xmlEscape(invoice.customer_name || invoice.customer_code || '')}</span><span class="text-md-end">${total}</span><span class="text-muted">${xmlEscape(date)}</span><span class="d-flex flex-wrap gap-1"><button class="btn btn-sm btn-outline-primary" type="button" onclick="restoreInvoiceFromModal('${source}', ${index})">${xmlEscape(t('Load'))}</button><button class="btn btn-sm btn-outline-info" type="button" onclick="generateSavedInvoicePdf('${source}', ${index})">${xmlEscape(t('PDF'))}</button><button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteInvoiceFromBrowser(${index})">${xmlEscape(t('Delete'))}</button></span></div>`;
     }
-    return `<button class="btn btn-sm btn-outline-secondary w-100 text-start mb-1 ${gridClass}" type="button" onclick="restoreInvoiceFromModal('${source}', ${index})"><span class="fw-semibold">${xmlEscape(invoice.invoice_number || '')}</span><span class="text-sm-end">${total}</span><span class="text-muted">${xmlEscape(date)}</span></button>`;
+    return `<div class="border rounded p-2 mb-1 ${gridClass}"><button class="btn btn-sm btn-link p-0 text-start fw-semibold" type="button" onclick="restoreInvoiceFromModal('${source}', ${index})">${xmlEscape(invoice.invoice_number || '')}</button><span class="text-sm-end">${total}</span><span class="text-muted">${xmlEscape(date)}</span><span class="d-flex gap-1"><button class="btn btn-sm btn-outline-primary" type="button" onclick="restoreInvoiceFromModal('${source}', ${index})">${xmlEscape(t('Load'))}</button><button class="btn btn-sm btn-outline-info" type="button" onclick="generateSavedInvoicePdf('${source}', ${index})">${xmlEscape(t('PDF'))}</button></span></div>`;
   }).join('');
   return header + rows;
 }
@@ -1822,7 +1925,7 @@ async function deleteInvoiceFromBrowser(index) {
   const invoiceId = Number(invoice?.id || 0);
   if (!invoice || !invoiceId) return;
   const invoiceNumber = String(invoice.invoice_number || '');
-  if (!window.confirm(tf('Delete invoice {invoiceNumber}? This cannot be undone.', { invoiceNumber }))) return;
+  if (!window.confirm(tf('Warning: Delete invoice {invoiceNumber}? This cannot be undone.', { invoiceNumber }))) return;
   const status = document.getElementById('invoiceBrowserStatus');
   try {
     if (status) status.textContent = t('Deleting invoice...');
@@ -1856,6 +1959,19 @@ function restoreInvoiceFromHistory(index) {
   restoreInvoiceRecord(invoice);
 }
 
+async function generateSavedInvoicePdf(source, index) {
+  const invoices = source === 'browser'
+    ? invoiceBrowserInvoices
+    : source === 'customer'
+      ? allCustomerInvoices
+      : JSON.parse(document.getElementById('invoiceHistory')?.dataset.invoices || '[]');
+  const invoice = invoices[index];
+  if (!invoice || !restoreInvoiceRecord(invoice)) return;
+  const modalId = source === 'browser' ? 'invoiceBrowserModal' : source === 'customer' ? 'customerInvoiceHistoryModal' : '';
+  if (modalId) bootstrap.Modal.getInstance(document.getElementById(modalId))?.hide();
+  await generatePdf(false, invoice.created_at || '');
+}
+
 function restoreInvoiceRecord(invoice) {
 
   let payload = {};
@@ -1863,25 +1979,29 @@ function restoreInvoiceRecord(invoice) {
     payload = JSON.parse(invoice.payload_json || '{}');
   } catch (e) {
     showDatabaseStatus('Saved invoice payload is invalid.', 'danger');
-    return;
+    return false;
   }
 
   const customer = payload.customer || {};
   document.getElementById('customerCode').value = customer.customer_code || invoice.customer_code || '';
   document.getElementById('customerName').value = customer.customer_name || invoice.customer_name || '';
   document.getElementById('customerAddress').value = customer.customer_address || invoice.customer_address || '';
+  document.getElementById('customerPostcode').value = customer.customer_postcode || '';
+  document.getElementById('customerCity').value = customer.customer_city || '';
+  document.getElementById('customerCountryCode').value = customer.customer_country_code || 'SI';
   document.getElementById('customerVatId').value = customer.vat_id || invoice.vat_id || '';
   const invoiceNumberInput = document.getElementById('invoiceNumber');
   invoiceNumberInput.value = payload.invoice_number || invoice.invoice_number || '';
   invoiceNumberInput.dataset.generated = '0';
   document.getElementById('serviceDate').value = formatIsoDateDisplay(payload.service_date || getTodayIsoDate());
-  document.getElementById('outputFileName').value = payload.output_file_name || '';
+  restoredInvoiceIssueDate = normalizeIsoDate(invoice.created_at || payload.issue_date || '') || getTodayIsoDate();
+  document.getElementById('dueDate').value = formatIsoDateDisplay(payload.due_date || addDaysIso(restoredInvoiceIssueDate, 15));
   document.getElementById('customInvoiceMessage').value = customer.custom_invoice_message || '';
 
   lastCalculatedData = payload.calculated_data || null;
   if (!lastCalculatedData) {
     showDatabaseStatus('Saved invoice has no calculated route data.', 'danger');
-    return;
+    return false;
   }
   if (Array.isArray(payload.draft_lines) && payload.draft_lines.length) {
     setActiveDraftRef(payload.project_ref || payload.draft_lines[0]?.project_ref || '');
@@ -1902,16 +2022,27 @@ function restoreInvoiceRecord(invoice) {
     Number(lastCalculatedData.totalAmount || 0),
     Number(lastCalculatedData.vatRate || 0),
     Number(lastCalculatedData.outsideVatRate || 0),
-    Array.isArray(lastCalculatedData.countrySegments) ? lastCalculatedData.countrySegments : []
+    Array.isArray(lastCalculatedData.countrySegments) ? lastCalculatedData.countrySegments : [],
+    Array.isArray(lastCalculatedData.deductions) ? lastCalculatedData.deductions : []
   );
   document.getElementById('invoiceTextEn').value = payload.invoice_text_en || lastCalculatedData.invoiceTextEn || '';
   document.getElementById('invoiceTextSl').value = payload.invoice_text_sl || lastCalculatedData.invoiceTextSl || '';
   showDatabaseStatus('Saved invoice restored. PDF and XML can be generated without recalculating the route.', 'success');
+  return true;
 }
 
-async function generatePdf() {
-  if (getRenderedDraftLines().length) {
-    await generateDraftPdf();
+async function generatePdf(saveInvoice = true, issueDateOverride = '') {
+  const hasDraftLines = getRenderedDraftLines().length > 0;
+  const draftPayloads = hasDraftLines ? await ensureDraftPayloads() : [];
+  if (hasDraftLines && !draftPayloads.length) return;
+
+  if (saveInvoice) {
+    const savedInvoice = await saveInvoiceHistory();
+    if (!savedInvoice) return;
+  }
+
+  if (hasDraftLines) {
+    await generateDraftPdf(draftPayloads, issueDateOverride);
     return;
   }
   if (!lastCalculatedData) { setStatus('Calculate a route first, then generate PDF.', 'warning'); return; }
@@ -1923,13 +2054,16 @@ async function generatePdf() {
   const invoiceNo = (document.getElementById('invoiceNumber')?.value || '26-0007').trim();
   const customerName = (document.getElementById('customerName')?.value || '').trim();
   const customerAddress = (document.getElementById('customerAddress')?.value || '').trim();
+  const customerPostcodeCity = [(document.getElementById('customerPostcode')?.value || '').trim(), (document.getElementById('customerCity')?.value || '').trim()].filter(Boolean).join(' ');
+  const customerCountryCode = (document.getElementById('customerCountryCode')?.value || '').trim().toUpperCase();
   const customerVatId = (document.getElementById('customerVatId')?.value || '').trim();
   const customInvoiceMessage = (document.getElementById('customInvoiceMessage')?.value || '').trim();
   const paymentReference = invoiceNo.replace(/[^0-9]/g, '');
-  const today = new Date();
-  const issueDate = formatDateDisplay(today);
+  const issueDateIso = normalizeIsoDate(issueDateOverride) || getTodayIsoDate();
+  const issueDateObject = new Date(`${issueDateIso}T12:00:00`);
+  const issueDate = formatDateDisplay(issueDateObject);
   const serviceDate = formatIsoDateDisplay(getServiceDateIso());
-  const dueDate = formatDateDisplay(new Date(today.getTime() + 30 * 86400000));
+  const dueDate = formatIsoDateDisplay(getDueDateIso(issueDateIso));
   const pageWidth = doc.internal.pageSize.getWidth();
   const right = pageWidth - 14;
   let y = 15;
@@ -1959,6 +2093,8 @@ async function generatePdf() {
   doc.setFontSize(10);
   if (customerName) { doc.text(pdfText(customerName), 14, y); y += 5; }
   if (customerAddress) y = writeWrapped(doc, customerAddress, 14, y, 90, 5);
+  if (customerPostcodeCity) y = writeWrapped(doc, customerPostcodeCity, 14, y, 90, 5);
+  if (customerCountryCode && customerCountryCode !== 'SI') y = writeWrapped(doc, customerCountryCode, 14, y, 90, 5);
   if (customerVatId) y = writeWrapped(doc, tf('ID za DDV: {taxNumber}', { taxNumber: customerVatId }), 14, y, 90, 5);
 
   y = 93;
@@ -1995,19 +2131,21 @@ async function generatePdf() {
     });
   }
   (d.deductions || []).filter(a => Number(a.amount) > 0).forEach(a => {
-    y = drawInvoiceRow(doc, y, a.description || t('Dodatni strosek'), a.amount, 1, t('kos'), 0, a.amount);
+    const amounts = getAdjustmentAmounts(a);
+    y = drawInvoiceRow(doc, y, a.description || t('Dodatni strosek'), amounts.base, 1, t('kos'), amounts.vatRate, amounts.base);
   });
 
+  const deductionTotals = getAdjustmentTotals(d.deductions || []);
   y += 4;
-  const netTotal = d.taxableBaseSlovenia + d.outsideSloveniaBase + (d.deductionsTotal || 0);
-  const vatTotal = d.vatAmount + d.outsideVatAmount;
+  const netTotal = d.taxableBaseSlovenia + d.outsideSloveniaBase + deductionTotals.base;
+  const vatTotal = d.vatAmount + d.outsideVatAmount + deductionTotals.vat;
   setPdfFont(doc, 'bold');
   doc.text(pdfText(t('Skupaj')), cols.vat, y, { align: 'right' });
   doc.text(fmtPdfEur(netTotal), right, y, { align: 'right' }); y += 6;
   doc.text(pdfText(t('DDV')), cols.vat, y, { align: 'right' });
   doc.text(fmtPdfEur(vatTotal), right, y, { align: 'right' }); y += 6;
   doc.text(pdfText(t('Za placilo')), cols.vat, y, { align: 'right' });
-  doc.text(fmtPdfEur(d.totalAmount + (d.deductionsTotal || 0)), right, y, { align: 'right' });
+  doc.text(fmtPdfEur(d.totalAmount + deductionTotals.gross), right, y, { align: 'right' });
 
   y = Math.max(y + 18, tableTop + 58);
   doc.setFontSize(8.5);
@@ -2017,7 +2155,10 @@ async function generatePdf() {
   doc.text(pdfText(t('Znesek z DDV')), right, y, { align: 'right' });
   setPdfFont(doc, 'normal');
   y += 7;
-  y = drawVatSummaryRow(doc, y, 0, d.deductionsTotal || 0, 0);
+  (d.deductions || []).filter(a => Number(a.amount) > 0).forEach(a => {
+    const amounts = getAdjustmentAmounts(a);
+    y = drawVatSummaryRow(doc, y, amounts.vatRate, amounts.base, amounts.vat);
+  });
   countrySegments.filter(segment => Number(segment.base) > 0.004 || Number(segment.vatAmount) > 0.004).forEach(segment => {
     y = drawVatSummaryRow(doc, y, segment.vatRate, segment.base, segment.vatAmount);
   });
@@ -2038,12 +2179,12 @@ async function generatePdf() {
   y = writeWrapped(doc, t('Zahvaljujemo se vam za vase zaupanje in se veselimo nadaljnjega sodelovanja!'), 14, y + 5, 180, 5);
   await drawPdfSignature(doc);
 
-  doc.save(getOutputFileName('racun_' + (invoiceNo || '26-0007'), 'pdf'));
+  doc.save(getInvoicePdfFileName(invoiceNo));
   setStatus('PDF generated.', 'success');
 }
 
-async function generateDraftPdf() {
-  const payloads = await ensureDraftPayloads();
+async function generateDraftPdf(payloads = null, issueDateOverride = '') {
+  payloads = Array.isArray(payloads) ? payloads : await ensureDraftPayloads();
   if (!payloads.length) return;
   const combined = combinedCalculatedDataFromDraft(payloads);
   const doc = new jspdf.jsPDF({ unit: 'mm', format: 'a4' });
@@ -2051,11 +2192,15 @@ async function generateDraftPdf() {
   const invoiceNo = (document.getElementById('invoiceNumber')?.value || '26-0007').trim();
   const customerName = (document.getElementById('customerName')?.value || '').trim();
   const customerAddress = (document.getElementById('customerAddress')?.value || '').trim();
+  const customerPostcodeCity = [(document.getElementById('customerPostcode')?.value || '').trim(), (document.getElementById('customerCity')?.value || '').trim()].filter(Boolean).join(' ');
+  const customerCountryCode = (document.getElementById('customerCountryCode')?.value || '').trim().toUpperCase();
   const customerVatId = (document.getElementById('customerVatId')?.value || '').trim();
   const customInvoiceMessage = (document.getElementById('customInvoiceMessage')?.value || '').trim();
   const paymentReference = invoiceNo.replace(/[^0-9]/g, '');
-  const issueDate = formatDateDisplay(new Date());
-  const dueDate = formatDateDisplay(new Date(Date.now() + 30 * 86400000));
+  const issueDateIso = normalizeIsoDate(issueDateOverride) || getTodayIsoDate();
+  const issueDateObject = new Date(`${issueDateIso}T12:00:00`);
+  const issueDate = formatDateDisplay(issueDateObject);
+  const dueDate = formatIsoDateDisplay(getDueDateIso(issueDateIso));
   const pageWidth = doc.internal.pageSize.getWidth();
   const right = pageWidth - 14;
   let y = 15;
@@ -2076,6 +2221,8 @@ async function generateDraftPdf() {
   doc.setFontSize(10);
   if (customerName) { doc.text(pdfText(customerName), 14, y); y += 5; }
   if (customerAddress) y = writeWrapped(doc, customerAddress, 14, y, 90, 5);
+  if (customerPostcodeCity) y = writeWrapped(doc, customerPostcodeCity, 14, y, 90, 5);
+  if (customerCountryCode && customerCountryCode !== 'SI') y = writeWrapped(doc, customerCountryCode, 14, y, 90, 5);
   if (customerVatId) y = writeWrapped(doc, tf('ID za DDV: {taxNumber}', { taxNumber: customerVatId }), 14, y, 90, 5);
 
   y = 93;
@@ -2117,16 +2264,26 @@ async function generateDraftPdf() {
       const note = segment.pdfNote || (!(segment.isBaseCountry ?? segment.isSlovenia) && Number(segment.vatRate || 0) === 0 ? SLOVENIA_PDF_NOTE : '');
       if (note && !countryNotes.includes(note)) countryNotes.push(note);
     });
+    (Array.isArray(d.deductions) ? d.deductions : []).filter(adjustment => Number(adjustment.amount) > 0).forEach(adjustment => {
+      if (y > 260) { doc.addPage(); y = 20; }
+      const amounts = getAdjustmentAmounts(adjustment);
+      y = drawInvoiceRow(doc, y, adjustment.description || t('Dodatni strosek'), amounts.base, 1, t('kos'), amounts.vatRate, amounts.base);
+      const key = String(amounts.vatRate);
+      vatSummary[key] = vatSummary[key] || { rate: amounts.vatRate, base: 0, vat: 0 };
+      vatSummary[key].base += amounts.base;
+      vatSummary[key].vat += amounts.vat;
+    });
   });
 
+  const deductionTotals = getAdjustmentTotals(combined.deductions || []);
   y += 4;
   setPdfFont(doc, 'bold');
   doc.text(pdfText(t('Skupaj')), cols.vat, y, { align: 'right' });
-  doc.text(fmtPdfEur(combined.taxableBaseSlovenia + combined.outsideSloveniaBase), right, y, { align: 'right' }); y += 6;
+  doc.text(fmtPdfEur(combined.taxableBaseSlovenia + combined.outsideSloveniaBase + deductionTotals.base), right, y, { align: 'right' }); y += 6;
   doc.text(pdfText(t('DDV')), cols.vat, y, { align: 'right' });
-  doc.text(fmtPdfEur(combined.vatAmount + combined.outsideVatAmount), right, y, { align: 'right' }); y += 6;
+  doc.text(fmtPdfEur(combined.vatAmount + combined.outsideVatAmount + deductionTotals.vat), right, y, { align: 'right' }); y += 6;
   doc.text(pdfText(t('Za placilo')), cols.vat, y, { align: 'right' });
-  doc.text(fmtPdfEur(combined.totalAmount), right, y, { align: 'right' });
+  doc.text(fmtPdfEur(combined.totalAmount + deductionTotals.gross), right, y, { align: 'right' });
 
   y += 14;
   setPdfFont(doc, 'normal');
@@ -2144,7 +2301,7 @@ async function generateDraftPdf() {
   });
   await drawPdfSignature(doc);
 
-  doc.save(getOutputFileName('racun_' + (invoiceNo || '26-0007'), 'pdf'));
+  doc.save(getInvoicePdfFileName(invoiceNo));
   setStatus('Draft PDF generated.', 'success');
 }
 
@@ -2311,8 +2468,7 @@ async function exportDraftMinimaxXml() {
   const previousData = lastCalculatedData;
   lastCalculatedData = combinedCalculatedDataFromDraft(payloads);
   try {
-    exportMinimaxXml();
-    setStatus('Draft Minimax XML exported.', 'success');
+    if (exportMinimaxXml()) setStatus('Draft Minimax XML exported.', 'success');
   } finally {
     lastCalculatedData = previousData;
   }
@@ -2327,44 +2483,71 @@ async function exportCurrentMinimaxXml() {
 }
 
 function exportMinimaxXml() {
-  if (!lastCalculatedData) { setStatus('Calculate a route first, then export Minimax XML.', 'warning'); return; }
+  if (!lastCalculatedData) { setStatus('Calculate a route first, then export Minimax XML.', 'warning'); return false; }
   const d = lastCalculatedData;
-  const today = new Date().toISOString().slice(0,10);
-  const serviceDateXml = getServiceDateIso();
-  const invoiceRef = (document.getElementById('invoiceNumber')?.value || 'PREVOZ 2026-212');
-  const sifraStranke = (document.getElementById('customerCode')?.value || 'STR001');
-  const naziv = (document.getElementById('customerName')?.value || '');
-  const naslov = (document.getElementById('customerAddress')?.value || '');
+  const today = restoredInvoiceIssueDate || getTodayIsoDate();
+  const calculatedServiceDates = (Array.isArray(d.countrySegments) ? d.countrySegments : [])
+    .map(segment => normalizeIsoDate(segment.serviceDate || ''))
+    .filter(Boolean)
+    .sort();
+  const serviceDateXml = calculatedServiceDates.at(-1) || getServiceDateIso();
+  const dueDateXml = getDueDateIso(today);
+  const invoiceRef = (document.getElementById('invoiceNumber')?.value || '').trim();
+  const sifraStranke = (document.getElementById('customerCode')?.value || '').trim();
+  const naziv = (document.getElementById('customerName')?.value || '').trim();
+  const naslov = (document.getElementById('customerAddress')?.value || '').trim();
+  const postnaStevilka = (document.getElementById('customerPostcode')?.value || '').trim();
+  const nazivPoste = (document.getElementById('customerCity')?.value || '').trim();
+  const kraticaDrzave = (document.getElementById('customerCountryCode')?.value || 'SI').trim().toUpperCase();
   const vatId = (document.getElementById('customerVatId')?.value || '').trim();
+  const requiredFields = [[invoiceRef, 'Invoice number'], [sifraStranke, 'Customer code'], [naziv, 'Customer name'], [naslov, 'Customer address'], [postnaStevilka, 'Customer postcode'], [nazivPoste, 'Customer city']];
+  const missingField = requiredFields.find(([value]) => !value);
+  if (missingField) { setStatus(`${missingField[1]} is required for Minimax XML.`, 'danger'); return false; }
+  if (invoiceRef.length > 30 || sifraStranke.length > 10 || naziv.length > 100 || naslov.length > 50 || postnaStevilka.length > 30 || nazivPoste.length > 250 || vatId.length > 14) {
+    setStatus('Customer or invoice data exceeds a Minimax XML field length.', 'danger'); return false;
+  }
+  if (!/^[A-Za-z0-9#._-]+$/.test(sifraStranke)) { setStatus('Customer code contains characters that are not supported by Minimax XML.', 'danger'); return false; }
+  if (!/^[A-Z]{2}$/.test(kraticaDrzave)) { setStatus('Customer country code must contain exactly two letters.', 'danger'); return false; }
   const calculationBaseCountryCode = String(d.baseCountry || getBaseCountryCode()).toUpperCase();
   const baseCountryConfig = getCountryOptionConfig(calculationBaseCountryCode);
   const baseRevenueAccount = String(baseCountryConfig.revenueAccount || '').trim();
   const baseVatAccount = String(baseCountryConfig.vatAccount || VAT_ACCOUNTS.slovenia || '26001').trim();
   const countrySegments = Array.isArray(d.countrySegments) ? d.countrySegments : [];
+  const hasOutsideBaseCountryDriving = countrySegments.some(segment =>
+    !(segment.isBaseCountry ?? segment.isSlovenia) && Number(segment.km || 0) > 0.004
+  );
   let outsideSegments = countrySegments.filter(segment => !(segment.isBaseCountry ?? segment.isSlovenia) && roundMoney(segment.base) > 0);
   const siBaseAmount = roundMoney(d.taxableBaseSlovenia);
   const outsideBaseAmount = roundMoney(d.outsideSloveniaBase);
   const siVatAmount = roundMoney(d.vatAmount);
   const outsideVatAmount = roundMoney(d.outsideVatAmount);
-  const totalAmount = roundMoney(d.totalAmount);
-  const balanceDiff = roundMoney(totalAmount - siBaseAmount - outsideBaseAmount - siVatAmount - outsideVatAmount);
-  const balancedOutsideBaseAmount = roundMoney(outsideBaseAmount + balanceDiff);
+  const routeTotalAmount = roundMoney(d.totalAmount);
+  const additionalCosts = (Array.isArray(d.deductions) ? d.deductions : []).filter(cost => roundMoney(cost.amount) > 0).map(cost => {
+    const amounts = getAdjustmentAmounts(cost);
+    const gross = roundMoney(amounts.gross);
+    const base = roundMoney(amounts.base);
+    return { ...cost, base, vatRate: amounts.vatRate, vat: roundMoney(gross - base), gross };
+  });
+  const additionalCostsGross = roundMoney(additionalCosts.reduce((sum, cost) => sum + cost.gross, 0));
+  const totalAmount = roundMoney(d.invoiceTotalAmount ?? (routeTotalAmount + additionalCostsGross));
   if (!outsideSegments.length && outsideBaseAmount > 0) {
     const outsideCountry = 'OTHER';
     const config = getCountryOptionConfig(outsideCountry);
     outsideSegments = [{ countryValue: outsideCountry, base: outsideBaseAmount, vatAmount: outsideVatAmount, vatRate: config.vatRate, revenueAccount: config.revenueAccount, isSlovenia: false }];
   }
-  if (siBaseAmount > 0 && !baseRevenueAccount) {
+  if ((siBaseAmount > 0 || additionalCosts.length > 0) && !baseRevenueAccount) {
     setStatus('Enter Slovenia SifraKonta in the module options before exporting Minimax XML.', 'danger');
-    return;
+    return false;
   }
-  if (balancedOutsideBaseAmount > 0 && outsideSegments.some(segment => !String(segment.revenueAccount || '').trim())) {
+  if (outsideBaseAmount + outsideVatAmount > 0 && outsideSegments.some(segment => !String(segment.revenueAccount || '').trim())) {
     setStatus('Enter SifraKonta in every outside country split row before exporting Minimax XML.', 'danger');
-    return;
+    return false;
   }
-  if (siVatAmount > 0 && !baseVatAccount) {
+  const baseVatCode = minimaxVatCodeForRate(d.vatRate);
+  const routeVatAccount = baseVatCode === 'S' ? '26000' : baseVatAccount;
+  if (siVatAmount > 0 && !routeVatAccount) {
     setStatus('Enter Slovenia VAT account in the module options before exporting Minimax XML.', 'danger');
-    return;
+    return false;
   }
   const revenueAmountsByAccount = {};
   const vatAmountsByAccount = {};
@@ -2386,43 +2569,92 @@ function exportMinimaxXml() {
     ddvAmountsByCode[ddvCode] = current;
   };
   addAmount(revenueAmountsByAccount, baseRevenueAccount, siBaseAmount);
-  addAmount(vatAmountsByAccount, baseVatAccount, siVatAmount);
+  addAmount(vatAmountsByAccount, routeVatAccount, siVatAmount);
   if (siBaseAmount > 0 || siVatAmount > 0) {
-    addDdvAmount(calculationBaseCountryCode === 'SI' ? 'Z' : (siVatAmount > 0 ? 'S' : 'N'), siBaseAmount, siVatAmount);
+    addDdvAmount(baseVatCode, siBaseAmount, siVatAmount);
   }
-  let missingOutsideVatAccount = false;
-  outsideSegments.forEach((segment, index) => {
-    const countryValue = String(segment.countryValue || '').toUpperCase();
-    const config = getCountryOptionConfig(countryValue);
+  outsideSegments.forEach(segment => {
     const account = String(segment.revenueAccount || '').trim();
-    const amount = roundMoney(segment.base + (index === 0 ? balanceDiff : 0));
-    const vatAmount = roundMoney(segment.vatAmount || 0);
-    const vatAccount = String(segment.vatAccount || config.vatAccount || '').trim();
+    // Minimax import only reports VAT for the selected base country. Foreign
+    // segments keep their PDF gross value, but are imported with code N and 0 VAT.
+    const amount = roundMoney(
+      Number(segment.base || 0)
+      + Number(segment.vatAmount || 0)
+    );
     addAmount(revenueAmountsByAccount, account, amount);
-    if (vatAmount > 0) {
-      if (!vatAccount) {
-        missingOutsideVatAccount = true;
-        return;
-      }
-      addAmount(vatAmountsByAccount, vatAccount, vatAmount);
-      addDdvAmount('S', amount, vatAmount);
-    } else if (amount > 0) {
+    if (amount > 0) {
       addDdvAmount('N', amount, 0);
     }
   });
-  if (missingOutsideVatAccount) {
-    setStatus('Enter VAT account for every taxed outside country before exporting Minimax XML.', 'danger');
-    return;
+  additionalCosts.forEach(cost => {
+    const { base, vatRate, vat, gross } = cost;
+    const legacyVatCode = Math.abs(vatRate - 22) < 0.0001 ? 'S' : Math.abs(vatRate - 9.5) < 0.0001 ? 'Z' : 'N';
+    const minimaxVatCode = ['S', 'Z', 'N'].includes(cost.minimaxVatCode) ? cost.minimaxVatCode : legacyVatCode;
+
+    if (minimaxVatCode === 'S' || minimaxVatCode === 'Z') {
+      addAmount(revenueAmountsByAccount, baseRevenueAccount, base);
+      addAmount(vatAmountsByAccount, minimaxVatCode === 'S' ? '26000' : baseVatAccount, vat);
+      addDdvAmount(minimaxVatCode, base, vat);
+      return;
+    }
+
+    // Custom rates remain visible and calculated on the PDF, but Minimax must
+    // receive their full gross amount as N (Neobdavčeno) with zero XML VAT.
+    addAmount(revenueAmountsByAccount, baseRevenueAccount, gross);
+    addDdvAmount('N', gross, 0);
+  });
+  const journalCredits = () => roundMoney(
+    Object.values(revenueAmountsByAccount).reduce((sum, amount) => sum + amount, 0)
+    + Object.values(vatAmountsByAccount).reduce((sum, amount) => sum + amount, 0)
+  );
+  const journalBalanceDiff = roundMoney(totalAmount - journalCredits());
+  if (journalBalanceDiff) {
+    const outsideBalanceSegment = outsideSegments.find(segment => String(segment.revenueAccount || '').trim());
+    const balancingRevenueAccount = String(outsideBalanceSegment?.revenueAccount || baseRevenueAccount).trim();
+    const balancingVatCode = outsideBalanceSegment ? 'N' : (siBaseAmount > 0 || siVatAmount > 0 ? baseVatCode : Object.keys(ddvAmountsByCode)[0]);
+    if (!balancingRevenueAccount || !balancingVatCode) {
+      setStatus('Minimax XML totals could not be balanced because no revenue line is available.', 'danger');
+      return false;
+    }
+    const ddvAmounts = ddvAmountsByCode[balancingVatCode] || { base: 0, vat: 0 };
+    if (!outsideBalanceSegment && siVatAmount > 0 && routeVatAccount) {
+      vatAmountsByAccount[routeVatAccount] = roundMoney((vatAmountsByAccount[routeVatAccount] || 0) + journalBalanceDiff);
+      ddvAmounts.vat = roundMoney(ddvAmounts.vat + journalBalanceDiff);
+    } else {
+      revenueAmountsByAccount[balancingRevenueAccount] = roundMoney((revenueAmountsByAccount[balancingRevenueAccount] || 0) + journalBalanceDiff);
+      ddvAmounts.base = roundMoney(ddvAmounts.base + journalBalanceDiff);
+    }
+    ddvAmountsByCode[balancingVatCode] = ddvAmounts;
+  }
+  if (journalCredits() !== totalAmount) {
+    setStatus('Minimax XML journal is not balanced.', 'danger');
+    return false;
   }
   const total = moneyXml(totalAmount);
   const ddvStopnjeXml = Object.entries(ddvAmountsByCode).map(([code, amounts]) => `\n            <DDVStopnja>\n              <SifraStopnjeDDV>${xmlEscape(code)}</SifraStopnjeDDV>\n              <StoritevOsnova>${moneyXml(amounts.base)}</StoritevOsnova>\n              <StoritevDDV>${moneyXml(amounts.vat)}</StoritevDDV>\n            </DDVStopnja>`).join('');
   const revenueLines = Object.entries(revenueAmountsByAccount).map(([account, amount]) => `\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)} - storitev</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(account)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>`).join('');
   const vatLines = Object.entries(vatAmountsByAccount).map(([account, amount]) => `\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)} - DDV</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(account)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>`).join('');
   const xml = `<?xml version="1.0" encoding="utf-8"?>\n<miniMAXUvozKnjigovodstvo xmlns="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo.xsd">\n\n  <Temeljnice>\n    <Temeljnica>\n      <GlavaTemeljnice>\n        <SifraVrsteTemeljnice>IR</SifraVrsteTemeljnice>\n        <DatumTemeljnice>${today}</DatumTemeljnice>\n        <OpisGlaveTemeljnice>${xmlEscape(invoiceRef)}</OpisGlaveTemeljnice>\n      </GlavaTemeljnice>\n\n      <DDV>\n        <DDVVrstica>\n          <DDVGlava>\n            <DatumDDV>${today}</DatumDDV>\n            <KnjigaDDV>IR</KnjigaDDV>\n            <DatumKnjizenjaDDV>${today}</DatumKnjizenjaDDV>\n            <SifraStranke>${sifraStranke}</SifraStranke>\n            <Listina>${xmlEscape(invoiceRef)}</Listina>\n            <DatumListine>${today}</DatumListine>\n            <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n            <VrstaPorocanja>Obračun</VrstaPorocanja>\n          </DDVGlava>\n\n          <DDVStopnje>${ddvStopnjeXml}\n          </DDVStopnje>\n        </DDVVrstica>\n      </DDV>\n\n      <VrsticeTemeljnice>\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>1200</SifraKonta>\n          <SifraStranke>${sifraStranke}</SifraStranke>\n          <DatumZapadlosti>${today}</DatumZapadlosti>\n          <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>${total}</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>0.00</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>${total}</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>0.00</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${revenueLines}${vatLines}\n      </VrsticeTemeljnice>\n    </Temeljnica>\n  </Temeljnice>\n\n  <Stranke>\n    <Stranka>\n      <Sifra>${xmlEscape(sifraStranke)}</Sifra>\n      <Naziv>${xmlEscape(naziv)}</Naziv>\n      <Naslov>${xmlEscape(naslov)}</Naslov>\n      <KraticaDrzave>SI</KraticaDrzave>\n      <PostnaStevilka>1000</PostnaStevilka>\n      <NazivPoste>Ljubljana</NazivPoste>\n      <DavcniZavezanec>${vatId ? 'D' : 'N'}</DavcniZavezanec>\n      <IdentifikacijskaStevilka>${xmlEscape(vatId)}</IdentifikacijskaStevilka>\n    </Stranka>\n  </Stranke>\n\n</miniMAXUvozKnjigovodstvo>`;
-  const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+  const normalizedXml = xml
+    .replaceAll(`<DatumTemeljnice>${today}</DatumTemeljnice>`, `<DatumTemeljnice>${serviceDateXml}</DatumTemeljnice>`)
+    .replaceAll(`<DatumDDV>${today}</DatumDDV>`, `<DatumDDV>${serviceDateXml}</DatumDDV>`)
+    .replaceAll(`<DatumKnjizenjaDDV>${today}</DatumKnjizenjaDDV>`, `<DatumKnjizenjaDDV>${serviceDateXml}</DatumKnjizenjaDDV>`)
+    .replaceAll(`<DatumKnjizbe>${today}</DatumKnjizbe>`, `<DatumKnjizbe>${serviceDateXml}</DatumKnjizbe>`)
+    .replace(`<DatumZapadlosti>${today}</DatumZapadlosti>`, `<DatumZapadlosti>${dueDateXml}</DatumZapadlosti>`)
+    .replace('<KraticaDrzave>SI</KraticaDrzave>', `<KraticaDrzave>${xmlEscape(kraticaDrzave)}</KraticaDrzave>`)
+    .replace('<PostnaStevilka>1000</PostnaStevilka>', `<PostnaStevilka>${xmlEscape(postnaStevilka)}</PostnaStevilka>`)
+    .replace('<NazivPoste>Ljubljana</NazivPoste>', `<NazivPoste>${xmlEscape(nazivPoste)}</NazivPoste>`);
+  const xmlWithVatCalculationType = hasOutsideBaseCountryDriving
+    ? normalizedXml.replace(
+        '            <KnjigaDDV>IR</KnjigaDDV>\n',
+        '            <KnjigaDDV>IR</KnjigaDDV>\n            <VrstaObracunaDDV>PS</VrstaObracunaDDV>\n'
+      )
+    : normalizedXml;
+  const blob = new Blob([xmlWithVatCalculationType], { type: 'application/xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = getOutputFileName('racun_26-0007', 'xml'); document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  const a = document.createElement('a'); a.href = url; a.download = getInvoiceXmlFileName(invoiceRef); document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   setStatus('Minimax XML exported.', 'success');
+  return true;
 }
 
 function showRouteOnly(totalKm) {
@@ -2434,7 +2666,9 @@ function showRouteOnly(totalKm) {
   document.getElementById('outsideBase').textContent = '-';
   document.getElementById('vatAmount').textContent = '-';
   document.getElementById('outsideVatAmount').textContent = '-';
+  document.getElementById('totalVatAmount').textContent = '-';
   document.getElementById('totalAmount').textContent = '-';
+  document.getElementById('additionalCostResults')?.replaceChildren();
 }
 
 async function loadCountryBoundaries() {
@@ -2611,8 +2845,11 @@ async function estimateBaseCountryMetersByGeocoding(path, sampleEveryMeters) {
   return sloveniaMeters;
 }
 function reverseGeocodeCountry(latLng) { return new Promise((resolve, reject) => { geocoder.geocode({ location: latLng }, (results, status) => { if (status === 'OK' && results && results.length) { for (const result of results) for (const comp of result.address_components) if (comp.types.includes('country')) { resolve(comp.long_name); return; } resolve(''); } else if (status === 'ZERO_RESULTS') resolve(''); else reject(new Error('Geocoder status ' + status)); }); }); }
-function showResults(totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate, countrySegments = []) {
-  const netTotal = taxableBase + outsideBase;
+function showResults(totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate, countrySegments = [], deductions = []) {
+  const deductionTotals = getAdjustmentTotals(deductions);
+  const netTotal = taxableBase + outsideBase + deductionTotals.base;
+  const totalVat = vatAmount + outsideVatAmount + deductionTotals.vat;
+  const invoiceTotal = totalAmount + deductionTotals.gross;
   const outsideSegments = countrySegments.filter(segment => !(segment.isBaseCountry ?? segment.isSlovenia) && Number(segment.base) > 0.004);
   const outsideRates = Array.from(new Set(outsideSegments.map(segment => Number(segment.vatRate || 0))));
   document.getElementById('totalKm').textContent = fmtKm(totalKm);
@@ -2625,7 +2862,59 @@ function showResults(totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmou
     + (outsideRates.length > 1 ? (' (' + outsideRates.map(rate => `${formatRate(rate)}%`).join(', ') + ')') : '');
   document.getElementById('vatAmount').textContent = fmtEur(vatAmount);
   document.getElementById('outsideVatAmount').textContent = fmtEur(outsideVatAmount || 0);
-  document.getElementById('totalAmount').textContent = fmtEur(totalAmount);
+  renderAdditionalCostResults(deductions);
+  document.getElementById('totalVatAmount').textContent = fmtEur(totalVat);
+  document.getElementById('totalAmount').textContent = fmtEur(invoiceTotal);
+}
+function renderAdditionalCostResults(deductions = []) {
+  const container = document.getElementById('additionalCostResults');
+  if (!container) return;
+  container.replaceChildren();
+  const costs = deductions.filter(cost => Number(cost.amount) > 0);
+  if (!costs.length) return;
+
+  const heading = document.createElement('tr');
+  heading.className = 'table-secondary';
+  const headingCell = document.createElement('th');
+  headingCell.colSpan = 2;
+  headingCell.scope = 'colgroup';
+  headingCell.textContent = t('Additional costs');
+  heading.appendChild(headingCell);
+  container.appendChild(heading);
+
+  costs.forEach(cost => {
+    const amounts = getAdjustmentAmounts(cost);
+    const row = document.createElement('tr');
+    const label = document.createElement('th');
+    label.scope = 'row';
+    label.textContent = String(cost.description || t('Dodatni strosek'));
+    const value = document.createElement('td');
+    value.className = 'result-value text-end';
+    value.textContent = tf('{base} + tax {rate}% ({tax}) = {gross}', {
+      base: fmtEur(amounts.base),
+      rate: formatRate(amounts.vatRate),
+      tax: fmtEur(amounts.vat),
+      gross: fmtEur(amounts.gross)
+    });
+    row.append(label, value);
+    container.appendChild(row);
+  });
+
+  const totals = getAdjustmentTotals(costs);
+  const totalRow = document.createElement('tr');
+  totalRow.className = 'fw-semibold';
+  const totalLabel = document.createElement('th');
+  totalLabel.scope = 'row';
+  totalLabel.textContent = t('Additional costs total');
+  const totalValue = document.createElement('td');
+  totalValue.className = 'result-value text-end';
+  totalValue.textContent = tf('Base: {base} / Tax: {tax} / Total: {total}', {
+    base: fmtEur(totals.base),
+    tax: fmtEur(totals.vat),
+    total: fmtEur(totals.gross)
+  });
+  totalRow.append(totalLabel, totalValue);
+  container.appendChild(totalRow);
 }
 function buildInvoiceText(pickup, dropoff, totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate, isDomesticSloveniaOnly = false) {
   const baseCountryName = getBaseCountryConfig().name;
@@ -2638,18 +2927,51 @@ function buildInvoiceText(pickup, dropoff, totalKm, siKm, outsideKm, taxableBase
   document.getElementById('invoiceTextEn').value = tf('International passenger transfer {pickup} → {dropoff}.\nTotal route: {totalKm}. Estimated Slovenia part: {siKm}. Outside Slovenia: {outsideKm}.\nSlovenian VAT is calculated only on the part of the route performed in Slovenia, proportionate to kilometres driven in Slovenia.\nTaxable base Slovenia: {taxableBase}. Outside Slovenia part: {outsideBase}.{outsideVatText} VAT {vatRate}%: {vatAmount}. Total: {totalAmount}.', { ...replacements, outsideVatText: Number(outsideVatRate) ? tf(' Outside VAT {outsideVatRate}%: {outsideVatAmount}.', { outsideVatRate, outsideVatAmount: fmtEur(outsideVatAmount) }) : '' });
   document.getElementById('invoiceTextSl').value = tf('Mednarodni prevoz potnikov {pickup} → {dropoff}.\nSkupna pot: {totalKm}. Ocenjen del poti po Sloveniji: {siKm}. Del poti izven Slovenije: {outsideKm}.\nDDV je obračunan samo od dela poti, opravljenega na ozemlju Slovenije, sorazmerno glede na kilometre v Sloveniji.\nDavčna osnova Slovenija: {taxableBase}. Del izven Slovenije: {outsideBase}.{outsideVatText} DDV {vatRate}%: {vatAmount}. Skupaj: {totalAmount}.', { ...replacements, outsideVatText: Number(outsideVatRate) ? tf(' DDV izven: {outsideVatRate}%: {outsideVatAmount}.', { outsideVatRate, outsideVatAmount: fmtEur(outsideVatAmount) }) : '' });
 }
-function setDefaultOutputFileName() {
-  const outputFileName = document.getElementById('outputFileName');
-  if (!outputFileName || outputFileName.value.trim()) return;
-  const today = new Date();
-  const year = today.getFullYear();
-  const date = today.toISOString().slice(0, 10);
-  outputFileName.value = `racun_${year}_${date}`;
-}
 function setDefaultServiceDate() {
   const serviceDate = document.getElementById('serviceDate');
   if (!serviceDate || serviceDate.value) return;
   serviceDate.value = formatIsoDateDisplay(getTodayIsoDate());
+}
+function setDefaultDueDate(issueDate = getTodayIsoDate()) {
+  const dueDate = document.getElementById('dueDate');
+  if (!dueDate || dueDate.value) return;
+  dueDate.value = formatIsoDateDisplay(addDaysIso(issueDate, 15));
+}
+function openServiceDatePicker() {
+  const picker = document.getElementById('serviceDatePicker');
+  const visibleInput = document.getElementById('serviceDate');
+  if (!picker || !visibleInput) return;
+  picker.value = normalizeIsoDate(visibleInput.value) || getTodayIsoDate();
+  try {
+    if (typeof picker.showPicker === 'function') picker.showPicker();
+    else picker.click();
+  } catch (err) {
+    picker.click();
+  }
+}
+function onServiceDatePicked() {
+  const picker = document.getElementById('serviceDatePicker');
+  const visibleInput = document.getElementById('serviceDate');
+  if (!picker || !visibleInput || !picker.value) return;
+  visibleInput.value = formatIsoDateDisplay(picker.value);
+}
+function openDueDatePicker() {
+  const picker = document.getElementById('dueDatePicker');
+  const visibleInput = document.getElementById('dueDate');
+  if (!picker || !visibleInput) return;
+  picker.value = normalizeIsoDate(visibleInput.value) || addDaysIso(restoredInvoiceIssueDate || getTodayIsoDate(), 15);
+  try {
+    if (typeof picker.showPicker === 'function') picker.showPicker();
+    else picker.click();
+  } catch (err) {
+    picker.click();
+  }
+}
+function onDueDatePicked() {
+  const picker = document.getElementById('dueDatePicker');
+  const visibleInput = document.getElementById('dueDate');
+  if (!picker || !visibleInput || !picker.value) return;
+  visibleInput.value = formatIsoDateDisplay(picker.value);
 }
 function getTodayIsoDate() {
   const today = new Date();
@@ -2682,6 +3004,20 @@ function getServiceDateIso() {
   if (serviceDate) serviceDate.value = formatIsoDateDisplay(today);
   return today;
 }
+function addDaysIso(value, days) {
+  const normalized = normalizeIsoDate(value) || getTodayIsoDate();
+  const [year, month, day] = normalized.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + Number(days || 0)));
+  return date.toISOString().slice(0, 10);
+}
+function getDueDateIso(issueDate = restoredInvoiceIssueDate || getTodayIsoDate()) {
+  const dueDate = document.getElementById('dueDate');
+  const value = normalizeIsoDate(dueDate?.value || '');
+  if (value) return value;
+  const fallback = addDaysIso(issueDate, 15);
+  if (dueDate) dueDate.value = formatIsoDateDisplay(fallback);
+  return fallback;
+}
 function formatIsoDateDisplay(value) {
   const normalized = normalizeIsoDate(value);
   if (!normalized) return '';
@@ -2698,14 +3034,48 @@ function formatDateDisplay(value) {
   if (Number.isNaN(date.getTime())) return '';
   return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
 }
+function getInvoicePdfFileName(invoiceNumber) {
+  const translatedPrefix = t('__PDF_FILENAME_PREFIX__');
+  const prefix = (translatedPrefix === '__PDF_FILENAME_PREFIX__' ? 'invoice' : translatedPrefix)
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]+/g, '_')
+    .replace(/^_+|_+$/g, '') || 'invoice';
+  const safeInvoiceNumber = String(invoiceNumber || '')
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return `${prefix}-${safeInvoiceNumber || 'invoice'}.pdf`;
+}
+function getInvoiceXmlFileName(invoiceNumber) {
+  const translatedPrefix = t('__XML_FILENAME_PREFIX__');
+  const prefix = (translatedPrefix === '__XML_FILENAME_PREFIX__' ? 'temeljnica' : translatedPrefix)
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]+/g, '_')
+    .replace(/^_+|_+$/g, '') || 'temeljnica';
+  const safeInvoiceNumber = String(invoiceNumber || '')
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return `${prefix}-${safeInvoiceNumber || 'invoice'}.xml`;
+}
 function getOutputFileName(fallbackBaseName, extension) {
-  const rawName = (document.getElementById('outputFileName')?.value || fallbackBaseName || 'racun').trim();
+  const rawName = String(fallbackBaseName || 'racun').trim();
   const withoutExtension = rawName.replace(/\.[a-z0-9]+$/i, '');
   const safeName = withoutExtension.replace(/[^a-zA-Z0-9._-]+/g, '_').replace(/^_+|_+$/g, '') || fallbackBaseName || 'racun';
   return `${safeName}.${extension}`;
 }
 function xmlEscape(value) { return String(value ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&apos;'); }
-function roundMoney(n) { return Math.round((Number(n) || 0) * 100) / 100; }
+function minimaxVatCodeForRate(value) {
+  const rate = Number(value || 0);
+  if (Math.abs(rate - 22) < 0.0001) return 'S';
+  if (Math.abs(rate - 5) < 0.0001) return '0';
+  if (rate > 0) return 'Z';
+  return 'N';
+}
+function roundMoney(n) {
+  const value = Number(n) || 0;
+  return Math.round((value + Math.sign(value || 1) * 1e-9) * 100) / 100;
+}
 function moneyXml(n) { return roundMoney(n).toFixed(2); }
 function round2(n) { return Number(n || 0).toFixed(2); }
 function fmtKm(n) { return n.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' km'; }
