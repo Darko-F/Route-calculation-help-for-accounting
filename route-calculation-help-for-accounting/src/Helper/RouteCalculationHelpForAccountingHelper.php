@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Session\Session;
 use Joomla\Database\DatabaseInterface;
 use RuntimeException;
+use Throwable;
 
 class RouteCalculationHelpForAccountingHelper
 {
@@ -33,10 +34,15 @@ class RouteCalculationHelpForAccountingHelper
         $payload = self::payload();
         $customerPayload = is_array($payload['customer'] ?? null) ? $payload['customer'] : [];
         $invoiceNumber = trim((string) ($payload['invoice_number'] ?? ''));
+        $automaticInvoiceYear = null;
 
         if ($invoiceNumber === '') {
-            $invoiceNumber = self::nextInvoiceNumber((int) Factory::getDate()->format('Y'));
+            $automaticInvoiceYear = (int) Factory::getDate()->format('Y');
+            $invoiceNumber = self::nextInvoiceNumber($automaticInvoiceYear);
             $payload['invoice_number'] = $invoiceNumber;
+        } elseif (preg_match('/^RCHA-(\d{2})-\d+(?:[-\s].+)?$/', $invoiceNumber, $matches)) {
+            $currentYear = (int) Factory::getDate()->format('Y');
+            $automaticInvoiceYear = ((int) floor($currentYear / 100) * 100) + (int) $matches[1];
         }
 
         if (mb_strlen($invoiceNumber) > 30) {
@@ -46,10 +52,8 @@ class RouteCalculationHelpForAccountingHelper
         self::ensureInvoiceCustomerColumns();
 
         if (self::invoiceExists($invoiceNumber)) {
-            if (preg_match('/^RCHA-(\d{2})-\d+(?:[-\s].+)?$/', $invoiceNumber, $matches)) {
-                $currentYear = (int) Factory::getDate()->format('Y');
-                $invoiceYear = ((int) floor($currentYear / 100) * 100) + (int) $matches[1];
-                $invoiceNumber = self::nextInvoiceNumber($invoiceYear);
+            if ($automaticInvoiceYear !== null) {
+                $invoiceNumber = self::nextInvoiceNumber($automaticInvoiceYear);
                 $payload['invoice_number'] = $invoiceNumber;
             } else {
                 throw new RuntimeException('Invoice number "' . $invoiceNumber . '" already exists in invoice history. Use a different invoice number to save a new record.');
@@ -58,7 +62,6 @@ class RouteCalculationHelpForAccountingHelper
 
         $customer = self::saveCustomer($customerPayload);
         $data = is_array($payload['calculated_data'] ?? null) ? $payload['calculated_data'] : [];
-        $payloadJson = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $db = self::db();
         $now = Factory::getDate()->toSql();
         $userId = (int) Factory::getApplication()->getIdentity()->id;
@@ -69,36 +72,53 @@ class RouteCalculationHelpForAccountingHelper
             'outside_slovenia_base', 'vat_rate', 'vat_amount', 'outside_vat_rate',
             'outside_vat_amount', 'total_amount', 'payload_json', 'created_by', 'created_at'
         ];
-        $values = [
-            (int) $customer['id'],
-            $db->quote($customer['customer_code']),
-            $db->quote((string) ($customerPayload['customer_name'] ?? '')),
-            $db->quote((string) ($customerPayload['customer_address'] ?? '')),
-            $db->quote((string) ($customerPayload['vat_id'] ?? '')),
-            $db->quote($invoiceNumber),
-            $db->quote((string) ($payload['output_file_name'] ?? '')),
-            $db->quote((string) ($data['pickup'] ?? '')),
-            $db->quote((string) ($data['dropoff'] ?? '')),
-            self::num($data['totalKm'] ?? 0),
-            self::num($data['sloveniaKm'] ?? 0),
-            self::num($data['outsideSloveniaKm'] ?? 0),
-            self::num($data['taxableBaseSlovenia'] ?? 0),
-            self::num($data['outsideSloveniaBase'] ?? 0),
-            self::num($data['vatRate'] ?? 0),
-            self::num($data['vatAmount'] ?? 0),
-            self::num($data['outsideVatRate'] ?? 0),
-            self::num($data['outsideVatAmount'] ?? 0),
-            self::num(self::invoiceTotal($data)),
-            $db->quote($payloadJson),
-            $userId,
-            $db->quote($now),
-        ];
+        $attempt = 0;
 
-        $query = $db->getQuery(true)
-            ->insert($db->quoteName('#__route_calculation_help_for_accounting_invoices'))
-            ->columns($db->quoteName($columns))
-            ->values(implode(',', $values));
-        $db->setQuery($query)->execute();
+        while (true) {
+            $attempt++;
+            $payload['invoice_number'] = $invoiceNumber;
+            $payloadJson = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $values = [
+                (int) $customer['id'],
+                $db->quote($customer['customer_code']),
+                $db->quote((string) ($customerPayload['customer_name'] ?? '')),
+                $db->quote((string) ($customerPayload['customer_address'] ?? '')),
+                $db->quote((string) ($customerPayload['vat_id'] ?? '')),
+                $db->quote($invoiceNumber),
+                $db->quote((string) ($payload['output_file_name'] ?? '')),
+                $db->quote((string) ($data['pickup'] ?? '')),
+                $db->quote((string) ($data['dropoff'] ?? '')),
+                self::num($data['totalKm'] ?? 0),
+                self::num($data['sloveniaKm'] ?? 0),
+                self::num($data['outsideSloveniaKm'] ?? 0),
+                self::num($data['taxableBaseSlovenia'] ?? 0),
+                self::num($data['outsideSloveniaBase'] ?? 0),
+                self::num($data['vatRate'] ?? 0),
+                self::num($data['vatAmount'] ?? 0),
+                self::num($data['outsideVatRate'] ?? 0),
+                self::num($data['outsideVatAmount'] ?? 0),
+                self::num(self::invoiceTotal($data)),
+                $db->quote($payloadJson),
+                $userId,
+                $db->quote($now),
+            ];
+            $query = $db->getQuery(true)
+                ->insert($db->quoteName('#__route_calculation_help_for_accounting_invoices'))
+                ->columns($db->quoteName($columns))
+                ->values(implode(',', $values));
+
+            try {
+                $db->setQuery($query)->execute();
+                break;
+            } catch (Throwable $exception) {
+                if ($automaticInvoiceYear === null || $attempt >= 5 || !self::isDuplicateKeyException($exception)) {
+                    throw $exception;
+                }
+
+                $invoiceNumber = self::nextInvoiceNumber($automaticInvoiceYear);
+            }
+        }
+
         $invoiceId = (int) $db->insertid();
 
         return [
@@ -552,6 +572,20 @@ class RouteCalculationHelpForAccountingHelper
             ->where($db->quoteName('invoice_number') . ' = ' . $db->quote($invoiceNumber));
 
         return (int) $db->setQuery($query)->loadResult() > 0;
+    }
+
+    private static function isDuplicateKeyException(Throwable $exception): bool
+    {
+        do {
+            if (in_array((int) $exception->getCode(), [1062, 23000], true)
+                || preg_match('/duplicate entry|unique constraint|integrity constraint violation/i', $exception->getMessage())) {
+                return true;
+            }
+
+            $exception = $exception->getPrevious();
+        } while ($exception instanceof Throwable);
+
+        return false;
     }
 
     private static function draftLines(string $customerCode, string $projectRef): array

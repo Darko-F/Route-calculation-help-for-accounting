@@ -7,7 +7,7 @@
   <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
   <authorEmail>info@topoweryou.com</authorEmail>
   <authorUrl>https://topoweryou.com</authorUrl>
-  <version>1.2.76</version>
+  <version>1.3.0</version>
   <description>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_XML_DESCRIPTION</description>
   <updateservers>
     <server type="extension" priority="1" name="Route Calculation Help for Accounting Updates">https://builder.topoweryou.com/routecalculationhelp/files/routecalculationhelp/updates/route-calculation-help-for-accounting.xml</server>
@@ -22,6 +22,7 @@
     <folder>src</folder>
     <folder>tmpl</folder>
     <folder>media</folder>
+    <folder>forms</folder>
   </files>
   <languages folder="language">
     <language tag="en-GB">en-GB/en-GB.mod_route_calculation_help_for_accounting.ini</language>
@@ -82,18 +83,36 @@
           default="podpis-transparent.png"
           filter="string"
         />
-        <field type="spacer" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_SPACER_REVENUE_ACCOUNTS" />
-        <field name="revenue_account_slovenia" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_SLOVENIA_LABEL" default="7601" />
-        <field name="revenue_account_italy" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_ITALY_LABEL" default="7610" />
-        <field name="revenue_account_croatia" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_CROATIA_LABEL" default="7610" />
-        <field name="revenue_account_austria" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_AUSTRIA_LABEL" default="7610" />
-        <field name="revenue_account_germany" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_GERMANY_LABEL" default="7605" />
-        <field name="revenue_account_hungary" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_REVENUE_ACCOUNT_HUNGARY_LABEL" default="7610" />
-        <field type="spacer" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_SPACER_VAT_ACCOUNTS" />
-        <field name="vat_account_slovenia" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_VAT_ACCOUNT_SLOVENIA_LABEL" default="26001" />
-        <field name="vat_account_croatia" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_VAT_ACCOUNT_CROATIA_LABEL" default="260011" />
-        <field name="vat_account_austria" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_VAT_ACCOUNT_AUSTRIA_LABEL" default="260012" />
-        <field name="vat_account_germany" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_VAT_ACCOUNT_GERMANY_LABEL" default="260010" />
+      </fieldset>
+      <fieldset name="minimax" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELDSET_MINIMAX">
+        <field name="minimax_receivable_account" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_RECEIVABLE_ACCOUNT_LABEL" default="" />
+        <field name="minimax_base_country_standard_vat_account" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_BASE_COUNTRY_STANDARD_VAT_ACCOUNT_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_BASE_COUNTRY_STANDARD_VAT_ACCOUNT_DESC" default="" />
+        <field name="minimax_default_foreign_revenue_account" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_DEFAULT_FOREIGN_REVENUE_ACCOUNT_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_DEFAULT_FOREIGN_REVENUE_ACCOUNT_DESC" default="" />
+        <field
+          name="minimax_country_accounts"
+          type="subform"
+          label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_COUNTRY_ACCOUNTS_LABEL"
+          description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_COUNTRY_ACCOUNTS_DESC"
+          formsource="modules/mod_route_calculation_help_for_accounting/forms/minimax_account.xml"
+          multiple="true"
+          layout="joomla.form.field.subform.repeatable"
+          buttons="add,remove,move"
+          validate="Subform"
+        />
+      </fieldset>
+      <fieldset name="countries" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELDSET_COUNTRIES">
+        <field name="default_foreign_passenger_vat_rate" type="number" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_DEFAULT_FOREIGN_PASSENGER_VAT_RATE_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_DEFAULT_FOREIGN_PASSENGER_VAT_RATE_DESC" default="" step="0.1" min="0" />
+        <field
+          name="countries"
+          type="subform"
+          label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COUNTRIES_LABEL"
+          description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COUNTRIES_DESC"
+          formsource="modules/mod_route_calculation_help_for_accounting/forms/country.xml"
+          multiple="true"
+          layout="joomla.form.field.subform.repeatable"
+          buttons="add,remove,move"
+          validate="Subform"
+        />
       </fieldset>
     </fields>
   </config>

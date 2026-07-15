@@ -214,7 +214,11 @@ $calculatorTextKeys = [
     'PDF generated.' => 'CALCULATOR_PDF_GENERATED',
     'Calculate a route first, then export Minimax XML.' => 'CALCULATOR_CALCULATE_BEFORE_XML',
     'Enter Slovenia SifraKonta in the module options before exporting Minimax XML.' => 'CALCULATOR_ENTER_SI_ACCOUNT_XML',
-    'Enter Outside SifraKonta before exporting Minimax XML.' => 'CALCULATOR_ENTER_OUTSIDE_ACCOUNT_XML',
+    'Enter SifraKonta in every outside country split row before exporting Minimax XML.' => 'CALCULATOR_ENTER_OUTSIDE_ACCOUNT_XML',
+    'Configure the VAT rate for every used country in the module options before exporting Minimax XML.' => 'CALCULATOR_CONFIGURE_COUNTRY_VAT_RATE_XML',
+    'Enter the Minimax customer receivable account in the module options before exporting Minimax XML.' => 'CALCULATOR_ENTER_RECEIVABLE_ACCOUNT_XML',
+    'Enter the base-country VAT liability account in the module options before exporting Minimax XML.' => 'CALCULATOR_ENTER_BASE_COUNTRY_VAT_ACCOUNT_XML',
+    'Enter the foreign VAT liability account in the module options before exporting Minimax XML.' => 'CALCULATOR_ENTER_FOREIGN_VAT_ACCOUNT_XML',
     'Minimax XML exported.' => 'CALCULATOR_XML_EXPORTED',
     'Edit country rows' => 'CALCULATOR_EDIT_COUNTRY_ROWS',
     'Calculate a route before recalculating country rows.' => 'CALCULATOR_CALCULATE_BEFORE_COUNTRY_ROWS',
@@ -281,6 +285,48 @@ foreach ($calculatorTextKeys as $sourceText => $keySuffix) {
     $calculatorTranslations[$sourceText] = $translation;
     $calculatorTranslations[$constant] = $translation;
 }
+$normalizeOptionArray = static function ($value): array {
+    if (is_string($value)) {
+        return (array) (json_decode($value, true) ?: []);
+    }
+    if (is_object($value)) {
+        return method_exists($value, 'toArray') ? (array) $value->toArray() : get_object_vars($value);
+    }
+    return (array) $value;
+};
+$countryConfig = [];
+foreach ($normalizeOptionArray($params->get('countries', [])) as $countryRow) {
+    $countryRow = $normalizeOptionArray($countryRow);
+    if (isset($countryRow['country'])) {
+        $countryRow = $normalizeOptionArray($countryRow['country']);
+    }
+    $countryCode = strtoupper(trim((string) ($countryRow['country_code'] ?? '')));
+    if (!preg_match('/^[A-Z]{2}$/', $countryCode)) {
+        continue;
+    }
+    $countryConfig[$countryCode] = [
+        'name' => trim((string) ($countryRow['country_name'] ?? $countryCode)),
+        'vatNumber' => trim((string) ($countryRow['vat_number'] ?? '')),
+        'vatRate' => $countryRow['vat_rate'] ?? '',
+        'pdfNote' => trim((string) ($countryRow['pdf_note'] ?? '')),
+    ];
+}
+$minimaxCountryAccounts = [];
+foreach ($normalizeOptionArray($params->get('minimax_country_accounts', [])) as $accountRow) {
+    $accountRow = $normalizeOptionArray($accountRow);
+    if (isset($accountRow['minimax_account'])) {
+        $accountRow = $normalizeOptionArray($accountRow['minimax_account']);
+    }
+    $countryCode = strtoupper(trim((string) ($accountRow['country_code'] ?? '')));
+    if (!preg_match('/^[A-Z]{2}$/', $countryCode)) {
+        continue;
+    }
+    $minimaxCountryAccounts[$countryCode] = [
+        'revenueAccount' => trim((string) ($accountRow['revenue_account'] ?? '')),
+        'vatAccount' => trim((string) ($accountRow['vat_account'] ?? '')),
+    ];
+}
+
 $frontendConfig = [
     'googleMapsApiKey' => (string) $params->get('google_maps_api_key', ''),
     'baseCountry' => (string) $params->get('base_country', 'SI'),
@@ -296,20 +342,14 @@ $frontendConfig = [
         'issueCity' => (string) $params->get('company_issue_city', 'Example City'),
         'signatureImageUrl' => (string) $params->get('pdf_signature_image_url', 'podpis-transparent.png'),
     ],
-    'revenueAccounts' => [
-        'slovenia' => (string) $params->get('revenue_account_slovenia', '7601'),
-        'italy' => (string) $params->get('revenue_account_italy', '7610'),
-        'croatia' => (string) $params->get('revenue_account_croatia', '7610'),
-        'austria' => (string) $params->get('revenue_account_austria', '7610'),
-        'germany' => (string) $params->get('revenue_account_germany', '7605'),
-        'hungary' => (string) $params->get('revenue_account_hungary', '7610'),
+    'minimax' => [
+        'receivableAccount' => (string) $params->get('minimax_receivable_account', ''),
+        'baseCountryStandardVatAccount' => (string) $params->get('minimax_base_country_standard_vat_account', ''),
+        'defaultForeignRevenueAccount' => (string) $params->get('minimax_default_foreign_revenue_account', ''),
+        'countryAccounts' => $minimaxCountryAccounts,
     ],
-    'vatAccounts' => [
-        'slovenia' => (string) $params->get('vat_account_slovenia', '26001'),
-        'croatia' => (string) $params->get('vat_account_croatia', '260011'),
-        'austria' => (string) $params->get('vat_account_austria', '260012'),
-        'germany' => (string) $params->get('vat_account_germany', '260010'),
-    ],
+    'defaultForeignPassengerVatRate' => $params->get('default_foreign_passenger_vat_rate', ''),
+    'countries' => $countryConfig,
 ];
 $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
 $frameConfig = [
