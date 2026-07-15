@@ -1,5 +1,19 @@
 # Version Summary
 
+## Version 1.3.0
+
+- Reorganized Joomla module settings into dedicated Options, Minimax, and Countries tabs.
+- Added an empty, repeatable Minimax country-account list for revenue and VAT liability accounts, with no hardcoded runtime account fallbacks.
+- Added configurable customer receivables, base-country standard-rate VAT, and default foreign revenue accounts; country rows can override the default foreign revenue account.
+- Added configurable country VAT numbers, VAT rates, and PDF notes with `{countryName}`, `{vatNumber}`, and `{vatRate}` placeholders.
+- Added a configurable default foreign passenger-transport VAT rate, with optional per-country overrides and correct handling of an explicit zero rate.
+- Added an empty, accounting-program-independent Countries list for future foreign VAT registrations and kept all Minimax-specific fields exclusively in the Minimax tab.
+- Corrected foreign Minimax journal entries so net revenue and foreign VAT liabilities are booked separately while the foreign net base remains outside Slovenian VAT.
+- Preserved Slovenian `S/Z/N` Minimax reporting when Slovenia is the base country and prevented foreign base-country VAT from being reported as Slovenian output VAT.
+- Added export validation that blocks Minimax XML when a required country rate or accounting account is missing.
+- Made invoice-number allocation resilient to simultaneous saves by retrying after a unique-number conflict.
+- Bundled Bootstrap and jsPDF with their licenses so PDF and UI functions no longer depend on third-party CDNs.
+
 ## Version 1.2.76
 
 - Corrected Minimax XML cent rounding so domestic, international, multi-country, and additional-cost journal entries always balance to the invoice total.

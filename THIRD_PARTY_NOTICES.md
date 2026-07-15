@@ -4,17 +4,19 @@ This project includes or loads the following third-party software, fonts, data, 
 
 ## Bootstrap
 
-- Use: UI CSS and JavaScript loaded from jsDelivr CDN in `route-calculation-help-for-accounting/media/calculator.html`.
-- Version referenced: 5.3.3.
+- Use: UI CSS and JavaScript bundled in `route-calculation-help-for-accounting/media/vendor/bootstrap/`.
+- Version: 5.3.3.
 - License: MIT License.
+- Bundled license: `route-calculation-help-for-accounting/media/vendor/bootstrap/LICENSE`.
 - Source: https://getbootstrap.com/
 - License information: https://getbootstrap.com/docs/5.3/about/license/
 
 ## jsPDF
 
-- Use: PDF generation library loaded from cdnjs in `route-calculation-help-for-accounting/media/calculator.html`.
-- Version referenced: 2.5.1.
+- Use: PDF generation library bundled in `route-calculation-help-for-accounting/media/vendor/jspdf/`.
+- Version: 2.5.1.
 - License: MIT License.
+- Bundled license: `route-calculation-help-for-accounting/media/vendor/jspdf/LICENSE`.
 - Source: https://github.com/parallax/jsPDF
 - License information: https://github.com/parallax/jsPDF/blob/master/LICENSE
 

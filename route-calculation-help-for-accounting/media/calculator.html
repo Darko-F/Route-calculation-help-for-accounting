@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_TITLE</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="vendor/bootstrap/bootstrap.min.css" rel="stylesheet" />
   <style>
     body { background: #f6f7f9; }
     #map { width: 100%; height: 460px; min-height: 460px; border-radius: .75rem; border: 1px solid var(--bs-border-color); background: #e9ecef; }
@@ -352,8 +352,16 @@ const ROADFARE_LANGUAGE_TAG = String(window.ROADFARE_LANGUAGE_TAG || 'en-GB');
 const ROADFARE_TRANSLATIONS = ROADFARE_FRAME_CONFIG.translations || {};
 const GOOGLE_MAPS_API_KEY = normalizeGoogleMapsApiKey(ROADFARE_CONFIG.googleMapsApiKey);
 const COMPANY = ROADFARE_CONFIG.company || {};
-const REVENUE_ACCOUNTS = ROADFARE_CONFIG.revenueAccounts || {};
-const VAT_ACCOUNTS = ROADFARE_CONFIG.vatAccounts || {};
+const MINIMAX_CONFIG = ROADFARE_CONFIG.minimax || {};
+const MINIMAX_COUNTRY_ACCOUNTS = MINIMAX_CONFIG.countryAccounts && typeof MINIMAX_CONFIG.countryAccounts === 'object'
+  ? MINIMAX_CONFIG.countryAccounts
+  : {};
+const DEFAULT_FOREIGN_VAT_RATE_VALUE = String(ROADFARE_CONFIG.defaultForeignPassengerVatRate ?? '').trim();
+const DEFAULT_FOREIGN_VAT_RATE_CONFIGURED = DEFAULT_FOREIGN_VAT_RATE_VALUE !== '';
+const DEFAULT_FOREIGN_VAT_RATE = parseFloat(DEFAULT_FOREIGN_VAT_RATE_VALUE || '0') || 0;
+const CONFIGURED_COUNTRIES = ROADFARE_CONFIG.countries && typeof ROADFARE_CONFIG.countries === 'object'
+  ? ROADFARE_CONFIG.countries
+  : {};
 
 let map, geocoder, Route, PlaceAutocompleteElement;
 let routePolylines = [];
@@ -435,7 +443,11 @@ const COUNTRY_GEOJSON_FILES = {
   DE: 'geoBoundaries-DEU-ADM0_simplified.geojson',
   HU: 'geoBoundaries-HUN-ADM0.geojson'
 };
-const COUNTRY_OPTION_ORDER = ['SI', 'IT', 'HR', 'AT', 'DE', 'HU', 'OTHER'];
+const COUNTRY_OPTION_ORDER = [...new Set([
+  'SI',
+  ...Object.keys(CONFIGURED_COUNTRIES).map(code => String(code).toUpperCase()).filter(code => code !== 'SI' && code !== 'OTHER'),
+  'OTHER'
+])];
 const COUNTRY_MAP_DEFAULTS = {
   SI: { center: { lat: 46.1512, lng: 14.9955 }, zoom: 7 },
   IT: { center: { lat: 42.8333, lng: 12.8333 }, zoom: 6 },
@@ -444,15 +456,42 @@ const COUNTRY_MAP_DEFAULTS = {
   DE: { center: { lat: 51.1657, lng: 10.4515 }, zoom: 6 },
   HU: { center: { lat: 47.1625, lng: 19.5033 }, zoom: 7 }
 };
-const SLOVENIA_PDF_NOTE = 'The place of supply is outside Slovenia under Article 28(1) of the Slovenian VAT Act (ZDDV-1) - (Slovenian) VAT is not charged.';
-const OUTSIDE_COUNTRY_DEFAULTS = {
-  IT: { name: 'Italy', label: 'Italy', vatRate: 0, revenueAccount: REVENUE_ACCOUNTS.italy || '7610', note: SLOVENIA_PDF_NOTE },
-  HR: { name: 'Croatia', label: 'Croatia', vatRate: 25, revenueAccount: REVENUE_ACCOUNTS.croatia || '7610', vatAccount: VAT_ACCOUNTS.croatia || '260011', note: 'Croatian VAT number: OIB39387192794. 25% VAT charged; we are VAT registered.' },
-  AT: { name: 'Austria', label: 'Austria', vatRate: 10, revenueAccount: REVENUE_ACCOUNTS.austria || '7610', vatAccount: VAT_ACCOUNTS.austria || '260012', note: 'Austrian VAT number: AT686058199. 10% VAT charged; we are VAT registered.' },
-  DE: { name: 'Germany', label: 'Germany', vatRate: 19, revenueAccount: REVENUE_ACCOUNTS.germany || '7605', vatAccount: VAT_ACCOUNTS.germany || '260010', note: 'German VAT number: 053/659/50131. 19% VAT charged; we are VAT registered.' },
-  HU: { name: 'Hungary', label: 'Hungary', vatRate: 0, revenueAccount: REVENUE_ACCOUNTS.hungary || '7610', note: SLOVENIA_PDF_NOTE },
-  OTHER: { name: 'Custom', label: 'Other / custom', vatRate: 0, revenueAccount: '', note: SLOVENIA_PDF_NOTE }
-};
+const COUNTRY_CONFIGS = Object.fromEntries(Object.entries(CONFIGURED_COUNTRIES).map(([code, config]) => {
+  const countryCode = String(code).toUpperCase();
+  const minimaxAccounts = MINIMAX_COUNTRY_ACCOUNTS[countryCode] || {};
+  const vatRateValue = String(config?.vatRate ?? '').trim();
+  const displayedVatRateValue = vatRateValue || DEFAULT_FOREIGN_VAT_RATE_VALUE;
+  const countryName = String(config?.name || countryCode);
+  const vatNumber = String(config?.vatNumber || '');
+  const pdfNote = String(config?.pdfNote || '')
+    .replaceAll('{countryName}', countryName)
+    .replaceAll('{vatNumber}', vatNumber)
+    .replaceAll('{vatRate}', displayedVatRateValue);
+  return [countryCode, {
+    name: countryName,
+    label: countryName,
+    vatNumber,
+    vatRate: parseFloat(vatRateValue || '0') || 0,
+    vatRateConfigured: vatRateValue !== '',
+    revenueAccount: String(minimaxAccounts.revenueAccount || '').trim(),
+    vatAccount: String(minimaxAccounts.vatAccount || '').trim(),
+    note: pdfNote
+  }];
+}));
+if (!COUNTRY_CONFIGS.SI) {
+  const sloveniaMinimaxAccounts = MINIMAX_COUNTRY_ACCOUNTS.SI || {};
+  COUNTRY_CONFIGS.SI = {
+    name: 'Slovenia',
+    label: 'Slovenia',
+    vatNumber: '',
+    vatRate: 0,
+    vatRateConfigured: true,
+    revenueAccount: String(sloveniaMinimaxAccounts.revenueAccount || '').trim(),
+    vatAccount: String(sloveniaMinimaxAccounts.vatAccount || '').trim(),
+    note: ''
+  };
+}
+COUNTRY_CONFIGS.OTHER = { name: 'Custom', label: 'Other / custom', vatNumber: '', vatRate: 0, vatRateConfigured: false, revenueAccount: '', vatAccount: '', note: '' };
 const BASE_COUNTRY_CODE = COUNTRY_OPTION_ORDER.includes(String(ROADFARE_CONFIG.baseCountry || '').toUpperCase())
   ? String(ROADFARE_CONFIG.baseCountry || '').toUpperCase()
   : 'SI';
@@ -742,8 +781,8 @@ function updateBaseCountryUiText() {
 function applyBaseCountryDefaults() {
   const vatInput = document.getElementById('vatRate');
   if (!vatInput || getBaseCountryCode() === 'SI') return;
-  const config = OUTSIDE_COUNTRY_DEFAULTS[getBaseCountryCode()] || OUTSIDE_COUNTRY_DEFAULTS.OTHER;
-  vatInput.value = String(config.vatRate);
+  const config = COUNTRY_CONFIGS[getBaseCountryCode()] || COUNTRY_CONFIGS.OTHER;
+  vatInput.value = String(config.vatRateConfigured ? config.vatRate : DEFAULT_FOREIGN_VAT_RATE);
 }
 
 function getBaseCountryConfig() {
@@ -751,17 +790,23 @@ function getBaseCountryConfig() {
 }
 
 function getCountryOptionConfig(value) {
-  if (value === 'SI') {
+  const countryCode = String(value || 'OTHER').toUpperCase();
+  const config = COUNTRY_CONFIGS[countryCode] || COUNTRY_CONFIGS.OTHER;
+  const vatRateConfigured = config.vatRateConfigured || DEFAULT_FOREIGN_VAT_RATE_CONFIGURED;
+  const configuredVatRate = config.vatRateConfigured ? config.vatRate : DEFAULT_FOREIGN_VAT_RATE;
+  const revenueAccount = config.revenueAccount || (
+    countryCode !== getBaseCountryCode() ? String(MINIMAX_CONFIG.defaultForeignRevenueAccount || '').trim() : ''
+  );
+  if (countryCode === 'SI') {
     const sloveniaVatRate = getBaseCountryCode() === 'SI'
-      ? (parseFloat(document.getElementById('vatRate')?.value || '9.5') || 0)
-      : 9.5;
-    return { name: 'Slovenia', label: 'Slovenia', vatRate: sloveniaVatRate, revenueAccount: REVENUE_ACCOUNTS.slovenia || '7601', vatAccount: VAT_ACCOUNTS.slovenia || '26001', note: '' };
+      ? (parseFloat(document.getElementById('vatRate')?.value || String(config.vatRate || '0')) || 0)
+      : configuredVatRate;
+    return { ...config, revenueAccount, vatRate: sloveniaVatRate, vatRateConfigured: getBaseCountryCode() === 'SI' || vatRateConfigured };
   }
-  const config = OUTSIDE_COUNTRY_DEFAULTS[value] || OUTSIDE_COUNTRY_DEFAULTS.OTHER;
-  if (value === getBaseCountryCode()) {
-    return { ...config, vatRate: parseFloat(document.getElementById('vatRate')?.value || String(config.vatRate)) || 0 };
+  if (countryCode === getBaseCountryCode()) {
+    return { ...config, revenueAccount, vatRate: parseFloat(document.getElementById('vatRate')?.value || String(configuredVatRate)) || 0, vatRateConfigured };
   }
-  return config;
+  return { ...config, revenueAccount, vatRate: configuredVatRate, vatRateConfigured };
 }
 
 function countryOptionHtml(selectedValue) {
@@ -794,13 +839,13 @@ function addCountrySplitRow(segment = {}) {
       </div>
       <div class="country-vat-wrap">
         <label class="form-label small mb-1">${xmlEscape(t('VAT %'))}</label>
-        <input class="form-control form-control-sm country-split-vat" type="number" step="0.1" value="${xmlEscape(String(vatRate))}" />
+        <input class="form-control form-control-sm country-split-vat" type="number" step="0.1" value="${xmlEscape(String(vatRate))}" readonly />
       </div>
     </div>
     <div class="country-split-meta-row mt-2">
       <div>
         <label class="form-label small mb-1">${xmlEscape(t('SifraKonta'))}</label>
-        <input class="form-control form-control-sm country-split-account" value="${xmlEscape(account)}" />
+        <input class="form-control form-control-sm country-split-account" value="${xmlEscape(account)}" readonly />
       </div>
       <div class="country-remove-wrap">
         <button class="btn btn-sm btn-outline-danger" type="button">${xmlEscape(t('Remove'))}</button>
@@ -808,7 +853,7 @@ function addCountrySplitRow(segment = {}) {
     </div>
     <div class="country-note-row mt-2">
       <label class="form-label small mb-1">${xmlEscape(t('PDF note for this country'))}</label>
-      <textarea class="form-control form-control-sm country-split-note" rows="2" placeholder="${xmlEscape(t('Optional text printed under the invoice table for this country'))}">${xmlEscape(note)}</textarea>
+      <textarea class="form-control form-control-sm country-split-note" rows="2" placeholder="${xmlEscape(t('Optional text printed under the invoice table for this country'))}" readonly>${xmlEscape(note)}</textarea>
     </div>`;
   list.appendChild(row);
   const select = row.querySelector('.country-split-select');
@@ -907,6 +952,7 @@ function readCountrySplitRows() {
       km: parseFloat(row.querySelector('.country-split-km')?.value || '0') || 0,
       vatRate: parseFloat(row.querySelector('.country-split-vat')?.value || '0') || 0,
       revenueAccount: (row.querySelector('.country-split-account')?.value || '').trim(),
+      vatAccount: String(getCountryOptionConfig(countryValue).vatAccount || '').trim(),
       pdfNote: (row.querySelector('.country-split-note')?.value || '').trim()
     };
   }).filter(segment => segment.km > 0);
@@ -2167,14 +2213,11 @@ async function generatePdf(saveInvoice = true, issueDateOverride = '') {
   setPdfFooterFont(doc);
   doc.text(pdfText(tf('Pri placilu se sklicujte na stevilko SI00 {paymentReference}.', { paymentReference })), 14, y); y += 8;
   if (customInvoiceMessage) y = writeWrapped(doc, customInvoiceMessage, 14, y, 180, 5) + 3;
-  const countryNotes = d.isDomesticSloveniaOnly ? [] : countrySegments.map(segment => segment.pdfNote).filter(Boolean);
+  const countryNotes = d.isDomesticSloveniaOnly ? [] : countrySegments
+    .map(segment => getCountryOptionConfig(segment.countryValue).note)
+    .filter(Boolean);
   if (countryNotes.length) {
     countryNotes.forEach(note => { y = writeWrapped(doc, note, 14, y, 180, 5) + 2; });
-  } else if (!d.isDomesticSloveniaOnly && d.outsideSloveniaBase > 0.004) {
-    const note = Number(d.outsideVatRate)
-      ? tf('Za del poti izven Slovenije je uporabljen DDV {outsideVatRate}%, skladno z izbrano drzavo opravljanja storitve.', { outsideVatRate: formatRate(d.outsideVatRate) })
-      : t(SLOVENIA_PDF_NOTE);
-    y = writeWrapped(doc, note, 14, y, 180, 5);
   }
   y = writeWrapped(doc, t('Zahvaljujemo se vam za vase zaupanje in se veselimo nadaljnjega sodelovanja!'), 14, y + 5, 180, 5);
   await drawPdfSignature(doc);
@@ -2261,7 +2304,7 @@ async function generateDraftPdf(payloads = null, issueDateOverride = '') {
       vatSummary[key] = vatSummary[key] || { rate: Number(segment.vatRate || 0), base: 0, vat: 0 };
       vatSummary[key].base += Number(segment.base || 0);
       vatSummary[key].vat += Number(segment.vatAmount || 0);
-      const note = segment.pdfNote || (!(segment.isBaseCountry ?? segment.isSlovenia) && Number(segment.vatRate || 0) === 0 ? SLOVENIA_PDF_NOTE : '');
+      const note = getCountryOptionConfig(segment.countryValue).note || '';
       if (note && !countryNotes.includes(note)) countryNotes.push(note);
     });
     (Array.isArray(d.deductions) ? d.deductions : []).filter(adjustment => Number(adjustment.amount) > 0).forEach(adjustment => {
@@ -2511,7 +2554,9 @@ function exportMinimaxXml() {
   const calculationBaseCountryCode = String(d.baseCountry || getBaseCountryCode()).toUpperCase();
   const baseCountryConfig = getCountryOptionConfig(calculationBaseCountryCode);
   const baseRevenueAccount = String(baseCountryConfig.revenueAccount || '').trim();
-  const baseVatAccount = String(baseCountryConfig.vatAccount || VAT_ACCOUNTS.slovenia || '26001').trim();
+  const baseVatAccount = String(baseCountryConfig.vatAccount || '').trim();
+  const standardVatAccount = String(MINIMAX_CONFIG.baseCountryStandardVatAccount || '').trim();
+  const receivableAccount = String(MINIMAX_CONFIG.receivableAccount || '').trim();
   const countrySegments = Array.isArray(d.countrySegments) ? d.countrySegments : [];
   const hasOutsideBaseCountryDriving = countrySegments.some(segment =>
     !(segment.isBaseCountry ?? segment.isSlovenia) && Number(segment.km || 0) > 0.004
@@ -2530,23 +2575,47 @@ function exportMinimaxXml() {
   });
   const additionalCostsGross = roundMoney(additionalCosts.reduce((sum, cost) => sum + cost.gross, 0));
   const totalAmount = roundMoney(d.invoiceTotalAmount ?? (routeTotalAmount + additionalCostsGross));
+  if (!receivableAccount) {
+    setStatus('Enter the Minimax customer receivable account in the module options before exporting Minimax XML.', 'danger');
+    return false;
+  }
   if (!outsideSegments.length && outsideBaseAmount > 0) {
     const outsideCountry = 'OTHER';
     const config = getCountryOptionConfig(outsideCountry);
-    outsideSegments = [{ countryValue: outsideCountry, base: outsideBaseAmount, vatAmount: outsideVatAmount, vatRate: config.vatRate, revenueAccount: config.revenueAccount, isSlovenia: false }];
+    outsideSegments = [{ countryValue: outsideCountry, base: outsideBaseAmount, vatAmount: outsideVatAmount, vatRate: config.vatRate, revenueAccount: config.revenueAccount, vatAccount: config.vatAccount, isSlovenia: false }];
+  }
+  if (outsideSegments.some(segment => !getCountryOptionConfig(segment.countryValue).vatRateConfigured)) {
+    setStatus('Configure the VAT rate for every used country in the module options before exporting Minimax XML.', 'danger');
+    return false;
   }
   if ((siBaseAmount > 0 || additionalCosts.length > 0) && !baseRevenueAccount) {
     setStatus('Enter Slovenia SifraKonta in the module options before exporting Minimax XML.', 'danger');
     return false;
   }
-  if (outsideBaseAmount + outsideVatAmount > 0 && outsideSegments.some(segment => !String(segment.revenueAccount || '').trim())) {
+  if (outsideBaseAmount + outsideVatAmount > 0 && outsideSegments.some(segment => !String(getCountryOptionConfig(segment.countryValue).revenueAccount || '').trim())) {
     setStatus('Enter SifraKonta in every outside country split row before exporting Minimax XML.', 'danger');
     return false;
   }
-  const baseVatCode = minimaxVatCodeForRate(d.vatRate);
-  const routeVatAccount = baseVatCode === 'S' ? '26000' : baseVatAccount;
+  const getOutsideVatAccount = segment => String(
+    getCountryOptionConfig(String(segment.countryValue || 'OTHER').toUpperCase()).vatAccount || ''
+  ).trim();
+  if (outsideSegments.some(segment => roundMoney(segment.vatAmount) > 0 && !getOutsideVatAccount(segment))) {
+    setStatus('Enter the foreign VAT liability account in the module options before exporting Minimax XML.', 'danger');
+    return false;
+  }
+  const isSlovenianBaseCountry = calculationBaseCountryCode === 'SI';
+  const baseVatCode = isSlovenianBaseCountry ? minimaxVatCodeForRate(d.vatRate) : 'N';
+  const routeVatAccount = isSlovenianBaseCountry && baseVatCode === 'S' ? standardVatAccount : baseVatAccount;
   if (siVatAmount > 0 && !routeVatAccount) {
-    setStatus('Enter Slovenia VAT account in the module options before exporting Minimax XML.', 'danger');
+    setStatus('Enter the base-country VAT liability account in the module options before exporting Minimax XML.', 'danger');
+    return false;
+  }
+  if (additionalCosts.some(cost => cost.vat > 0 && (cost.minimaxVatCode === 'S' || (!cost.minimaxVatCode && Math.abs(cost.vatRate - 22) < 0.0001))) && !standardVatAccount) {
+    setStatus('Enter the base-country VAT liability account in the module options before exporting Minimax XML.', 'danger');
+    return false;
+  }
+  if (additionalCosts.some(cost => cost.vat > 0 && (cost.minimaxVatCode === 'Z' || (!cost.minimaxVatCode && Math.abs(cost.vatRate - 9.5) < 0.0001))) && !baseVatAccount) {
+    setStatus('Enter the base-country VAT liability account in the module options before exporting Minimax XML.', 'danger');
     return false;
   }
   const revenueAmountsByAccount = {};
@@ -2571,19 +2640,18 @@ function exportMinimaxXml() {
   addAmount(revenueAmountsByAccount, baseRevenueAccount, siBaseAmount);
   addAmount(vatAmountsByAccount, routeVatAccount, siVatAmount);
   if (siBaseAmount > 0 || siVatAmount > 0) {
-    addDdvAmount(baseVatCode, siBaseAmount, siVatAmount);
+    addDdvAmount(baseVatCode, siBaseAmount, isSlovenianBaseCountry ? siVatAmount : 0);
   }
   outsideSegments.forEach(segment => {
-    const account = String(segment.revenueAccount || '').trim();
-    // Minimax import only reports VAT for the selected base country. Foreign
-    // segments keep their PDF gross value, but are imported with code N and 0 VAT.
-    const amount = roundMoney(
-      Number(segment.base || 0)
-      + Number(segment.vatAmount || 0)
-    );
-    addAmount(revenueAmountsByAccount, account, amount);
-    if (amount > 0) {
-      addDdvAmount('N', amount, 0);
+    const revenueAccount = String(getCountryOptionConfig(segment.countryValue).revenueAccount || '').trim();
+    const base = roundMoney(segment.base);
+    const vat = roundMoney(segment.vatAmount);
+    addAmount(revenueAmountsByAccount, revenueAccount, base);
+    addAmount(vatAmountsByAccount, getOutsideVatAccount(segment), vat);
+    // Foreign VAT is a liability, not revenue and not Slovenian output VAT.
+    // Only the foreign net base is reported as outside the Slovenian VAT scope.
+    if (base > 0) {
+      addDdvAmount('N', base, 0);
     }
   });
   additionalCosts.forEach(cost => {
@@ -2593,8 +2661,8 @@ function exportMinimaxXml() {
 
     if (minimaxVatCode === 'S' || minimaxVatCode === 'Z') {
       addAmount(revenueAmountsByAccount, baseRevenueAccount, base);
-      addAmount(vatAmountsByAccount, minimaxVatCode === 'S' ? '26000' : baseVatAccount, vat);
-      addDdvAmount(minimaxVatCode, base, vat);
+      addAmount(vatAmountsByAccount, minimaxVatCode === 'S' ? standardVatAccount : baseVatAccount, vat);
+      addDdvAmount(isSlovenianBaseCountry ? minimaxVatCode : 'N', base, isSlovenianBaseCountry ? vat : 0);
       return;
     }
 
@@ -2609,15 +2677,15 @@ function exportMinimaxXml() {
   );
   const journalBalanceDiff = roundMoney(totalAmount - journalCredits());
   if (journalBalanceDiff) {
-    const outsideBalanceSegment = outsideSegments.find(segment => String(segment.revenueAccount || '').trim());
-    const balancingRevenueAccount = String(outsideBalanceSegment?.revenueAccount || baseRevenueAccount).trim();
+    const outsideBalanceSegment = outsideSegments.find(segment => String(getCountryOptionConfig(segment.countryValue).revenueAccount || '').trim());
+    const balancingRevenueAccount = String(outsideBalanceSegment ? getCountryOptionConfig(outsideBalanceSegment.countryValue).revenueAccount : baseRevenueAccount).trim();
     const balancingVatCode = outsideBalanceSegment ? 'N' : (siBaseAmount > 0 || siVatAmount > 0 ? baseVatCode : Object.keys(ddvAmountsByCode)[0]);
     if (!balancingRevenueAccount || !balancingVatCode) {
       setStatus('Minimax XML totals could not be balanced because no revenue line is available.', 'danger');
       return false;
     }
     const ddvAmounts = ddvAmountsByCode[balancingVatCode] || { base: 0, vat: 0 };
-    if (!outsideBalanceSegment && siVatAmount > 0 && routeVatAccount) {
+    if (!outsideBalanceSegment && isSlovenianBaseCountry && siVatAmount > 0 && routeVatAccount) {
       vatAmountsByAccount[routeVatAccount] = roundMoney((vatAmountsByAccount[routeVatAccount] || 0) + journalBalanceDiff);
       ddvAmounts.vat = roundMoney(ddvAmounts.vat + journalBalanceDiff);
     } else {
@@ -2634,7 +2702,7 @@ function exportMinimaxXml() {
   const ddvStopnjeXml = Object.entries(ddvAmountsByCode).map(([code, amounts]) => `\n            <DDVStopnja>\n              <SifraStopnjeDDV>${xmlEscape(code)}</SifraStopnjeDDV>\n              <StoritevOsnova>${moneyXml(amounts.base)}</StoritevOsnova>\n              <StoritevDDV>${moneyXml(amounts.vat)}</StoritevDDV>\n            </DDVStopnja>`).join('');
   const revenueLines = Object.entries(revenueAmountsByAccount).map(([account, amount]) => `\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)} - storitev</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(account)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>`).join('');
   const vatLines = Object.entries(vatAmountsByAccount).map(([account, amount]) => `\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)} - DDV</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(account)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>`).join('');
-  const xml = `<?xml version="1.0" encoding="utf-8"?>\n<miniMAXUvozKnjigovodstvo xmlns="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo.xsd">\n\n  <Temeljnice>\n    <Temeljnica>\n      <GlavaTemeljnice>\n        <SifraVrsteTemeljnice>IR</SifraVrsteTemeljnice>\n        <DatumTemeljnice>${today}</DatumTemeljnice>\n        <OpisGlaveTemeljnice>${xmlEscape(invoiceRef)}</OpisGlaveTemeljnice>\n      </GlavaTemeljnice>\n\n      <DDV>\n        <DDVVrstica>\n          <DDVGlava>\n            <DatumDDV>${today}</DatumDDV>\n            <KnjigaDDV>IR</KnjigaDDV>\n            <DatumKnjizenjaDDV>${today}</DatumKnjizenjaDDV>\n            <SifraStranke>${sifraStranke}</SifraStranke>\n            <Listina>${xmlEscape(invoiceRef)}</Listina>\n            <DatumListine>${today}</DatumListine>\n            <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n            <VrstaPorocanja>Obračun</VrstaPorocanja>\n          </DDVGlava>\n\n          <DDVStopnje>${ddvStopnjeXml}\n          </DDVStopnje>\n        </DDVVrstica>\n      </DDV>\n\n      <VrsticeTemeljnice>\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>1200</SifraKonta>\n          <SifraStranke>${sifraStranke}</SifraStranke>\n          <DatumZapadlosti>${today}</DatumZapadlosti>\n          <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>${total}</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>0.00</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>${total}</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>0.00</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${revenueLines}${vatLines}\n      </VrsticeTemeljnice>\n    </Temeljnica>\n  </Temeljnice>\n\n  <Stranke>\n    <Stranka>\n      <Sifra>${xmlEscape(sifraStranke)}</Sifra>\n      <Naziv>${xmlEscape(naziv)}</Naziv>\n      <Naslov>${xmlEscape(naslov)}</Naslov>\n      <KraticaDrzave>SI</KraticaDrzave>\n      <PostnaStevilka>1000</PostnaStevilka>\n      <NazivPoste>Ljubljana</NazivPoste>\n      <DavcniZavezanec>${vatId ? 'D' : 'N'}</DavcniZavezanec>\n      <IdentifikacijskaStevilka>${xmlEscape(vatId)}</IdentifikacijskaStevilka>\n    </Stranka>\n  </Stranke>\n\n</miniMAXUvozKnjigovodstvo>`;
+  const xml = `<?xml version="1.0" encoding="utf-8"?>\n<miniMAXUvozKnjigovodstvo xmlns="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo http://moj.minimax.si/ip/doc/schemas/miniMAXUvozKnjigovodstvo.xsd">\n\n  <Temeljnice>\n    <Temeljnica>\n      <GlavaTemeljnice>\n        <SifraVrsteTemeljnice>IR</SifraVrsteTemeljnice>\n        <DatumTemeljnice>${today}</DatumTemeljnice>\n        <OpisGlaveTemeljnice>${xmlEscape(invoiceRef)}</OpisGlaveTemeljnice>\n      </GlavaTemeljnice>\n\n      <DDV>\n        <DDVVrstica>\n          <DDVGlava>\n            <DatumDDV>${today}</DatumDDV>\n            <KnjigaDDV>IR</KnjigaDDV>\n            <DatumKnjizenjaDDV>${today}</DatumKnjizenjaDDV>\n            <SifraStranke>${sifraStranke}</SifraStranke>\n            <Listina>${xmlEscape(invoiceRef)}</Listina>\n            <DatumListine>${today}</DatumListine>\n            <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n            <VrstaPorocanja>Obračun</VrstaPorocanja>\n          </DDVGlava>\n\n          <DDVStopnje>${ddvStopnjeXml}\n          </DDVStopnje>\n        </DDVVrstica>\n      </DDV>\n\n      <VrsticeTemeljnice>\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(receivableAccount)}</SifraKonta>\n          <SifraStranke>${sifraStranke}</SifraStranke>\n          <DatumZapadlosti>${today}</DatumZapadlosti>\n          <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>${total}</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>0.00</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>${total}</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>0.00</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${revenueLines}${vatLines}\n      </VrsticeTemeljnice>\n    </Temeljnica>\n  </Temeljnice>\n\n  <Stranke>\n    <Stranka>\n      <Sifra>${xmlEscape(sifraStranke)}</Sifra>\n      <Naziv>${xmlEscape(naziv)}</Naziv>\n      <Naslov>${xmlEscape(naslov)}</Naslov>\n      <KraticaDrzave>SI</KraticaDrzave>\n      <PostnaStevilka>1000</PostnaStevilka>\n      <NazivPoste>Ljubljana</NazivPoste>\n      <DavcniZavezanec>${vatId ? 'D' : 'N'}</DavcniZavezanec>\n      <IdentifikacijskaStevilka>${xmlEscape(vatId)}</IdentifikacijskaStevilka>\n    </Stranka>\n  </Stranke>\n\n</miniMAXUvozKnjigovodstvo>`;
   const normalizedXml = xml
     .replaceAll(`<DatumTemeljnice>${today}</DatumTemeljnice>`, `<DatumTemeljnice>${serviceDateXml}</DatumTemeljnice>`)
     .replaceAll(`<DatumDDV>${today}</DatumDDV>`, `<DatumDDV>${serviceDateXml}</DatumDDV>`)
@@ -3113,7 +3181,7 @@ if (window.ResizeObserver) {
   setInterval(postFrameHeight, 1000);
 }
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="vendor/jspdf/jspdf.umd.min.js"></script>
+<script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
 </body>
 </html>
