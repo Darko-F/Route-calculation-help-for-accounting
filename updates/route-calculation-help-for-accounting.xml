@@ -6,15 +6,15 @@
     <element>mod_route_calculation_help_for_accounting</element>
     <type>module</type>
     <client>site</client>
-    <version>1.3.0</version>
+    <version>1.3.1</version>
     <infourl title="Route calculation help for accounting">https://builder.topoweryou.com/routecalculationhelp/</infourl>
     <downloads>
-      <downloadurl type="full" format="zip">https://builder.topoweryou.com/routecalculationhelp/files/routecalculationhelp/downloads/download.php?file=route_calculation_help_for_accounting_v1.3.0.zip</downloadurl>
+      <downloadurl type="full" format="zip">https://builder.topoweryou.com/routecalculationhelp/files/routecalculationhelp/downloads/download.php?file=route_calculation_help_for_accounting_v1.3.1.zip</downloadurl>
     </downloads>
     <tags>
       <tag>stable</tag>
     </tags>
-    <sha256>4c23baa019153566ded724d6fe6f00a282268df6d87cdd4ef003905a9e43a5fa</sha256>
+    <sha256>4c57b9b119d218c0f25932d6bb556815c11196eb8b5d0ab8a3960ae96802d876</sha256>
     <maintainer>topoweryou.com</maintainer>
     <maintainerurl>https://topoweryou.com</maintainerurl>
     <targetplatform name="joomla" version="6\..*" />

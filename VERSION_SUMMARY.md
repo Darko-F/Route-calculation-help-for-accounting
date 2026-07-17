@@ -1,5 +1,16 @@
 # Version Summary
 
+## Version 1.3.1
+
+- Updated Minimax XML to the namespace used by the current official XSD.
+- Corrected the Minimax VAT accounting type to `PP` (passenger transport) for both domestic and international passenger-transport invoices.
+- Kept foreign net bases outside Slovenian VAT while posting foreign VAT exclusively to each country's configured VAT-liability account.
+- Normalized additional costs to Minimax `S` (22%), `Z` (9.5%), or `N` (0% non-taxable), including safe handling of legacy saved costs.
+- Added export guards for unsupported or mixed Slovenian passenger-transport VAT rates and retained balanced journal totals across domestic, foreign, and additional-cost lines.
+- Made the PDF use the per-route country note edited in the calculator, with the module setting retained as its default.
+- Corrected fast country splitting so detected foreign kilometres are retained even when the country has not been added to module settings; unknown countries fall back to an editable Other/custom row.
+- Removed endpoint-only domestic-route detection so routes that leave and re-enter the base country are split using the full route geometry.
+
 ## Version 1.3.0
 
 - Reorganized Joomla module settings into dedicated Options, Minimax, and Countries tabs.

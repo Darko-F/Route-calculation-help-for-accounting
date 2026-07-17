@@ -7,7 +7,7 @@
   <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
   <authorEmail>info@topoweryou.com</authorEmail>
   <authorUrl>https://topoweryou.com</authorUrl>
-  <version>1.3.0</version>
+  <version>1.3.1</version>
   <description>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_XML_DESCRIPTION</description>
   <updateservers>
     <server type="extension" priority="1" name="Route Calculation Help for Accounting Updates">https://builder.topoweryou.com/routecalculationhelp/files/routecalculationhelp/updates/route-calculation-help-for-accounting.xml</server>
