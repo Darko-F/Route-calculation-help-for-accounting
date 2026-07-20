@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" method="upgrade">
+  <name>COM_RCHA_DOCUMENTS</name>
+  <author>Darko Fatur</author>
+  <creationDate>2026-07-20</creationDate>
+  <copyright>Copyright (C) 2026 topoweryou.com</copyright>
+  <license>GNU General Public License version 2 or later</license>
+  <authorEmail>info@topoweryou.com</authorEmail>
+  <authorUrl>https://topoweryou.com</authorUrl>
+  <version>1.0.1</version>
+  <description>COM_RCHA_DOCUMENTS_XML_DESCRIPTION</description>
+  <element>com_rcha_documents</element>
+  <namespace path="src">Topoweryou\Component\RchaDocuments</namespace>
+  <scriptfile>script.php</scriptfile>
+  <install>
+    <sql>
+      <file driver="mysql" charset="utf8">sql/install/mysql/install.sql</file>
+    </sql>
+  </install>
+  <administration>
+    <menu>COM_RCHA_DOCUMENTS_MENU</menu>
+    <files folder="admin">
+      <folder>services</folder>
+      <folder>src</folder>
+      <folder>tmpl</folder>
+      <folder>sql</folder>
+      <filename>access.xml</filename>
+      <filename>config.xml</filename>
+    </files>
+    <languages folder="admin/language">
+      <language tag="en-GB">en-GB/com_rcha_documents.ini</language>
+      <language tag="en-GB">en-GB/com_rcha_documents.sys.ini</language>
+      <language tag="sl-SI">sl-SI/com_rcha_documents.ini</language>
+      <language tag="sl-SI">sl-SI/com_rcha_documents.sys.ini</language>
+    </languages>
+  </administration>
+</extension>

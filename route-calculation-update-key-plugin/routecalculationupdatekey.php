@@ -55,7 +55,7 @@ class PlgInstallerRoutecalculationupdatekey extends CMSPlugin
         $uri = new Uri($url);
         $file = (string) $uri->getVar('file', '');
 
-        $allowedPackagePattern = '/^(route_calculation_help_for_accounting|plg_installer_routecalculationupdatekey)_v\d+\.\d+\.\d+\.zip$/';
+        $allowedPackagePattern = '/^pkg_route_calculation_help_for_accounting_v\d+\.\d+\.\d+\.zip$/';
 
         if (!preg_match($allowedPackagePattern, $file)) {
             return true;

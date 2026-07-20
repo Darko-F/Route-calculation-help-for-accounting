@@ -7,11 +7,8 @@
   <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
   <authorEmail>info@topoweryou.com</authorEmail>
   <authorUrl>https://topoweryou.com</authorUrl>
-  <version>1.0.2</version>
+  <version>1.0.4</version>
   <description>PLG_INSTALLER_ROUTECALCULATIONUPDATEKEY_XML_DESCRIPTION</description>
-  <updateservers>
-    <server type="extension" priority="1" name="Route Calculation Help Update Key Plugin Updates">https://builder.topoweryou.com/routecalculationhelp/files/routecalculationhelp/updates/routecalculationupdatekey.xml</server>
-  </updateservers>
   <files>
     <filename plugin="routecalculationupdatekey">routecalculationupdatekey.php</filename>
     <folder>language</folder>

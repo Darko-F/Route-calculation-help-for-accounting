@@ -21,6 +21,23 @@ $calculatorUrl = Uri::root(true) . '/modules/mod_route_calculation_help_for_acco
 $ajaxUrl = Uri::root() . 'index.php?option=com_ajax&module=route_calculation_help_for_accounting&format=json';
 $tokenName = Session::getFormToken();
 $tokenValue = '1';
+$resolvePdfImageUrl = static function ($value): string {
+    $value = trim((string) $value);
+    if ($value === '' || preg_match('#^(?:https?:)?//#i', $value) || str_starts_with($value, 'data:')) {
+        return $value;
+    }
+    if (defined('JPATH_ROOT') && str_starts_with($value, rtrim(JPATH_ROOT, '/') . '/')) {
+        $value = substr($value, strlen(rtrim(JPATH_ROOT, '/')) + 1);
+    }
+    if (str_starts_with($value, '/')) {
+        return $value;
+    }
+    $siteRoot = rtrim(Uri::root(true), '/');
+    if (preg_match('#^(?:images|media|modules)/#i', $value)) {
+        return $siteRoot . '/' . ltrim($value, '/');
+    }
+    return $siteRoot . '/modules/mod_route_calculation_help_for_accounting/media/' . ltrim($value, '/');
+};
 $calculatorTextKeys = [
     'Taxi Transfer VAT Route Calculator' => 'CALCULATOR_TITLE',
     'Route calculation help for accounting' => 'CALCULATOR_NAV_TITLE',
@@ -108,8 +125,10 @@ $calculatorTextKeys = [
     'English' => 'CALCULATOR_ENGLISH',
     'Slovenian' => 'CALCULATOR_SLOVENIAN',
     'Generate PDF / Save' => 'CALCULATOR_GENERATE_PDF',
+    'Generate Predračun / Save' => 'CALCULATOR_GENERATE_PROFORMA_PDF',
     'PDF' => 'CALCULATOR_GENERATE_HISTORY_PDF',
     '__PDF_FILENAME_PREFIX__' => 'PDF_FILENAME_PREFIX',
+    '__PROFORMA_PDF_FILENAME_PREFIX__' => 'PROFORMA_PDF_FILENAME_PREFIX',
     '__XML_FILENAME_PREFIX__' => 'XML_FILENAME_PREFIX',
     'Export minimax XML' => 'CALCULATOR_EXPORT_MINIMAX_XML',
     'Load saved customer' => 'CALCULATOR_LOAD_SAVED_CUSTOMER',
@@ -192,6 +211,12 @@ $calculatorTextKeys = [
     'Warning: Delete invoice {invoiceNumber}? This cannot be undone.' => 'CALCULATOR_DELETE_INVOICE_CONFIRM',
     'Deleting invoice...' => 'CALCULATOR_DELETING_INVOICE',
     'Invoice deleted.' => 'CALCULATOR_INVOICE_DELETED',
+    'Open predračun' => 'CALCULATOR_PROFORMA_OPEN',
+    'Converted to {invoiceNumber}' => 'CALCULATOR_PROFORMA_CONVERTED_TO',
+    'Create Invoice' => 'CALCULATOR_CREATE_INVOICE',
+    'Create a new invoice from predračun {documentNumber}?' => 'CALCULATOR_CREATE_INVOICE_CONFIRM',
+    'Predračun cannot be exported to Minimax. Create the invoice first.' => 'CALCULATOR_PROFORMA_NO_MINIMAX',
+    'Predračun PDF generated.' => 'CALCULATOR_PROFORMA_PDF_GENERATED',
     'Per page' => 'CALCULATOR_PER_PAGE',
     'Showing {shown} of {total} customers.' => 'CALCULATOR_SHOWING_CUSTOMERS',
     'Showing {shown} of {total} invoices.' => 'CALCULATOR_SHOWING_INVOICES',
@@ -199,6 +224,10 @@ $calculatorTextKeys = [
     'Previous' => 'CALCULATOR_PREVIOUS',
     'Next' => 'CALCULATOR_NEXT',
     'Filter by invoice / order number' => 'CALCULATOR_FILTER_INVOICE',
+    'Document type' => 'CALCULATOR_DOCUMENT_TYPE',
+    'All documents' => 'CALCULATOR_ALL_DOCUMENTS',
+    'Invoices only' => 'CALCULATOR_INVOICES_ONLY',
+    'Pro forma invoices only' => 'CALCULATOR_PROFORMAS_ONLY',
     'Invoice Name' => 'CALCULATOR_INVOICE_NAME',
     'Price' => 'CALCULATOR_PRICE',
     'Date' => 'CALCULATOR_DATE',
@@ -236,6 +265,8 @@ $calculatorTextKeys = [
     'VAT ' => 'CALCULATOR_VAT_PREFIX',
     ' not subject to Slovenian VAT' => 'CALCULATOR_NOT_SUBJECT_SI_VAT',
     'Racun st.: {invoiceNo}' => 'PDF_INVOICE_NO',
+    'PREDRACUN' => 'PDF_PROFORMA_TITLE',
+    'Predracun st.: {invoiceNo}' => 'PDF_PROFORMA_NO',
     'Datum izdaje: {issuePlace}{issueDate}' => 'PDF_ISSUE_DATE',
     'Datum opr. storitve: {serviceDate}' => 'PDF_SERVICE_DATE',
     'Rok placila: {dueDate}' => 'PDF_DUE_DATE',
@@ -339,7 +370,9 @@ $frontendConfig = [
         'email' => (string) $params->get('company_email', 'office@example.com'),
         'phone' => (string) $params->get('company_phone', '+386 00 000 000'),
         'issueCity' => (string) $params->get('company_issue_city', 'Example City'),
-        'signatureImageUrl' => (string) $params->get('pdf_signature_image_url', 'podpis-transparent.png'),
+        'logoImageUrl' => $resolvePdfImageUrl($params->get('pdf_logo_image_url', '')),
+        'footerText' => (string) $params->get('pdf_footer_text', ''),
+        'signatureImageUrl' => $resolvePdfImageUrl($params->get('pdf_signature_image_url', 'podpis-transparent.png')),
     ],
     'minimax' => [
         'receivableAccount' => (string) $params->get('minimax_receivable_account', ''),

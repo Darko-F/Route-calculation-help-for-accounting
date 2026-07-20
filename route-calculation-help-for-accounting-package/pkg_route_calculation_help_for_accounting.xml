@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="package" method="upgrade">
+  <name>Route Calculation Help for Accounting Suite</name>
+  <packagename>route_calculation_help_for_accounting</packagename>
+  <version>1.4.2</version>
+  <creationDate>2026-07-20</creationDate>
+  <author>Darko Fatur</author>
+  <authorEmail>info@topoweryou.com</authorEmail>
+  <authorUrl>https://topoweryou.com</authorUrl>
+  <copyright>Copyright (C) 2026 topoweryou.com</copyright>
+  <license>GNU General Public License version 2 or later</license>
+  <description>Installs the invoicing site module, administrator document-management component, and subscriber update-key plugin.</description>
+  <updateservers>
+    <server type="extension" priority="1" name="Route Calculation Help for Accounting Suite Updates">https://builder.topoweryou.com/routecalculationhelp/files/routecalculationhelp/updates/route-calculation-help-for-accounting-package.xml</server>
+  </updateservers>
+  <files folder="packages">
+    <file type="module" id="mod_route_calculation_help_for_accounting" client="site">route_calculation_help_for_accounting_v1.4.1.zip</file>
+    <file type="component" id="com_rcha_documents">com_rcha_documents_v1.0.1.zip</file>
+    <file type="plugin" id="routecalculationupdatekey" group="installer">plg_installer_routecalculationupdatekey_v1.0.4.zip</file>
+  </files>
+</extension>
