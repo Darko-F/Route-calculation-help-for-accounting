@@ -451,13 +451,16 @@ class RouteCalculationHelpForAccountingHelper
         }
 
         $query = $db->getQuery(true)
-            ->select($db->quoteName(['id', 'customer_code', 'customer_name', 'customer_address', 'vat_id', 'invoice_number', 'document_type', 'document_status', 'source_document_id', 'converted_invoice_id', 'converted_invoice_number', 'total_amount', 'payload_json', 'created_at']))
-            ->from($db->quoteName('#__route_calculation_help_for_accounting_invoices'));
+            ->select($db->quoteName(['i.id', 'i.customer_code', 'i.customer_name', 'i.customer_address', 'i.vat_id', 'i.invoice_number', 'i.document_type', 'i.document_status', 'i.source_document_id', 'i.converted_invoice_id', 'i.converted_invoice_number', 'i.total_amount', 'i.payload_json', 'i.created_at']))
+            ->select('(SELECT COALESCE(SUM(' . $db->quoteName('p.amount') . '), 0) FROM '
+                . $db->quoteName('#__route_calculation_help_for_accounting_invoice_payments', 'p')
+                . ' WHERE ' . $db->quoteName('p.invoice_id') . ' = ' . $db->quoteName('i.id') . ') AS ' . $db->quoteName('paid_amount'))
+            ->from($db->quoteName('#__route_calculation_help_for_accounting_invoices', 'i'));
         foreach ($conditions as $condition) {
             $query->where($condition);
         }
 
-        $query->order($db->quoteName('created_at') . ' DESC');
+        $query->order($db->quoteName('i.created_at') . ' DESC');
         $total = 0;
         if ($paginate) {
             $countQuery = $db->getQuery(true)
@@ -473,6 +476,38 @@ class RouteCalculationHelpForAccountingHelper
             $query->setLimit(7);
         }
         $invoices = $db->setQuery($query)->loadAssocList();
+
+        $paymentsByInvoice = [];
+        $invoiceIds = array_values(array_filter(array_map(static fn ($invoice) => (int) ($invoice['id'] ?? 0), $invoices ?: [])));
+        if ($invoiceIds) {
+            $paymentQuery = $db->getQuery(true)
+                ->select($db->quoteName(['invoice_id', 'payment_date', 'amount', 'payment_method', 'payment_reference', 'note']))
+                ->from($db->quoteName('#__route_calculation_help_for_accounting_invoice_payments'))
+                ->where($db->quoteName('invoice_id') . ' IN (' . implode(',', $invoiceIds) . ')')
+                ->order($db->quoteName('payment_date') . ' ASC')
+                ->order($db->quoteName('id') . ' ASC');
+            foreach ($db->setQuery($paymentQuery)->loadAssocList() ?: [] as $payment) {
+                $paymentsByInvoice[(int) $payment['invoice_id']][] = [
+                    'date' => (string) $payment['payment_date'],
+                    'amount' => round((float) $payment['amount'], 2),
+                    'method' => (string) $payment['payment_method'],
+                    'reference' => (string) $payment['payment_reference'],
+                    'note' => (string) $payment['note'],
+                ];
+            }
+        }
+
+        foreach ($invoices as &$invoice) {
+            $totalAmount = round((float) ($invoice['total_amount'] ?? 0), 2);
+            $paidAmount = min($totalAmount, round((float) ($invoice['paid_amount'] ?? 0), 2));
+            $invoice['paid_amount'] = $paidAmount;
+            $invoice['remaining_amount'] = max(0, round($totalAmount - $paidAmount, 2));
+            $invoice['payment_status'] = $paidAmount <= 0.004
+                ? 'unpaid'
+                : ($invoice['remaining_amount'] <= 0.004 ? 'paid' : 'partially_paid');
+            $invoice['payments'] = $paymentsByInvoice[(int) ($invoice['id'] ?? 0)] ?? [];
+        }
+        unset($invoice);
 
         return ['invoices' => $invoices ?: [], 'total' => $paginate ? $total : count($invoices ?: []), 'page' => $page, 'per_page' => $perPage];
     }
@@ -846,6 +881,22 @@ class RouteCalculationHelpForAccountingHelper
               PRIMARY KEY (" . $db->quoteName('id') . "),
               KEY " . $db->quoteName('idx_customer_project') . " (" . $db->quoteName('customer_code') . ", " . $db->quoteName('project_ref') . "),
               KEY " . $db->quoteName('idx_customer_id') . " (" . $db->quoteName('customer_id') . ")
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci"
+        )->execute();
+
+        $db->setQuery(
+            "CREATE TABLE IF NOT EXISTS " . $db->quoteName('#__route_calculation_help_for_accounting_invoice_payments') . " (
+              " . $db->quoteName('id') . " int unsigned NOT NULL AUTO_INCREMENT,
+              " . $db->quoteName('invoice_id') . " int unsigned NOT NULL,
+              " . $db->quoteName('payment_date') . " date NOT NULL,
+              " . $db->quoteName('amount') . " decimal(12,2) NOT NULL,
+              " . $db->quoteName('payment_method') . " varchar(32) NOT NULL DEFAULT 'bank_transfer',
+              " . $db->quoteName('payment_reference') . " varchar(255) NOT NULL DEFAULT '',
+              " . $db->quoteName('note') . " text NULL,
+              " . $db->quoteName('created_by') . " int unsigned NOT NULL DEFAULT 0,
+              " . $db->quoteName('created_at') . " datetime NOT NULL,
+              PRIMARY KEY (" . $db->quoteName('id') . "),
+              KEY " . $db->quoteName('idx_invoice_id_date') . " (" . $db->quoteName('invoice_id') . ", " . $db->quoteName('payment_date') . ")
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci"
         )->execute();
 

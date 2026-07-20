@@ -7,7 +7,7 @@
   <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
   <authorEmail>info@topoweryou.com</authorEmail>
   <authorUrl>https://topoweryou.com</authorUrl>
-  <version>1.4.1</version>
+  <version>1.5.0</version>
   <description>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_XML_DESCRIPTION</description>
   <files>
     <filename module="mod_route_calculation_help_for_accounting">mod_route_calculation_help_for_accounting.php</filename>

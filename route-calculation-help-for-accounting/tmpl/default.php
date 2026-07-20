@@ -19,6 +19,7 @@ $languageTag = Factory::getApplication()->getLanguage()->getTag();
 $calculatorVersion = (string) (filemtime(__DIR__ . '/../media/calculator.html') ?: '1.2.39');
 $calculatorUrl = Uri::root(true) . '/modules/mod_route_calculation_help_for_accounting/media/calculator.html?v=' . rawurlencode($calculatorVersion);
 $ajaxUrl = Uri::root() . 'index.php?option=com_ajax&module=route_calculation_help_for_accounting&format=json';
+$administratorDocumentsUrl = Uri::root() . 'administrator/index.php?option=com_rcha_documents&view=documents';
 $tokenName = Session::getFormToken();
 $tokenValue = '1';
 $resolvePdfImageUrl = static function ($value): string {
@@ -119,6 +120,11 @@ $calculatorTextKeys = [
     'Save customer' => 'CALCULATOR_SAVE_DETAILS',
     'Customers' => 'CALCULATOR_CUSTOMERS',
     'Invoices' => 'CALCULATOR_INVOICES',
+    'Add payment' => 'CALCULATOR_ADD_PAYMENT',
+    'Payment confirmation' => 'CALCULATOR_PAYMENT_CONFIRMATION',
+    'Unpaid' => 'CALCULATOR_PAYMENT_UNPAID',
+    'Partially paid' => 'CALCULATOR_PAYMENT_PARTIALLY_PAID',
+    'Paid' => 'CALCULATOR_PAYMENT_PAID',
     'Add to draft Invoice' => 'CALCULATOR_ADD_TO_DRAFT',
     'Save Invoice' => 'CALCULATOR_SAVE_INVOICE_HISTORY',
     'Auto generated invoice text' => 'CALCULATOR_AUTO_INVOICE_TEXT',
@@ -248,6 +254,8 @@ $calculatorTextKeys = [
     'Enter the base-country VAT liability account in the module options before exporting Minimax XML.' => 'CALCULATOR_ENTER_BASE_COUNTRY_VAT_ACCOUNT_XML',
     'Enter the foreign VAT liability account in the module options before exporting Minimax XML.' => 'CALCULATOR_ENTER_FOREIGN_VAT_ACCOUNT_XML',
     'Minimax XML exported.' => 'CALCULATOR_XML_EXPORTED',
+    'Full invoice exported to Minimax. Reconcile the partial payment through a Minimax bank statement or journal.' => 'CALCULATOR_XML_EXPORTED_PARTIAL_PAYMENT',
+    'Full invoice exported to Minimax. Reconcile the recorded payment through a Minimax bank statement or journal.' => 'CALCULATOR_XML_EXPORTED_RECORDED_PAYMENT',
     'Edit country rows' => 'CALCULATOR_EDIT_COUNTRY_ROWS',
     'Calculate a route before recalculating country rows.' => 'CALCULATOR_CALCULATE_BEFORE_COUNTRY_ROWS',
     'Country VAT split recalculated. Remaining km adjusted to route total.' => 'CALCULATOR_COUNTRY_SPLIT_RECALCULATED',
@@ -386,6 +394,7 @@ $frontendConfig = [
 $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
 $frameConfig = [
     'ajaxUrl' => $ajaxUrl,
+    'administratorDocumentsUrl' => $administratorDocumentsUrl,
     'tokenName' => $tokenName,
     'tokenValue' => $tokenValue,
     'languageTag' => $languageTag,

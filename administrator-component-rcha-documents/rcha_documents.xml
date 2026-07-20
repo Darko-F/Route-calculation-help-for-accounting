@@ -7,7 +7,7 @@
   <license>GNU General Public License version 2 or later</license>
   <authorEmail>info@topoweryou.com</authorEmail>
   <authorUrl>https://topoweryou.com</authorUrl>
-  <version>1.0.1</version>
+  <version>1.1.0</version>
   <description>COM_RCHA_DOCUMENTS_XML_DESCRIPTION</description>
   <element>com_rcha_documents</element>
   <namespace path="src">Topoweryou\Component\RchaDocuments</namespace>

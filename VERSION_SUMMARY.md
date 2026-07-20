@@ -1,5 +1,16 @@
 # Version Summary
 
+## Suite Package 1.5.0
+
+- Added administrator payment tracking for invoices with Unpaid / Neplačano, Partially paid / Delno plačano, and Paid / Plačano states.
+- Added payment date, amount, method, reference, and note history without changing the invoice's original payment due date.
+- Added Unicode Payment Confirmation / Potrdilo o plačilu PDFs with customer and invoice details, payment history, paid and remaining amounts, configured footer text, and a prominent PAID / PLAČANO label.
+- Kept payment confirmations outside the invoice-number sequence and documented that they do not replace required FURS fiscal confirmation for cash or card payments.
+- Kept Minimax XML at the full original invoice value for paid and partially paid invoices; payments are reconciled separately through a Minimax bank statement or journal.
+- Prevented long payment methods, references, and notes from overlapping adjacent columns in confirmation PDFs.
+- Added payment status and administrator Add payment links to the front-end Računi / Invoices browser; payment-confirmation PDFs automatically follow Joomla's active site language.
+- Updated the enclosed versions to module 1.5.0, RCHA Document Management component 1.1.0, and installer update-key plugin 1.0.4.
+
 ## Suite Package 1.4.2
 
 - Made the combined suite the single supported installation and update unit.

@@ -74,6 +74,22 @@ return new class implements InstallerScriptInterface {
             }
         }
 
+        $db->setQuery(
+            "CREATE TABLE IF NOT EXISTS " . $db->quoteName('#__route_calculation_help_for_accounting_invoice_payments') . " (
+              " . $db->quoteName('id') . " int unsigned NOT NULL AUTO_INCREMENT,
+              " . $db->quoteName('invoice_id') . " int unsigned NOT NULL,
+              " . $db->quoteName('payment_date') . " date NOT NULL,
+              " . $db->quoteName('amount') . " decimal(12,2) NOT NULL,
+              " . $db->quoteName('payment_method') . " varchar(32) NOT NULL DEFAULT 'bank_transfer',
+              " . $db->quoteName('payment_reference') . " varchar(255) NOT NULL DEFAULT '',
+              " . $db->quoteName('note') . " text NULL,
+              " . $db->quoteName('created_by') . " int unsigned NOT NULL DEFAULT 0,
+              " . $db->quoteName('created_at') . " datetime NOT NULL,
+              PRIMARY KEY (" . $db->quoteName('id') . "),
+              KEY " . $db->quoteName('idx_invoice_id_date') . " (" . $db->quoteName('invoice_id') . ", " . $db->quoteName('payment_date') . ")
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci"
+        )->execute();
+
         return true;
     }
 };

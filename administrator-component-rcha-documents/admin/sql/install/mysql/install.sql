@@ -34,3 +34,17 @@ CREATE TABLE IF NOT EXISTS `#__route_calculation_help_for_accounting_invoices` (
   KEY `idx_customer_id` (`customer_id`),
   KEY `idx_customer_code` (`customer_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__route_calculation_help_for_accounting_invoice_payments` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `invoice_id` int unsigned NOT NULL,
+  `payment_date` date NOT NULL,
+  `amount` decimal(12,2) NOT NULL,
+  `payment_method` varchar(32) NOT NULL DEFAULT 'bank_transfer',
+  `payment_reference` varchar(255) NOT NULL DEFAULT '',
+  `note` text NULL,
+  `created_by` int unsigned NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_invoice_id_date` (`invoice_id`, `payment_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
