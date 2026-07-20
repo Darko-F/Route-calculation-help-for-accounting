@@ -1,5 +1,56 @@
 # Version Summary
 
+## Suite Package 1.4.2
+
+- Made the combined suite the single supported installation and update unit.
+- Removed individual update feeds and update-server registrations from the module, component, and plugin to prevent duplicate or incompatible partial updates.
+- Updated the enclosed versions to module 1.4.1, RCHA Document Management component 1.0.1, and installer update-key plugin 1.0.4.
+- Retained only the combined-suite update feed in the `updates` folder.
+
+## Suite Package 1.4.1
+
+- Combined the site module 1.4.0, RCHA Document Management component 1.0.0, and installer update-key plugin 1.0.3 into one Joomla installation ZIP.
+- Kept plugin enablement and subscriber-key configuration under Joomla's plugin manager.
+- Added a dedicated Joomla update feed for future combined-suite upgrades.
+
+## Version 1.4.0
+
+- Moved invoice and Predračun / pro forma deletion out of the module editor into the dedicated administrator-only RCHA Document Management component.
+- Added server-side search, invoice/pro forma filtering, sortable columns, and 25/50/100-row pagination; only the current page is loaded from the database.
+- Added Joomla component `core.manage`, `core.delete`, and `core.admin` ACL rules plus POST-only CSRF-protected bulk deletion.
+- Preserved conversion integrity: a converted pro forma and its linked invoice can be deleted together, and deleting only the invoice reopens the source pro forma.
+- Replaced the module's database-backed management field with a lightweight link, so opening any module instance no longer loads document records.
+- Added a combined Joomla package for installing the site module and administrator component together, plus separate component updates.
+
+## Version 1.3.5
+
+- Reduced the maximum PDF logo dimensions by 15%, from 32 × 12 mm to 27.2 × 10.2 mm, while preserving its aspect ratio.
+- Removed invoice and pro forma deletion controls from the public calculator and disabled the public AJAX deletion route.
+- Added an administrator-only Document Management tab to the module editor with search, invoice/pro forma filtering, status, customer, date, amount, and deletion controls.
+- Protected administrator deletion with Joomla `core.delete` permission checks and CSRF tokens.
+- Preserved Predračun conversion links: converted pro forma invoices require their linked invoice to be deleted first; deleting that invoice reopens the source pro forma invoice.
+
+## Version 1.3.4
+
+- Added a document-type filter to the all-invoices browser with All documents, Invoices only, and Pro forma invoices only options.
+- Applied document-type filtering in the database query so result totals and pagination remain accurate.
+- Added English and Slovenian labels for the new filter.
+
+## Version 1.3.3
+
+- Translated all English `Predračun` labels to `Pro forma invoice`, including actions, statuses, confirmations, PDF title, document number, and filename.
+- Changed the PDF logo option to a Joomla Media selector and normalized selected site paths, absolute URLs, filesystem paths below the Joomla root, and module-media-relative filenames.
+- Made the configured centered footer more visible with a separator, larger text, and safer bottom-page spacing; moved the signature upward to reserve footer space.
+
+## Version 1.3.2
+
+- Added saved Predračun documents with their own automatic `PR-RCHA-YY-NNNN` number sequence.
+- Added a dedicated Predračun PDF action and Slovenian/English PDF labels, including a prominent `PREDRAČUN` heading and `Predračun št.` number.
+- Predračun PDFs omit the stamp/signature and cannot be exported to Minimax.
+- Added one-click conversion from an open Predračun to a separately numbered `RCHA-YY-NNNN` invoice while retaining the source/conversion link in history.
+- Added open/converted Predračun status badges and guarded conversions against duplicate invoices.
+- Added configurable invoice header logo and centered Unicode-safe footer text, including support for `š`, `č`, and `ć`.
+
 ## Version 1.3.1
 
 - Updated Minimax XML to the namespace used by the current official XSD.
@@ -168,6 +219,10 @@
 - Updated update server and package download URLs to the corrected server paths.
 - Updated download-key injection to support the corrected protected download endpoint.
 - Added support for Joomla event-style package download URL updates.
+
+## Installer Plugin 1.0.3
+
+- Added subscriber-key support for protected RCHA Document Management component and combined suite package downloads.
 
 ## Update Server
 

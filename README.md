@@ -10,6 +10,7 @@ Route calculation help for accounting is a Joomla 6 site module for taxi and pas
 - Saved customer details and reusable invoice history in Joomla database tables
 - PDF invoice generation
 - Minimax XML export
+- Separate administrator component for paginated invoice and pro forma management
 - Configurable company details, origin-country accounts, and foreign-country accounts
 - English and Slovenian Joomla language files
 
@@ -41,8 +42,8 @@ subscriber key in:
 System -> Manage -> Plugins -> Installer - Route Calculation Help update key
 ```
 
-The plugin appends the subscriber key when Joomla downloads this module's update
-package.
+The plugin appends the subscriber key when Joomla downloads the combined suite
+update package.
 
 ## Default Configuration
 
@@ -56,15 +57,23 @@ On request, we provide configuration adjusted to your needs. Get in touch at: ht
 
 ## Installation
 
-Install the ZIP package in Joomla:
+For a new installation, install the combined suite ZIP package in Joomla:
 
 1. Go to Joomla Administrator.
 2. Open System -> Install -> Extensions.
-3. Upload the module ZIP package.
+3. Upload `pkg_route_calculation_help_for_accounting_v1.4.2.zip`.
 4. Open Content -> Site Modules.
 5. Create or open Route calculation help for accounting.
 6. Enter the Google Maps API key and company settings.
 7. Publish the module in the desired position.
+
+The suite installs the site module, administrator-only document management
+component, and subscriber update-key installer plugin. Enable the plugin and
+enter the subscriber key before using protected updates. Install and update the
+suite only through the combined package so all three extensions remain on the
+same compatible release. Document management is available under Joomla
+Administrator → Components → Invoices and Pro Forma Invoices, and from the
+lightweight link in the module's Document Management tab.
 
 ## Source Package
 
@@ -74,10 +83,10 @@ The source code is in:
 route-calculation-help-for-accounting/
 ```
 
-The installable ZIP package is distributed separately as:
+The supported installable suite is distributed as:
 
 ```text
-route_calculation_help_for_accounting_vx.x.xx.zip
+pkg_route_calculation_help_for_accounting_vx.x.x.zip
 ```
 
 ## Security

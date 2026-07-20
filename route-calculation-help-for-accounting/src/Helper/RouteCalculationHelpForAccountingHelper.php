@@ -33,14 +33,16 @@ class RouteCalculationHelpForAccountingHelper
         Session::checkToken('post') or throw new RuntimeException('Invalid Joomla session token.');
         $payload = self::payload();
         $customerPayload = is_array($payload['customer'] ?? null) ? $payload['customer'] : [];
+        $documentType = ($payload['document_type'] ?? '') === 'proforma' ? 'proforma' : 'invoice';
+        $sourceDocumentId = $documentType === 'invoice' ? max(0, (int) ($payload['source_document_id'] ?? 0)) : 0;
         $invoiceNumber = trim((string) ($payload['invoice_number'] ?? ''));
         $automaticInvoiceYear = null;
 
         if ($invoiceNumber === '') {
             $automaticInvoiceYear = (int) Factory::getDate()->format('Y');
-            $invoiceNumber = self::nextInvoiceNumber($automaticInvoiceYear);
+            $invoiceNumber = self::nextInvoiceNumber($automaticInvoiceYear, $documentType);
             $payload['invoice_number'] = $invoiceNumber;
-        } elseif (preg_match('/^RCHA-(\d{2})-\d+(?:[-\s].+)?$/', $invoiceNumber, $matches)) {
+        } elseif (preg_match($documentType === 'proforma' ? '/^PR-RCHA-(\d{2})-\d+$/' : '/^RCHA-(\d{2})-\d+(?:[-\s].+)?$/', $invoiceNumber, $matches)) {
             $currentYear = (int) Factory::getDate()->format('Y');
             $automaticInvoiceYear = ((int) floor($currentYear / 100) * 100) + (int) $matches[1];
         }
@@ -51,9 +53,24 @@ class RouteCalculationHelpForAccountingHelper
 
         self::ensureInvoiceCustomerColumns();
 
+        if ($sourceDocumentId > 0) {
+            $db = self::db();
+            $sourceQuery = $db->getQuery(true)
+                ->select($db->quoteName(['id', 'document_type', 'converted_invoice_id']))
+                ->from($db->quoteName('#__route_calculation_help_for_accounting_invoices'))
+                ->where($db->quoteName('id') . ' = ' . $sourceDocumentId);
+            $sourceDocument = $db->setQuery($sourceQuery)->loadAssoc();
+            if (!$sourceDocument || ($sourceDocument['document_type'] ?? '') !== 'proforma') {
+                throw new RuntimeException('The selected predračun was not found.');
+            }
+            if ((int) ($sourceDocument['converted_invoice_id'] ?? 0) > 0) {
+                throw new RuntimeException('This predračun has already been converted to an invoice.');
+            }
+        }
+
         if (self::invoiceExists($invoiceNumber)) {
             if ($automaticInvoiceYear !== null) {
-                $invoiceNumber = self::nextInvoiceNumber($automaticInvoiceYear);
+                $invoiceNumber = self::nextInvoiceNumber($automaticInvoiceYear, $documentType);
                 $payload['invoice_number'] = $invoiceNumber;
             } else {
                 throw new RuntimeException('Invoice number "' . $invoiceNumber . '" already exists in invoice history. Use a different invoice number to save a new record.');
@@ -67,7 +84,8 @@ class RouteCalculationHelpForAccountingHelper
         $userId = (int) Factory::getApplication()->getIdentity()->id;
         $columns = [
             'customer_id', 'customer_code', 'customer_name', 'customer_address', 'vat_id',
-            'invoice_number', 'output_file_name', 'pickup', 'dropoff',
+            'invoice_number', 'document_type', 'document_status', 'source_document_id',
+            'output_file_name', 'pickup', 'dropoff',
             'total_km', 'slovenia_km', 'outside_slovenia_km', 'taxable_base_slovenia',
             'outside_slovenia_base', 'vat_rate', 'vat_amount', 'outside_vat_rate',
             'outside_vat_amount', 'total_amount', 'payload_json', 'created_by', 'created_at'
@@ -77,6 +95,8 @@ class RouteCalculationHelpForAccountingHelper
         while (true) {
             $attempt++;
             $payload['invoice_number'] = $invoiceNumber;
+            $payload['document_type'] = $documentType;
+            $payload['source_document_id'] = $sourceDocumentId ?: null;
             $payloadJson = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             $values = [
                 (int) $customer['id'],
@@ -85,6 +105,9 @@ class RouteCalculationHelpForAccountingHelper
                 $db->quote((string) ($customerPayload['customer_address'] ?? '')),
                 $db->quote((string) ($customerPayload['vat_id'] ?? '')),
                 $db->quote($invoiceNumber),
+                $db->quote($documentType),
+                $db->quote($documentType === 'proforma' ? 'open' : 'issued'),
+                $sourceDocumentId > 0 ? $sourceDocumentId : 'NULL',
                 $db->quote((string) ($payload['output_file_name'] ?? '')),
                 $db->quote((string) ($data['pickup'] ?? '')),
                 $db->quote((string) ($data['dropoff'] ?? '')),
@@ -115,11 +138,21 @@ class RouteCalculationHelpForAccountingHelper
                     throw $exception;
                 }
 
-                $invoiceNumber = self::nextInvoiceNumber($automaticInvoiceYear);
+                $invoiceNumber = self::nextInvoiceNumber($automaticInvoiceYear, $documentType);
             }
         }
 
         $invoiceId = (int) $db->insertid();
+        if ($sourceDocumentId > 0) {
+            $query = $db->getQuery(true)
+                ->update($db->quoteName('#__route_calculation_help_for_accounting_invoices'))
+                ->set($db->quoteName('document_status') . ' = ' . $db->quote('converted'))
+                ->set($db->quoteName('converted_invoice_id') . ' = ' . $invoiceId)
+                ->set($db->quoteName('converted_invoice_number') . ' = ' . $db->quote($invoiceNumber))
+                ->where($db->quoteName('id') . ' = ' . $sourceDocumentId)
+                ->where($db->quoteName('converted_invoice_id') . ' IS NULL');
+            $db->setQuery($query)->execute();
+        }
 
         return [
             'invoice_id' => $invoiceId,
@@ -129,6 +162,11 @@ class RouteCalculationHelpForAccountingHelper
                 'customer_address' => (string) ($customerPayload['customer_address'] ?? ''),
                 'vat_id' => (string) ($customerPayload['vat_id'] ?? ''),
                 'invoice_number' => $invoiceNumber,
+                'document_type' => $documentType,
+                'document_status' => $documentType === 'proforma' ? 'open' : 'issued',
+                'source_document_id' => $sourceDocumentId ?: null,
+                'converted_invoice_id' => null,
+                'converted_invoice_number' => '',
                 'total_amount' => self::num(self::invoiceTotal($data)),
                 'payload_json' => $payloadJson,
                 'created_at' => $now,
@@ -141,14 +179,15 @@ class RouteCalculationHelpForAccountingHelper
         Session::checkToken('post') or throw new RuntimeException('Invalid Joomla session token.');
         $payload = self::payload();
         $year = (int) ($payload['year'] ?? Factory::getDate()->format('Y'));
+        $documentType = ($payload['document_type'] ?? '') === 'proforma' ? 'proforma' : 'invoice';
 
         if ($year < 2000 || $year > 9999) {
             $year = (int) Factory::getDate()->format('Y');
         }
 
-        $invoiceNumber = self::nextInvoiceNumber($year);
+        $invoiceNumber = self::nextInvoiceNumber($year, $documentType);
 
-        return ['invoice_number' => $invoiceNumber, 'year' => $year];
+        return ['invoice_number' => $invoiceNumber, 'year' => $year, 'document_type' => $documentType];
     }
 
     public function addDraftLineAjax()
@@ -372,6 +411,8 @@ class RouteCalculationHelpForAccountingHelper
         $allCustomers = !empty($payload['all_customers']);
         $loadAll = !empty($payload['load_all']);
         $invoiceNumber = trim((string) ($payload['invoice_number'] ?? ''));
+        $documentType = trim((string) ($payload['document_type'] ?? ''));
+        $documentType = in_array($documentType, ['invoice', 'proforma'], true) ? $documentType : '';
         $date = trim((string) ($payload['date'] ?? ''));
         $paginate = !empty($payload['paginate']);
         $page = max(1, (int) ($payload['page'] ?? 1));
@@ -402,12 +443,15 @@ class RouteCalculationHelpForAccountingHelper
         if ($invoiceNumber !== '') {
             $conditions[] = $db->quoteName('invoice_number') . ' LIKE ' . $db->quote('%' . $invoiceNumber . '%');
         }
+        if ($documentType !== '') {
+            $conditions[] = $db->quoteName('document_type') . ' = ' . $db->quote($documentType);
+        }
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
             $conditions[] = $db->quoteName('created_at') . ' LIKE ' . $db->quote($date . '%');
         }
 
         $query = $db->getQuery(true)
-            ->select($db->quoteName(['id', 'customer_code', 'customer_name', 'customer_address', 'vat_id', 'invoice_number', 'total_amount', 'payload_json', 'created_at']))
+            ->select($db->quoteName(['id', 'customer_code', 'customer_name', 'customer_address', 'vat_id', 'invoice_number', 'document_type', 'document_status', 'source_document_id', 'converted_invoice_id', 'converted_invoice_number', 'total_amount', 'payload_json', 'created_at']))
             ->from($db->quoteName('#__route_calculation_help_for_accounting_invoices'));
         foreach ($conditions as $condition) {
             $query->where($condition);
@@ -436,25 +480,7 @@ class RouteCalculationHelpForAccountingHelper
     public function deleteInvoiceAjax()
     {
         Session::checkToken('post') or throw new RuntimeException('Invalid Joomla session token.');
-        $payload = self::payload();
-        $invoiceId = (int) ($payload['id'] ?? 0);
-
-        if ($invoiceId < 1) {
-            throw new RuntimeException('A valid invoice ID is required.');
-        }
-
-        self::ensureTables();
-        $db = self::db();
-        $query = $db->getQuery(true)
-            ->delete($db->quoteName('#__route_calculation_help_for_accounting_invoices'))
-            ->where($db->quoteName('id') . ' = ' . $invoiceId);
-        $db->setQuery($query)->execute();
-
-        if ((int) $db->getAffectedRows() < 1) {
-            throw new RuntimeException('Invoice was not found.');
-        }
-
-        return ['deleted_invoice_id' => $invoiceId];
+        throw new RuntimeException('Invoice and pro forma deletion is available only in the RCHA Document Management administrator component.');
     }
 
     private static function saveCustomer(array $payload): array
@@ -605,12 +631,12 @@ class RouteCalculationHelpForAccountingHelper
         return $db->setQuery($query)->loadAssocList() ?: [];
     }
 
-    private static function nextInvoiceNumber(int $year): string
+    private static function nextInvoiceNumber(int $year, string $documentType = 'invoice'): string
     {
         self::ensureTables();
         $db = self::db();
         $shortYear = substr(str_pad((string) $year, 4, '0', STR_PAD_LEFT), -2);
-        $prefix = 'RCHA-' . $shortYear . '-';
+        $prefix = $documentType === 'proforma' ? 'PR-RCHA-' . $shortYear . '-' : 'RCHA-' . $shortYear . '-';
         $query = $db->getQuery(true)
             ->select($db->quoteName('invoice_number'))
             ->from($db->quoteName('#__route_calculation_help_for_accounting_invoices'))
@@ -676,6 +702,26 @@ class RouteCalculationHelpForAccountingHelper
                 'definition' => "varchar(64) NOT NULL DEFAULT ''",
                 'after' => 'customer_address',
             ],
+            'document_type' => [
+                'definition' => "varchar(16) NOT NULL DEFAULT 'invoice'",
+                'after' => 'invoice_number',
+            ],
+            'document_status' => [
+                'definition' => "varchar(16) NOT NULL DEFAULT 'issued'",
+                'after' => 'document_type',
+            ],
+            'source_document_id' => [
+                'definition' => 'int unsigned NULL DEFAULT NULL',
+                'after' => 'document_status',
+            ],
+            'converted_invoice_id' => [
+                'definition' => 'int unsigned NULL DEFAULT NULL',
+                'after' => 'source_document_id',
+            ],
+            'converted_invoice_number' => [
+                'definition' => "varchar(64) NOT NULL DEFAULT ''",
+                'after' => 'converted_invoice_id',
+            ],
         ];
 
         foreach ($columns as $column => $config) {
@@ -689,6 +735,24 @@ class RouteCalculationHelpForAccountingHelper
                 'ALTER TABLE ' . $db->quoteName($table)
                 . ' ADD COLUMN ' . $db->quoteName($column) . ' ' . $config['definition']
                 . ' AFTER ' . $db->quoteName($config['after'])
+            )->execute();
+        }
+
+        $db->setQuery('SHOW INDEX FROM ' . $db->quoteName($table) . ' WHERE Key_name = ' . $db->quote('idx_source_document_id'));
+        if (!$db->loadResult()) {
+            $db->setQuery(
+                'ALTER TABLE ' . $db->quoteName($table)
+                . ' ADD UNIQUE KEY ' . $db->quoteName('idx_source_document_id')
+                . ' (' . $db->quoteName('source_document_id') . ')'
+            )->execute();
+        }
+
+        $db->setQuery('SHOW INDEX FROM ' . $db->quoteName($table) . ' WHERE Key_name = ' . $db->quote('idx_document_type_status'));
+        if (!$db->loadResult()) {
+            $db->setQuery(
+                'ALTER TABLE ' . $db->quoteName($table)
+                . ' ADD KEY ' . $db->quoteName('idx_document_type_status')
+                . ' (' . $db->quoteName('document_type') . ', ' . $db->quoteName('document_status') . ')'
             )->execute();
         }
     }
@@ -735,6 +799,11 @@ class RouteCalculationHelpForAccountingHelper
               " . $db->quoteName('customer_address') . " varchar(512) NOT NULL DEFAULT '',
               " . $db->quoteName('vat_id') . " varchar(64) NOT NULL DEFAULT '',
               " . $db->quoteName('invoice_number') . " varchar(64) NOT NULL,
+              " . $db->quoteName('document_type') . " varchar(16) NOT NULL DEFAULT 'invoice',
+              " . $db->quoteName('document_status') . " varchar(16) NOT NULL DEFAULT 'issued',
+              " . $db->quoteName('source_document_id') . " int unsigned NULL DEFAULT NULL,
+              " . $db->quoteName('converted_invoice_id') . " int unsigned NULL DEFAULT NULL,
+              " . $db->quoteName('converted_invoice_number') . " varchar(64) NOT NULL DEFAULT '',
               " . $db->quoteName('output_file_name') . " varchar(255) NOT NULL DEFAULT '',
               " . $db->quoteName('pickup') . " varchar(255) NOT NULL DEFAULT '',
               " . $db->quoteName('dropoff') . " varchar(255) NOT NULL DEFAULT '',
@@ -753,6 +822,8 @@ class RouteCalculationHelpForAccountingHelper
               " . $db->quoteName('created_at') . " datetime NOT NULL,
               PRIMARY KEY (" . $db->quoteName('id') . "),
               UNIQUE KEY " . $db->quoteName('idx_invoice_number') . " (" . $db->quoteName('invoice_number') . "),
+              UNIQUE KEY " . $db->quoteName('idx_source_document_id') . " (" . $db->quoteName('source_document_id') . "),
+              KEY " . $db->quoteName('idx_document_type_status') . " (" . $db->quoteName('document_type') . ", " . $db->quoteName('document_status') . "),
               KEY " . $db->quoteName('idx_customer_id') . " (" . $db->quoteName('customer_id') . "),
               KEY " . $db->quoteName('idx_customer_code') . " (" . $db->quoteName('customer_code') . ")
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci"

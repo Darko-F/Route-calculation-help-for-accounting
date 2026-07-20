@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<updates>
+  <update>
+    <name>Route Calculation Help for Accounting Suite</name>
+    <description>Combined Joomla package containing the invoicing module, document-management component, and subscriber update-key plugin.</description>
+    <element>pkg_route_calculation_help_for_accounting</element>
+    <type>package</type>
+    <version>1.4.2</version>
+    <infourl title="Route Calculation Help for Accounting Suite">https://builder.topoweryou.com/routecalculationhelp/</infourl>
+    <downloads>
+      <downloadurl type="full" format="zip">https://builder.topoweryou.com/routecalculationhelp/files/routecalculationhelp/downloads/download.php?file=pkg_route_calculation_help_for_accounting_v1.4.2.zip</downloadurl>
+    </downloads>
+    <tags>
+      <tag>stable</tag>
+    </tags>
+    <sha256>22889dd37a8566fe108d11b131012da914629b0de7c38ecd97489c1419a9279a</sha256>
+    <maintainer>topoweryou.com</maintainer>
+    <maintainerurl>https://topoweryou.com</maintainerurl>
+    <targetplatform name="joomla" version="6\..*" />
+  </update>
+</updates>

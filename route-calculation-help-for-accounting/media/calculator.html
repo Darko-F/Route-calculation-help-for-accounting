@@ -10,7 +10,7 @@
     #map { width: 100%; height: 460px; min-height: 460px; border-radius: .75rem; border: 1px solid var(--bs-border-color); background: #e9ecef; }
     textarea { min-height: 120px; }
     .result-value { font-weight: 600; }
-    .action-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+    .action-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
     .place-autocomplete { display: block; width: 100%; }
     gmp-place-autocomplete { display: block; width: 100%; }
     .route-stop-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; align-items: start; }
@@ -250,6 +250,7 @@
           <div class="mb-3"><label for="invoiceTextEn" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ENGLISH</label><textarea id="invoiceTextEn" class="form-control"></textarea></div>
           <div class="mb-3"><label for="invoiceTextSl" class="form-label fw-semibold">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIAN</label><textarea id="invoiceTextSl" class="form-control"></textarea></div>
           <div class="action-grid">
+            <button class="btn btn-outline-info" onclick="generateProformaPdf()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GENERATE_PROFORMA_PDF</button>
             <button class="btn btn-info" onclick="generatePdf()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GENERATE_PDF</button>
             <button class="btn btn-success" onclick="exportCurrentMinimaxXml()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_EXPORT_MINIMAX_XML</button>
           </div>
@@ -306,11 +307,19 @@
       </div>
       <div class="modal-body">
         <div class="row g-2 mb-3">
-          <div class="col-md-5">
+          <div class="col-md-4">
             <label for="invoiceBrowserNumber" class="form-label small">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_FILTER_INVOICE</label>
             <input id="invoiceBrowserNumber" class="form-control" autocomplete="off" oninput="scheduleInvoiceBrowserSearch()" />
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
+            <label for="invoiceBrowserDocumentType" class="form-label small">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_DOCUMENT_TYPE</label>
+            <select id="invoiceBrowserDocumentType" class="form-select" onchange="searchInvoiceBrowser(1)">
+              <option value="">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ALL_DOCUMENTS</option>
+              <option value="invoice">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_INVOICES_ONLY</option>
+              <option value="proforma">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PROFORMAS_ONLY</option>
+            </select>
+          </div>
+          <div class="col-md-3">
             <label for="invoiceBrowserDate" class="form-label small">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_DATE</label>
             <div class="input-group">
               <input id="invoiceBrowserDate" class="form-control" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" oninput="scheduleInvoiceBrowserSearch()" onblur="normalizeVisibleDateInput(this)" />
@@ -318,7 +327,7 @@
               <input id="invoiceBrowserDatePicker" type="date" tabindex="-1" aria-hidden="true" onchange="onInvoiceBrowserDatePicked()" style="position:absolute; width:1px; height:1px; opacity:0; right:0; bottom:0; pointer-events:none;" />
             </div>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-2">
             <label for="invoiceBrowserPerPage" class="form-label small">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PER_PAGE</label>
             <select id="invoiceBrowserPerPage" class="form-select" onchange="changeInvoiceBrowserPerPage()"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select>
           </div>
@@ -370,6 +379,9 @@ let autoRouteTimer = null;
 let lastRouteData = null;
 let lastCalculatedData = null;
 let restoredInvoiceIssueDate = '';
+let currentDocumentType = 'invoice';
+let currentDocumentId = 0;
+let currentConvertedInvoiceId = 0;
 let activeDraftRef = '';
 let savedCustomers = [];
 let customerPickerCustomers = [];
@@ -517,6 +529,9 @@ window.addEventListener('DOMContentLoaded', () => {
     generateNextInvoiceNumber(false).catch(() => {});
     document.getElementById('invoiceNumber')?.addEventListener('input', event => {
       event.currentTarget.dataset.generated = '0';
+      currentDocumentType = /^PR-RCHA-/i.test(event.currentTarget.value) ? 'proforma' : 'invoice';
+      currentDocumentId = 0;
+      currentConvertedInvoiceId = 0;
     });
     document.getElementById('serviceDate')?.addEventListener('blur', event => normalizeVisibleDateInput(event.currentTarget));
     document.getElementById('dueDate')?.addEventListener('blur', event => normalizeVisibleDateInput(event.currentTarget));
@@ -637,6 +652,11 @@ function markRouteCalculationStale() {
   if (!lastCalculatedData && !lastRouteData) return;
   lastCalculatedData = null;
   lastRouteData = null;
+  currentDocumentType = 'invoice';
+  currentDocumentId = 0;
+  currentConvertedInvoiceId = 0;
+  const documentNumber = document.getElementById('invoiceNumber');
+  if (documentNumber && /^PR-RCHA-/i.test(documentNumber.value)) documentNumber.value = '';
   setStatus('Route settings changed. Click Calculate route to update totals.', 'warning');
 }
 
@@ -1447,13 +1467,15 @@ async function loadCustomerDetails(selectedCustomerCode = '') {
   }
 }
 
-function getInvoicePayload() {
+function getInvoicePayload(documentType = 'invoice', sourceDocumentId = 0) {
   if (!lastCalculatedData) return null;
   const invoiceNumberInput = document.getElementById('invoiceNumber');
   return {
     customer: getCustomerPayload(),
     invoice_number: (invoiceNumberInput?.value || '').trim(),
     invoice_number_auto: invoiceNumberInput?.dataset.generated === '1',
+    document_type: documentType,
+    source_document_id: sourceDocumentId || null,
     service_date: getServiceDateIso(),
     due_date: getDueDateIso(),
     output_file_name: '',
@@ -1463,25 +1485,30 @@ function getInvoicePayload() {
   };
 }
 
-function getInvoiceYear() {
+function getInvoiceYear(documentType = 'invoice') {
   const currentValue = (document.getElementById('invoiceNumber')?.value || '').trim();
-  const yearMatch = currentValue.match(/^RCHA-(\d{2})-/);
+  const yearMatch = currentValue.match(documentType === 'proforma' ? /^PR-RCHA-(\d{2})-/ : /^RCHA-(\d{2})-/);
   const currentYear = new Date().getFullYear();
   return yearMatch ? (Math.floor(currentYear / 100) * 100) + Number(yearMatch[1]) : currentYear;
 }
 
-async function generateNextInvoiceNumber(force = false) {
+async function generateNextInvoiceNumber(force = false, documentType = 'invoice') {
   const invoiceNumberInput = document.getElementById('invoiceNumber');
   if (!invoiceNumberInput) return '';
   if (!force && invoiceNumberInput.value.trim()) return invoiceNumberInput.value.trim();
 
   try {
     if (force) showDatabaseStatus('Generating invoice number...', 'warning');
-    const data = await postJoomlaAjax('nextInvoiceNumber', { year: getInvoiceYear() });
+    const data = await postJoomlaAjax('nextInvoiceNumber', { year: getInvoiceYear(documentType), document_type: documentType });
     const invoiceNumber = String(data.invoice_number || '').trim();
     if (invoiceNumber) {
       invoiceNumberInput.value = invoiceNumber;
       invoiceNumberInput.dataset.generated = '1';
+      if (force) {
+        currentDocumentType = documentType;
+        currentDocumentId = 0;
+        currentConvertedInvoiceId = 0;
+      }
       if (force) showDatabaseStatus('Invoice number generated.', 'success');
     }
     return invoiceNumber;
@@ -1491,12 +1518,16 @@ async function generateNextInvoiceNumber(force = false) {
   }
 }
 
-async function saveInvoiceHistory() {
+async function saveInvoiceHistory(documentType = 'invoice', sourceDocumentId = 0) {
   try {
     const invoiceNumberInput = document.getElementById('invoiceNumber');
     await resolveCustomerCodeFromName();
-    await generateNextInvoiceNumber(false);
-    const payload = getInvoiceHistoryPayload();
+    const expectedPrefix = documentType === 'proforma' ? 'PR-RCHA-' : 'RCHA-';
+    if (!String(invoiceNumberInput?.value || '').toUpperCase().startsWith(expectedPrefix)) {
+      invoiceNumberInput.value = '';
+    }
+    await generateNextInvoiceNumber(false, documentType);
+    const payload = getInvoiceHistoryPayload(documentType, sourceDocumentId);
     if (!payload) { showDatabaseStatus('Calculate a route or add draft services before saving invoice history.', 'warning'); return; }
     if (!payload.customer.customer_code) { showDatabaseStatus('Sifra Stranke is required.', 'danger'); return; }
     if (!payload.invoice_number) { showDatabaseStatus('Invoice number is required.', 'danger'); return; }
@@ -1506,6 +1537,10 @@ async function saveInvoiceHistory() {
     if (savedInvoice?.invoice_number) {
       invoiceNumberInput.value = savedInvoice.invoice_number;
       invoiceNumberInput.dataset.generated = '0';
+      currentDocumentType = savedInvoice.document_type || documentType;
+      currentDocumentId = Number(data?.invoice_id || 0);
+      currentConvertedInvoiceId = Number(savedInvoice.converted_invoice_id || 0);
+      restoredInvoiceIssueDate = getTodayIsoDate();
     }
     showDatabaseStatus('Invoice history saved.', 'success');
     if (payload.is_draft_invoice) {
@@ -1520,13 +1555,13 @@ async function saveInvoiceHistory() {
   }
 }
 
-function getInvoiceHistoryPayload() {
+function getInvoiceHistoryPayload(documentType = 'invoice', sourceDocumentId = 0) {
   const draftLines = getRenderedDraftLines();
-  if (draftLines.length) return getDraftInvoiceHistoryPayload(draftLines);
-  return getInvoicePayload();
+  if (draftLines.length) return getDraftInvoiceHistoryPayload(draftLines, documentType, sourceDocumentId);
+  return getInvoicePayload(documentType, sourceDocumentId);
 }
 
-function getDraftInvoiceHistoryPayload(draftLines) {
+function getDraftInvoiceHistoryPayload(draftLines, documentType = 'invoice', sourceDocumentId = 0) {
   const invoiceNumberInput = document.getElementById('invoiceNumber');
   const payloads = draftLines.map(line => {
     try { return JSON.parse(line.payload_json || '{}'); } catch (e) { return null; }
@@ -1537,6 +1572,8 @@ function getDraftInvoiceHistoryPayload(draftLines) {
     customer: getCustomerPayload(),
     invoice_number: (invoiceNumberInput?.value || '').trim(),
     invoice_number_auto: invoiceNumberInput?.dataset.generated === '1',
+    document_type: documentType,
+    source_document_id: sourceDocumentId || null,
     service_date: payloads[0]?.service_date || getServiceDateIso(),
     due_date: getDueDateIso(),
     output_file_name: '',
@@ -1795,8 +1832,32 @@ function invoiceHistoryRowsHtml(invoices, orderFilter, dateFilter) {
   return filteredInvoices.map(inv => {
     const index = invoices.indexOf(inv);
     const total = Number(inv.total_amount || 0).toLocaleString('sl-SI', { style: 'currency', currency: 'EUR' });
-    return `<div class="border rounded p-2 mb-1 invoice-history-grid"><button class="btn btn-sm btn-link p-0 text-start fw-semibold" type="button" onclick="restoreInvoiceFromHistory(${index})">${xmlEscape(inv.invoice_number)}</button><span class="text-sm-end">${total}</span><span class="text-muted">${xmlEscape(formatIsoDateDisplay(inv.created_at || ''))}</span><span class="d-flex gap-1"><button class="btn btn-sm btn-outline-primary" type="button" onclick="restoreInvoiceFromHistory(${index})">${xmlEscape(t('Load'))}</button><button class="btn btn-sm btn-outline-info" type="button" onclick="generateSavedInvoicePdf('history', ${index})">${xmlEscape(t('PDF'))}</button></span></div>`;
+    return `<div class="border rounded p-2 mb-1 invoice-history-grid"><span><button class="btn btn-sm btn-link p-0 text-start fw-semibold" type="button" onclick="restoreInvoiceFromHistory(${index})">${xmlEscape(inv.invoice_number)}</button>${documentStatusHtml(inv)}</span><span class="text-sm-end">${total}</span><span class="text-muted">${xmlEscape(formatIsoDateDisplay(inv.created_at || ''))}</span><span class="d-flex flex-wrap gap-1">${documentActionButtonsHtml(inv, 'history', index)}</span></div>`;
   }).join('');
+}
+
+function documentStatusHtml(document) {
+  if (document.document_type !== 'proforma') return '';
+  const convertedNumber = String(document.converted_invoice_number || '').trim();
+  const status = convertedNumber ? tf('Converted to {invoiceNumber}', { invoiceNumber: convertedNumber }) : t('Open predračun');
+  const badgeClass = convertedNumber ? 'text-bg-success' : 'text-bg-warning';
+  return `<span class="badge ${badgeClass} ms-1">${xmlEscape(status)}</span>`;
+}
+
+function documentActionButtonsHtml(document, source, index) {
+  const buttons = [
+    `<button class="btn btn-sm btn-outline-primary" type="button" onclick="restoreInvoiceFromModalOrHistory('${source}', ${index})">${xmlEscape(t('Load'))}</button>`,
+    `<button class="btn btn-sm btn-outline-info" type="button" onclick="generateSavedInvoicePdf('${source}', ${index})">${xmlEscape(t('PDF'))}</button>`
+  ];
+  if (document.document_type === 'proforma' && !Number(document.converted_invoice_id || 0)) {
+    buttons.push(`<button class="btn btn-sm btn-success" type="button" onclick="convertProformaToInvoice('${source}', ${index})">${xmlEscape(t('Create Invoice'))}</button>`);
+  }
+  return buttons.join('');
+}
+
+function restoreInvoiceFromModalOrHistory(source, index) {
+  if (source === 'history') restoreInvoiceFromHistory(index);
+  else restoreInvoiceFromModal(source, index);
 }
 
 async function loadInvoiceHistory(customerCodeOverride = '', customerNameOverride = '', savedInvoice = null) {
@@ -1832,9 +1893,9 @@ function modalInvoiceRowsHtml(invoices, source, includeCustomer = false) {
     const total = Number(invoice.total_amount || 0).toLocaleString('sl-SI', { style: 'currency', currency: 'EUR' });
     const date = formatIsoDateDisplay(invoice.created_at || '');
     if (includeCustomer) {
-      return `<div class="border rounded p-2 mb-1 ${gridClass}"><button class="btn btn-sm btn-link p-0 text-start fw-semibold" type="button" onclick="restoreInvoiceFromModal('${source}', ${index})">${xmlEscape(invoice.invoice_number || '')}</button><span>${xmlEscape(invoice.customer_name || invoice.customer_code || '')}</span><span class="text-md-end">${total}</span><span class="text-muted">${xmlEscape(date)}</span><span class="d-flex flex-wrap gap-1"><button class="btn btn-sm btn-outline-primary" type="button" onclick="restoreInvoiceFromModal('${source}', ${index})">${xmlEscape(t('Load'))}</button><button class="btn btn-sm btn-outline-info" type="button" onclick="generateSavedInvoicePdf('${source}', ${index})">${xmlEscape(t('PDF'))}</button><button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteInvoiceFromBrowser(${index})">${xmlEscape(t('Delete'))}</button></span></div>`;
+      return `<div class="border rounded p-2 mb-1 ${gridClass}"><span><button class="btn btn-sm btn-link p-0 text-start fw-semibold" type="button" onclick="restoreInvoiceFromModal('${source}', ${index})">${xmlEscape(invoice.invoice_number || '')}</button>${documentStatusHtml(invoice)}</span><span>${xmlEscape(invoice.customer_name || invoice.customer_code || '')}</span><span class="text-md-end">${total}</span><span class="text-muted">${xmlEscape(date)}</span><span class="d-flex flex-wrap gap-1">${documentActionButtonsHtml(invoice, source, index)}</span></div>`;
     }
-    return `<div class="border rounded p-2 mb-1 ${gridClass}"><button class="btn btn-sm btn-link p-0 text-start fw-semibold" type="button" onclick="restoreInvoiceFromModal('${source}', ${index})">${xmlEscape(invoice.invoice_number || '')}</button><span class="text-sm-end">${total}</span><span class="text-muted">${xmlEscape(date)}</span><span class="d-flex gap-1"><button class="btn btn-sm btn-outline-primary" type="button" onclick="restoreInvoiceFromModal('${source}', ${index})">${xmlEscape(t('Load'))}</button><button class="btn btn-sm btn-outline-info" type="button" onclick="generateSavedInvoicePdf('${source}', ${index})">${xmlEscape(t('PDF'))}</button></span></div>`;
+    return `<div class="border rounded p-2 mb-1 ${gridClass}"><span><button class="btn btn-sm btn-link p-0 text-start fw-semibold" type="button" onclick="restoreInvoiceFromModal('${source}', ${index})">${xmlEscape(invoice.invoice_number || '')}</button>${documentStatusHtml(invoice)}</span><span class="text-sm-end">${total}</span><span class="text-muted">${xmlEscape(date)}</span><span class="d-flex flex-wrap gap-1">${documentActionButtonsHtml(invoice, source, index)}</span></div>`;
   }).join('');
   return header + rows;
 }
@@ -1871,6 +1932,7 @@ async function openInvoiceBrowser() {
   document.getElementById('invoiceBrowserNumber').value = '';
   document.getElementById('invoiceBrowserDate').value = '';
   document.getElementById('invoiceBrowserDatePicker').value = '';
+  document.getElementById('invoiceBrowserDocumentType').value = '';
   document.getElementById('invoiceBrowserPerPage').value = '50';
   invoiceBrowserPage = 1;
   bootstrap.Modal.getOrCreateInstance(modalElement).show();
@@ -1911,13 +1973,14 @@ async function searchInvoiceBrowser(page = 1) {
   const pagination = document.getElementById('invoiceBrowserPagination');
   if (!status || !list || !pagination) return;
   const invoiceNumber = (document.getElementById('invoiceBrowserNumber')?.value || '').trim();
+  const documentType = (document.getElementById('invoiceBrowserDocumentType')?.value || '').trim();
   const dateInput = (document.getElementById('invoiceBrowserDate')?.value || '').trim();
   const date = normalizeIsoDate(dateInput);
   const perPage = Number(document.getElementById('invoiceBrowserPerPage')?.value || 50);
   const requestId = ++invoiceBrowserRequestId;
   status.textContent = t('Loading invoices...');
   try {
-    const data = await postJoomlaAjax('listInvoices', { all_customers: true, invoice_number: invoiceNumber, date, paginate: true, page, per_page: perPage });
+    const data = await postJoomlaAjax('listInvoices', { all_customers: true, invoice_number: invoiceNumber, document_type: documentType, date, paginate: true, page, per_page: perPage });
     if (requestId !== invoiceBrowserRequestId) return;
     invoiceBrowserInvoices = data.invoices || [];
     invoiceBrowserPage = Number(data.page || page);
@@ -1953,27 +2016,6 @@ function paginationHtml(page, total, perPage, callbackName) {
   return `<nav class="d-flex flex-wrap align-items-center justify-content-center gap-1" aria-label="${xmlEscape(t('Pagination'))}"><button class="btn btn-sm btn-outline-secondary" type="button" onclick="${callbackName}(${currentPage - 1})"${currentPage <= 1 ? ' disabled' : ''}>${xmlEscape(t('Previous'))}</button>${numberedButtons}<button class="btn btn-sm btn-outline-secondary" type="button" onclick="${callbackName}(${currentPage + 1})"${currentPage >= totalPages ? ' disabled' : ''}>${xmlEscape(t('Next'))}</button></nav>`;
 }
 
-async function deleteInvoiceFromBrowser(index) {
-  const invoice = invoiceBrowserInvoices[index];
-  const invoiceId = Number(invoice?.id || 0);
-  if (!invoice || !invoiceId) return;
-  const invoiceNumber = String(invoice.invoice_number || '');
-  if (!window.confirm(tf('Warning: Delete invoice {invoiceNumber}? This cannot be undone.', { invoiceNumber }))) return;
-  const status = document.getElementById('invoiceBrowserStatus');
-  try {
-    if (status) status.textContent = t('Deleting invoice...');
-    await postJoomlaAjax('deleteInvoice', { id: invoiceId });
-    await searchInvoiceBrowser(invoiceBrowserPage);
-    if (status) status.textContent = t('Invoice deleted.');
-    const currentCustomerCode = (document.getElementById('customerCode')?.value || '').trim();
-    if (currentCustomerCode && currentCustomerCode === String(invoice.customer_code || '')) {
-      loadInvoiceHistory().catch(() => {});
-    }
-  } catch (err) {
-    if (status) status.textContent = err.message;
-  }
-}
-
 function restoreInvoiceFromModal(source, index) {
   const invoices = source === 'customer' ? allCustomerInvoices : invoiceBrowserInvoices;
   const invoice = invoices[index];
@@ -2002,7 +2044,25 @@ async function generateSavedInvoicePdf(source, index) {
   if (!invoice || !restoreInvoiceRecord(invoice)) return;
   const modalId = source === 'browser' ? 'invoiceBrowserModal' : source === 'customer' ? 'customerInvoiceHistoryModal' : '';
   if (modalId) bootstrap.Modal.getInstance(document.getElementById(modalId))?.hide();
-  await generatePdf(false, invoice.created_at || '');
+  await generatePdf(false, invoice.created_at || '', invoice.document_type === 'proforma' ? 'proforma' : 'invoice');
+}
+
+async function convertProformaToInvoice(source, index) {
+  const invoices = source === 'browser'
+    ? invoiceBrowserInvoices
+    : source === 'customer'
+      ? allCustomerInvoices
+      : JSON.parse(document.getElementById('invoiceHistory')?.dataset.invoices || '[]');
+  const proforma = invoices[index];
+  if (!proforma || proforma.document_type !== 'proforma' || Number(proforma.converted_invoice_id || 0)) return;
+  if (!window.confirm(tf('Create a new invoice from predračun {documentNumber}?', { documentNumber: proforma.invoice_number || '' }))) return;
+  if (!restoreInvoiceRecord(proforma)) return;
+  const modalId = source === 'browser' ? 'invoiceBrowserModal' : source === 'customer' ? 'customerInvoiceHistoryModal' : '';
+  if (modalId) bootstrap.Modal.getInstance(document.getElementById(modalId))?.hide();
+  document.getElementById('invoiceNumber').value = '';
+  restoredInvoiceIssueDate = getTodayIsoDate();
+  document.getElementById('dueDate').value = formatIsoDateDisplay(restoredInvoiceIssueDate);
+  await generatePdf(true, '', 'invoice', Number(proforma.id || 0));
 }
 
 function restoreInvoiceRecord(invoice) {
@@ -2026,6 +2086,9 @@ function restoreInvoiceRecord(invoice) {
   const invoiceNumberInput = document.getElementById('invoiceNumber');
   invoiceNumberInput.value = payload.invoice_number || invoice.invoice_number || '';
   invoiceNumberInput.dataset.generated = '0';
+  currentDocumentType = invoice.document_type || payload.document_type || (/^PR-RCHA-/i.test(invoiceNumberInput.value) ? 'proforma' : 'invoice');
+  currentDocumentId = Number(invoice.id || 0);
+  currentConvertedInvoiceId = Number(invoice.converted_invoice_id || 0);
   document.getElementById('serviceDate').value = formatIsoDateDisplay(payload.service_date || getTodayIsoDate());
   restoredInvoiceIssueDate = normalizeIsoDate(invoice.created_at || payload.issue_date || '') || getTodayIsoDate();
   document.getElementById('dueDate').value = formatIsoDateDisplay(payload.due_date || addDaysIso(restoredInvoiceIssueDate, 15));
@@ -2064,18 +2127,26 @@ function restoreInvoiceRecord(invoice) {
   return true;
 }
 
-async function generatePdf(saveInvoice = true, issueDateOverride = '') {
+async function generateProformaPdf() {
+  await generatePdf(true, '', 'proforma', 0);
+}
+
+async function generatePdf(saveInvoice = true, issueDateOverride = '', documentType = 'invoice', sourceDocumentId = 0) {
   const hasDraftLines = getRenderedDraftLines().length > 0;
   const draftPayloads = hasDraftLines ? await ensureDraftPayloads() : [];
   if (hasDraftLines && !draftPayloads.length) return;
 
   if (saveInvoice) {
-    const savedInvoice = await saveInvoiceHistory();
+    if (documentType === 'invoice' && !sourceDocumentId && currentDocumentType === 'proforma' && currentDocumentId && !currentConvertedInvoiceId) {
+      sourceDocumentId = currentDocumentId;
+    }
+    const savedInvoice = await saveInvoiceHistory(documentType, sourceDocumentId);
     if (!savedInvoice) return;
+    documentType = savedInvoice.document_type || documentType;
   }
 
   if (hasDraftLines) {
-    await generateDraftPdf(draftPayloads, issueDateOverride);
+    await generateDraftPdf(draftPayloads, issueDateOverride, documentType);
     return;
   }
   if (!lastCalculatedData) { setStatus('Calculate a route first, then generate PDF.', 'warning'); return; }
@@ -2101,9 +2172,16 @@ async function generatePdf(saveInvoice = true, issueDateOverride = '') {
   const right = pageWidth - 14;
   let y = 15;
 
+  if (await drawPdfHeaderLogo(doc)) y = 24;
+  if (documentType === 'proforma') {
+    setPdfFont(doc, 'bold');
+    doc.setFontSize(15);
+    doc.text(pdfText(t('PREDRACUN')), pageWidth / 2, 15, { align: 'center' });
+    y = Math.max(y, 25);
+  }
   setPdfFont(doc, 'normal');
   doc.setFontSize(9);
-  doc.text(pdfText(tf('Racun st.: {invoiceNo}', { invoiceNo })), 14, y); y += 5;
+  doc.text(pdfText(tf(documentType === 'proforma' ? 'Predracun st.: {invoiceNo}' : 'Racun st.: {invoiceNo}', { invoiceNo })), 14, y); y += 5;
   const issuePlace = String(COMPANY.issueCity || '').trim();
   doc.text(pdfText(tf('Datum izdaje: {issuePlace}{issueDate}', { issuePlace: issuePlace ? pdfText(issuePlace) + ', ' : '', issueDate })), 14, y); y += 5;
   doc.text(pdfText(tf('Datum opr. storitve: {serviceDate}', { serviceDate })), 14, y); y += 5;
@@ -2207,13 +2285,14 @@ async function generatePdf(saveInvoice = true, issueDateOverride = '') {
     countryNotes.forEach(note => { y = writeWrapped(doc, note, 14, y, 180, 5) + 2; });
   }
   y = writeWrapped(doc, t('Zahvaljujemo se vam za vase zaupanje in se veselimo nadaljnjega sodelovanja!'), 14, y + 5, 180, 5);
-  await drawPdfSignature(doc);
+  if (documentType !== 'proforma') await drawPdfSignature(doc);
+  drawConfiguredPdfFooter(doc);
 
-  doc.save(getInvoicePdfFileName(invoiceNo));
-  setStatus('PDF generated.', 'success');
+  doc.save(getInvoicePdfFileName(invoiceNo, documentType));
+  setStatus(documentType === 'proforma' ? 'Predračun PDF generated.' : 'PDF generated.', 'success');
 }
 
-async function generateDraftPdf(payloads = null, issueDateOverride = '') {
+async function generateDraftPdf(payloads = null, issueDateOverride = '', documentType = 'invoice') {
   payloads = Array.isArray(payloads) ? payloads : await ensureDraftPayloads();
   if (!payloads.length) return;
   const combined = combinedCalculatedDataFromDraft(payloads);
@@ -2235,9 +2314,16 @@ async function generateDraftPdf(payloads = null, issueDateOverride = '') {
   const right = pageWidth - 14;
   let y = 15;
 
+  if (await drawPdfHeaderLogo(doc)) y = 24;
+  if (documentType === 'proforma') {
+    setPdfFont(doc, 'bold');
+    doc.setFontSize(15);
+    doc.text(pdfText(t('PREDRACUN')), pageWidth / 2, 15, { align: 'center' });
+    y = Math.max(y, 25);
+  }
   setPdfFont(doc, 'normal');
   doc.setFontSize(9);
-  doc.text(pdfText(tf('Racun st.: {invoiceNo}', { invoiceNo })), 14, y); y += 5;
+  doc.text(pdfText(tf(documentType === 'proforma' ? 'Predracun st.: {invoiceNo}' : 'Racun st.: {invoiceNo}', { invoiceNo })), 14, y); y += 5;
   const issuePlace = String(COMPANY.issueCity || '').trim();
   doc.text(pdfText(tf('Datum izdaje: {issuePlace}{issueDate}', { issuePlace: issuePlace ? pdfText(issuePlace) + ', ' : '', issueDate })), 14, y); y += 5;
   doc.text(pdfText(tf('Rok placila: {dueDate}', { dueDate })), 14, y);
@@ -2329,10 +2415,11 @@ async function generateDraftPdf(payloads = null, issueDateOverride = '') {
     if (y > 265) { doc.addPage(); y = 20; }
     y = writeWrapped(doc, note, 14, y, 180, 5) + 2;
   });
-  await drawPdfSignature(doc);
+  if (documentType !== 'proforma') await drawPdfSignature(doc);
+  drawConfiguredPdfFooter(doc);
 
-  doc.save(getInvoicePdfFileName(invoiceNo));
-  setStatus('Draft PDF generated.', 'success');
+  doc.save(getInvoicePdfFileName(invoiceNo, documentType));
+  setStatus(documentType === 'proforma' ? 'Predračun PDF generated.' : 'Draft PDF generated.', 'success');
 }
 
 function drawInvoiceRow(doc, y, description, price, quantity, unit, vatRate, amount) {
@@ -2436,15 +2523,65 @@ async function loadPdfFontBase64(fileName) {
 
 async function drawPdfSignature(doc) {
   setPdfFooterFont(doc);
-  doc.text(pdfText(t('Zig in podpis:')), 158, 255);
+  doc.text(pdfText(t('Zig in podpis:')), 158, 245);
   const signatureImageUrl = String(COMPANY.signatureImageUrl || '').trim();
   if (!signatureImageUrl) return;
   try {
     const signatureDataUrl = await loadPdfImageDataUrl(signatureImageUrl);
-    doc.addImage(signatureDataUrl, 'PNG', 151, 258, 45, 29);
+    doc.addImage(signatureDataUrl, getPdfImageFormat(signatureDataUrl), 151, 248, 45, 29);
   } catch (error) {
     // Keep PDF generation working if the optional signature image is unavailable.
   }
+}
+
+async function drawPdfHeaderLogo(doc) {
+  const logoImageUrl = String(COMPANY.logoImageUrl || '').trim();
+  if (!logoImageUrl) return false;
+  try {
+    const logoDataUrl = await loadPdfImageDataUrl(logoImageUrl);
+    const properties = doc.getImageProperties(logoDataUrl);
+    const maxWidth = 27.2;
+    const maxHeight = 10.2;
+    const scale = Math.min(maxWidth / properties.width, maxHeight / properties.height);
+    const width = properties.width * scale;
+    const height = properties.height * scale;
+    doc.addImage(logoDataUrl, getPdfImageFormat(logoDataUrl), 14, 7, width, height);
+    return true;
+  } catch (error) {
+    // Keep PDF generation working if the optional logo is unavailable.
+    return false;
+  }
+}
+
+function drawConfiguredPdfFooter(doc) {
+  const footerText = String(COMPANY.footerText || '').trim();
+  if (!footerText) return;
+  const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+  const pageCount = doc.getNumberOfPages();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  setPdfFont(doc, 'normal');
+  doc.setFontSize(8);
+  const lines = footerText.replace(/\r\n?/g, '\n').split('\n').flatMap(line => {
+    const wrapped = doc.splitTextToSize(pdfText(line), 180);
+    return wrapped.length ? wrapped : [''];
+  });
+  const lineHeight = 3.6;
+  const startY = pageHeight - 7 - ((lines.length - 1) * lineHeight);
+  for (let page = 1; page <= pageCount; page++) {
+    doc.setPage(page);
+    doc.setDrawColor(190, 190, 190);
+    doc.setLineWidth(0.15);
+    doc.line(14, startY - 3, pageWidth - 14, startY - 3);
+    lines.forEach((line, index) => {
+      doc.text(line, pageWidth / 2, startY + (index * lineHeight), { align: 'center' });
+    });
+  }
+  doc.setPage(currentPage);
+}
+
+function getPdfImageFormat(dataUrl) {
+  return /^data:image\/(?:jpeg|jpg);/i.test(String(dataUrl || '')) ? 'JPEG' : 'PNG';
 }
 
 async function loadPdfImageDataUrl(imageUrl) {
@@ -2513,6 +2650,7 @@ async function exportCurrentMinimaxXml() {
 }
 
 function exportMinimaxXml() {
+  if (currentDocumentType === 'proforma') { setStatus('Predračun cannot be exported to Minimax. Create the invoice first.', 'warning'); return false; }
   if (!lastCalculatedData) { setStatus('Calculate a route first, then export Minimax XML.', 'warning'); return false; }
   const d = lastCalculatedData;
   const today = restoredInvoiceIssueDate || getTodayIsoDate();
@@ -3102,17 +3240,19 @@ function formatDateDisplay(value) {
   if (Number.isNaN(date.getTime())) return '';
   return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
 }
-function getInvoicePdfFileName(invoiceNumber) {
-  const translatedPrefix = t('__PDF_FILENAME_PREFIX__');
-  const prefix = (translatedPrefix === '__PDF_FILENAME_PREFIX__' ? 'invoice' : translatedPrefix)
+function getInvoicePdfFileName(invoiceNumber, documentType = 'invoice') {
+  const translationKey = documentType === 'proforma' ? '__PROFORMA_PDF_FILENAME_PREFIX__' : '__PDF_FILENAME_PREFIX__';
+  const translatedPrefix = t(translationKey);
+  const fallbackPrefix = documentType === 'proforma' ? 'predracun' : 'invoice';
+  const prefix = (translatedPrefix === translationKey ? fallbackPrefix : translatedPrefix)
     .trim()
     .replace(/[^a-zA-Z0-9._-]+/g, '_')
-    .replace(/^_+|_+$/g, '') || 'invoice';
+    .replace(/^_+|_+$/g, '') || fallbackPrefix;
   const safeInvoiceNumber = String(invoiceNumber || '')
     .trim()
     .replace(/[^a-zA-Z0-9._-]+/g, '_')
     .replace(/^_+|_+$/g, '');
-  return `${prefix}-${safeInvoiceNumber || 'invoice'}.pdf`;
+  return `${prefix}-${safeInvoiceNumber || fallbackPrefix}.pdf`;
 }
 function getInvoiceXmlFileName(invoiceNumber) {
   const translatedPrefix = t('__XML_FILENAME_PREFIX__');
