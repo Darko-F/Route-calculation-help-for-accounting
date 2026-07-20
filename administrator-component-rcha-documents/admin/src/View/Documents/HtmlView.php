@@ -18,12 +18,14 @@ class HtmlView extends BaseHtmlView
     public $items;
     public $pagination;
     public $state;
+    public $company;
 
     public function display($tpl = null): void
     {
         $this->items = $this->get('Items');
         $this->pagination = $this->get('Pagination');
         $this->state = $this->get('State');
+        $this->company = $this->get('CompanyDetails');
 
         if ($errors = $this->get('Errors')) {
             throw new \RuntimeException(implode("\n", $errors));
