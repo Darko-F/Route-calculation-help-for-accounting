@@ -32,6 +32,7 @@ foreach ([
     'TOTAL_PAID', 'REMAINING', 'UNPAID', 'PARTIALLY_PAID', 'PAID', 'DUE_DATE',
     'CONFIRMATION_STATEMENT', 'CONFIRMATION_GENERATED', 'CONFIRMATION_FILENAME_PREFIX',
     'CONFIRMATION_PAID_LABEL', 'CONFIRMATION_PARTIAL_LABEL',
+    'CONFIRMATION_SIGNATURE',
 ] as $key) {
     $pdfText[$key] = Text::_('COM_RCHA_DOCUMENTS_' . $key);
 }
@@ -239,6 +240,32 @@ async function rchaPdfFont(doc) {
   }
   doc.setFont('NotoSans', 'normal');
 }
+async function rchaPdfImageDataUrl(imageUrl) {
+  const value = String(imageUrl || '').trim();
+  if (!value) return '';
+  const absoluteUrl = /^(?:https?:|data:|\/)/i.test(value) ? value : `${<?php echo json_encode(rtrim(Uri::root(true), '/')); ?>}/${value.replace(/^\/+/, '')}`;
+  if (absoluteUrl.startsWith('data:')) return absoluteUrl;
+  const response = await fetch(absoluteUrl);
+  if (!response.ok) throw new Error('Signature image request failed');
+  return await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(response.blob()); });
+}
+async function rchaDrawPaymentSignature(doc, y, company) {
+  const pageHeight = doc.internal.pageSize.getHeight();
+  if (y > pageHeight - 72) { doc.addPage(); y = 28; }
+  const x = 145;
+  doc.setFont('NotoSans', 'normal'); doc.setFontSize(9); doc.text(`${RCHA_PAYMENT_TEXT.CONFIRMATION_SIGNATURE}:`, x, y);
+  const signatureUrl = String(company.signature_image_url || '').trim();
+  if (signatureUrl) {
+    try {
+      const dataUrl = await rchaPdfImageDataUrl(signatureUrl);
+      const properties = doc.getImageProperties(dataUrl);
+      const scale = Math.min(45 / properties.width, 26 / properties.height);
+      const width = properties.width * scale, height = properties.height * scale;
+      doc.addImage(dataUrl, /^data:image\/(?:jpeg|jpg)/i.test(dataUrl) ? 'JPEG' : 'PNG', x, y + 3, width, height);
+    } catch (error) { /* Keep confirmation available when the optional image cannot load. */ }
+  }
+  return y + 34;
+}
 async function rchaPaymentConfirmationPdf(button) {
   const data = rchaPaymentData(button);
   if (!window.jspdf?.jsPDF || !Array.isArray(data.payments) || !data.payments.length) return;
@@ -285,6 +312,8 @@ async function rchaPaymentConfirmationPdf(button) {
   if (y > 245) { doc.addPage(); y = 20; }
   y += 4; doc.setFont('NotoSans', 'bold'); detail(RCHA_PAYMENT_TEXT.TOTAL_PAID, rchaMoney(data.paid_amount)); detail(RCHA_PAYMENT_TEXT.REMAINING, rchaMoney(data.remaining_amount));
   y += 6; doc.setFont('NotoSans', 'normal'); doc.setFontSize(9); doc.text(doc.splitTextToSize(RCHA_PAYMENT_TEXT.CONFIRMATION_STATEMENT, 175), 16, y);
+  y += doc.splitTextToSize(RCHA_PAYMENT_TEXT.CONFIRMATION_STATEMENT, 175).length * 4 + 8;
+  await rchaDrawPaymentSignature(doc, y, company);
   const footerY = doc.internal.pageSize.getHeight() - 16; doc.setFontSize(8); if (company.footer) doc.text(doc.splitTextToSize(String(company.footer), 150), doc.internal.pageSize.getWidth() / 2, footerY - 7, { align: 'center' }); doc.text(`${RCHA_PAYMENT_TEXT.CONFIRMATION_GENERATED}: ${rchaDate(new Date().toISOString().slice(0, 10))}`, 16, footerY);
   const safeNumber = String(data.invoice_number || '').replace(/[^A-Za-z0-9._-]+/g, '-'); doc.save(`${RCHA_PAYMENT_TEXT.CONFIRMATION_FILENAME_PREFIX}-${safeNumber}.pdf`);
 }

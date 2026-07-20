@@ -11,6 +11,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\ListModel;
+use Joomla\CMS\Uri\Uri;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Registry\Registry;
 use RuntimeException;
@@ -149,6 +150,18 @@ class DocumentsModel extends ListModel
             ->order($db->quoteName('published') . ' DESC')
             ->order($db->quoteName('id') . ' ASC');
         $params = new Registry((string) ($db->setQuery($query, 0, 1)->loadResult() ?: '{}'));
+        $signatureImageUrl = trim((string) $params->get('pdf_signature_image_url', 'podpis-transparent.png'));
+        if ($signatureImageUrl !== '' && !preg_match('#^(?:https?:)?//#i', $signatureImageUrl) && !str_starts_with($signatureImageUrl, 'data:')) {
+            if (defined('JPATH_ROOT') && str_starts_with($signatureImageUrl, rtrim(JPATH_ROOT, '/') . '/')) {
+                $signatureImageUrl = substr($signatureImageUrl, strlen(rtrim(JPATH_ROOT, '/')) + 1);
+            }
+            if (!str_starts_with($signatureImageUrl, '/')) {
+                $siteRoot = rtrim(Uri::root(true), '/');
+                $signatureImageUrl = preg_match('#^(?:images|media|modules)/#i', $signatureImageUrl)
+                    ? $siteRoot . '/' . ltrim($signatureImageUrl, '/')
+                    : $siteRoot . '/modules/mod_route_calculation_help_for_accounting/media/' . ltrim($signatureImageUrl, '/');
+            }
+        }
 
         return [
             'name' => (string) $params->get('company_name', ''),
@@ -159,6 +172,7 @@ class DocumentsModel extends ListModel
             'email' => (string) $params->get('company_email', ''),
             'phone' => (string) $params->get('company_phone', ''),
             'footer' => (string) $params->get('pdf_footer_text', ''),
+            'signature_image_url' => $signatureImageUrl,
         ];
     }
 

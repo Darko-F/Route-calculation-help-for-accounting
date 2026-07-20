@@ -10,6 +10,8 @@
 - Prevented long payment methods, references, and notes from overlapping adjacent columns in confirmation PDFs.
 - Added payment status and administrator Add payment links to the front-end Računi / Invoices browser; payment-confirmation PDFs automatically follow Joomla's active site language.
 - Updated the enclosed versions to module 1.5.0, RCHA Document Management component 1.1.0, and installer update-key plugin 1.0.4.
+- Localized the prominent paid label to PAID in English confirmations and PLAČANO in Slovenian confirmations.
+- Added the configured signature label and signature image to payment-confirmation PDFs.
 
 ## Suite Package 1.4.2
 

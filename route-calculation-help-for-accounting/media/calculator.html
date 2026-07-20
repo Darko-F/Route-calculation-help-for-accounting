@@ -1906,13 +1906,13 @@ async function generatePaymentConfirmationFromList(source, index) {
   const copy = language === 'en' ? {
     title: 'Payment Confirmation', invoice: 'Invoice', customer: 'Customer', due: 'Original payment due date', total: 'Invoice total',
     history: 'Payment history', date: 'Payment date', method: 'Payment method', reference: 'Reference', amount: 'Paid amount', note: 'Note',
-    totalPaid: 'Total paid', remaining: 'Remaining balance', paid: 'PAID / PLAČANO', partial: 'PARTIALLY PAID / DELNO PLAČANO',
+    totalPaid: 'Total paid', remaining: 'Remaining balance', paid: 'PAID', partial: 'PARTIALLY PAID',
     statement: 'This document confirms payments recorded against the referenced invoice. It does not create or replace an invoice.',
     methods: { bank_transfer: 'Bank transfer', cash: 'Cash', card: 'Card', other: 'Other' }, file: 'payment-confirmation'
   } : {
     title: 'Potrdilo o plačilu', invoice: 'Račun', customer: 'Stranka', due: 'Prvotni rok plačila', total: 'Skupni znesek računa',
     history: 'Zgodovina plačil', date: 'Datum plačila', method: 'Način plačila', reference: 'Sklic', amount: 'Plačani znesek', note: 'Opomba',
-    totalPaid: 'Skupaj plačano', remaining: 'Preostanek', paid: 'PAID / PLAČANO', partial: 'PARTIALLY PAID / DELNO PLAČANO',
+    totalPaid: 'Skupaj plačano', remaining: 'Preostanek', paid: 'PLAČANO', partial: 'DELNO PLAČANO',
     statement: 'Ta dokument potrjuje plačila, zabeležena za navedeni račun. Ne ustvarja in ne nadomešča računa.',
     methods: { bank_transfer: 'Bančno nakazilo', cash: 'Gotovina', card: 'Kartica', other: 'Drugo' }, file: 'potrdilo-o-placilu'
   };
@@ -1969,6 +1969,9 @@ async function generatePaymentConfirmationFromList(source, index) {
   if (y > 245) { doc.addPage(); y = 20; }
   y += 4; detail(copy.totalPaid, money(invoice.paid_amount)); detail(copy.remaining, money(invoice.remaining_amount));
   y += 4; setPdfFont(doc, 'normal'); doc.setFontSize(9); doc.text(doc.splitTextToSize(pdfText(copy.statement), 175), 16, y);
+  y += doc.splitTextToSize(pdfText(copy.statement), 175).length * 4 + 8;
+  if (y > 220) { doc.addPage(); y = 190; } else { y = Math.max(y, 190); }
+  await drawPdfSignature(doc, y);
   drawConfiguredPdfFooter(doc);
   const safeNumber = String(invoice.invoice_number || '').replace(/[^A-Za-z0-9._-]+/g, '-');
   doc.save(`${copy.file}-${safeNumber}-${language}.pdf`);
@@ -2645,14 +2648,14 @@ async function loadPdfFontBase64(fileName) {
   return pdfUnicodeFontBase64[fileName];
 }
 
-async function drawPdfSignature(doc) {
+async function drawPdfSignature(doc, signatureY = 245) {
   setPdfFooterFont(doc);
-  doc.text(pdfText(t('Zig in podpis:')), 158, 245);
+  doc.text(pdfText(t('Zig in podpis:')), 158, signatureY);
   const signatureImageUrl = String(COMPANY.signatureImageUrl || '').trim();
   if (!signatureImageUrl) return;
   try {
     const signatureDataUrl = await loadPdfImageDataUrl(signatureImageUrl);
-    doc.addImage(signatureDataUrl, getPdfImageFormat(signatureDataUrl), 151, 248, 45, 29);
+    doc.addImage(signatureDataUrl, getPdfImageFormat(signatureDataUrl), 151, signatureY + 3, 45, 29);
   } catch (error) {
     // Keep PDF generation working if the optional signature image is unavailable.
   }
