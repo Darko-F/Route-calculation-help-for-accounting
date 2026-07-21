@@ -515,7 +515,7 @@ class RouteCalculationHelpForAccountingHelper
     public function deleteInvoiceAjax()
     {
         Session::checkToken('post') or throw new RuntimeException('Invalid Joomla session token.');
-        throw new RuntimeException('Invoice and pro forma deletion is available only in the RCHA Document Management administrator component.');
+        throw new RuntimeException('Invoice and pro forma deletion is available only in the Route calculation help administrator component.');
     }
 
     private static function saveCustomer(array $payload): array

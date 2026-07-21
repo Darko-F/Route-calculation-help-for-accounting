@@ -1,5 +1,17 @@
 # Version Summary
 
+## Suite Package 1.6.0
+
+- Renamed the administrator component to Route calculation help, with a localized Slovenian name.
+- Moved the Google Maps key, base country, company/PDF identity, country VAT configuration, and Minimax accounts from individual module instances into the component's shared Options.
+- Added independent global/module choices for Google Maps, company/PDF, Minimax, and country settings, while keeping global settings as each default.
+- Enabled language-assigned modules to use their own translated PDF footer while continuing to share settings such as the global Google Maps API key.
+- Moved Base country into the Countries tab in both global and module settings.
+- Corrected the package update feed client so Joomla 6 associates the 1.6.0 update with the installed suite package.
+- Added an upgrade migration that copies existing values from the first published module into component Options without overwriting component values already saved there.
+- Updated the module and administrator payment-confirmation code to read the same component-wide settings.
+- Updated the enclosed versions to module 1.6.0, component 1.2.0, and installer update-key plugin 1.0.4.
+
 ## Suite Package 1.5.0
 
 - Added administrator payment tracking for invoices with Unpaid / Neplačano, Partially paid / Delno plačano, and Paid / Plačano states.

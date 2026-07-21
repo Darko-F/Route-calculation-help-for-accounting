@@ -16,7 +16,7 @@ declare(strict_types=1);
  * php -r "echo hash('sha256', 'subscriber-key-here') . PHP_EOL;"
  */
 
-const PACKAGE_FILENAME_PATTERN = '/^pkg_route_calculation_help_for_accounting_v\d+\.\d+\.\d+\.zip$/';
+const PACKAGE_FILENAME_PATTERN = '/^(?:pkg_route_calculation_help_for_accounting|route_calculation_help_for_accounting|plg_installer_routecalculationupdatekey)_v\d+\.\d+\.\d+\.zip$/';
 
 $validKeyHashes = [];
 $envKeyHashes = getenv('DOWNLOAD_KEY_HASHES');

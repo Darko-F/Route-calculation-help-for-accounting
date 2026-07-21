@@ -10,6 +10,7 @@
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Language\Text;
@@ -22,6 +23,17 @@ $ajaxUrl = Uri::root() . 'index.php?option=com_ajax&module=route_calculation_hel
 $administratorDocumentsUrl = Uri::root() . 'administrator/index.php?option=com_rcha_documents&view=documents';
 $tokenName = Session::getFormToken();
 $tokenValue = '1';
+$globalSettings = ComponentHelper::getParams('com_rcha_documents');
+$legacySettingsSource = (string) $params->get('settings_source', 'global');
+$getSettingsGroup = static function (string $sourceKey) use ($params, $globalSettings, $legacySettingsSource) {
+    return (string) $params->get($sourceKey, $legacySettingsSource) === 'module'
+        ? $params
+        : $globalSettings;
+};
+$googleMapsSettings = $getSettingsGroup('google_maps_settings_source');
+$companyPdfSettings = $getSettingsGroup('company_pdf_settings_source');
+$minimaxSettings = $getSettingsGroup('minimax_settings_source');
+$countriesSettings = $getSettingsGroup('countries_settings_source');
 $resolvePdfImageUrl = static function ($value): string {
     $value = trim((string) $value);
     if ($value === '' || preg_match('#^(?:https?:)?//#i', $value) || str_starts_with($value, 'data:')) {
@@ -46,7 +58,7 @@ $calculatorTextKeys = [
     'Calculates route distance, Slovenia km, outside-Slovenia km, gross price, net price, Slovenian VAT and invoice text.' => 'CALCULATOR_INTRO',
     'Google Maps status' => 'CALCULATOR_GOOGLE_MAPS_STATUS',
     'Loading Google Maps...' => 'CALCULATOR_LOADING_GOOGLE_MAPS',
-    'The Google Maps API key is configured in the module Options tab.' => 'CALCULATOR_API_KEY_HELP',
+    'The Google Maps API key is configured in the component Options.' => 'CALCULATOR_API_KEY_HELP',
     'Transfer details' => 'CALCULATOR_TRANSFER_DETAILS',
     'Pickup' => 'CALCULATOR_PICKUP',
     'Drop-off' => 'CALCULATOR_DROPOFF',
@@ -160,8 +172,8 @@ $calculatorTextKeys = [
     '22% S - General' => 'CALCULATOR_ADJUSTMENT_VAT_GENERAL',
     '9.5% Z - Reduced' => 'CALCULATOR_ADJUSTMENT_VAT_REDUCED',
     '0% N - Non-taxable' => 'CALCULATOR_ADJUSTMENT_VAT_CUSTOM',
-    'Google Maps API key is missing. Enter it in the module Options tab.' => 'CALCULATOR_API_KEY_MISSING',
-    'Map cannot load until the module API key is configured.' => 'CALCULATOR_MAP_CANNOT_LOAD',
+    'Google Maps API key is missing. Enter it in the component Options.' => 'CALCULATOR_API_KEY_MISSING',
+    'Map cannot load until the component API key is configured.' => 'CALCULATOR_MAP_CANNOT_LOAD',
     'Google Maps loaded successfully.' => 'CALCULATOR_MAPS_LOADED_SUCCESS',
     'Google Maps loaded. Enter pickup and drop-off, then calculate.' => 'CALCULATOR_MAPS_LOADED_READY',
     'Google Maps failed to load. Check API key, billing and enabled APIs.' => 'CALCULATOR_MAPS_FAILED',
@@ -247,12 +259,12 @@ $calculatorTextKeys = [
     'Calculate a route first, then generate PDF.' => 'CALCULATOR_CALCULATE_BEFORE_PDF',
     'PDF generated.' => 'CALCULATOR_PDF_GENERATED',
     'Calculate a route first, then export Minimax XML.' => 'CALCULATOR_CALCULATE_BEFORE_XML',
-    'Enter Slovenia SifraKonta in the module options before exporting Minimax XML.' => 'CALCULATOR_ENTER_SI_ACCOUNT_XML',
+    'Enter Slovenia SifraKonta in the component Options before exporting Minimax XML.' => 'CALCULATOR_ENTER_SI_ACCOUNT_XML',
     'Enter SifraKonta in every outside country split row before exporting Minimax XML.' => 'CALCULATOR_ENTER_OUTSIDE_ACCOUNT_XML',
-    'Configure the VAT rate for every used country in the module options before exporting Minimax XML.' => 'CALCULATOR_CONFIGURE_COUNTRY_VAT_RATE_XML',
-    'Enter the Minimax customer receivable account in the module options before exporting Minimax XML.' => 'CALCULATOR_ENTER_RECEIVABLE_ACCOUNT_XML',
-    'Enter the base-country VAT liability account in the module options before exporting Minimax XML.' => 'CALCULATOR_ENTER_BASE_COUNTRY_VAT_ACCOUNT_XML',
-    'Enter the foreign VAT liability account in the module options before exporting Minimax XML.' => 'CALCULATOR_ENTER_FOREIGN_VAT_ACCOUNT_XML',
+    'Configure the VAT rate for every used country in the component Options before exporting Minimax XML.' => 'CALCULATOR_CONFIGURE_COUNTRY_VAT_RATE_XML',
+    'Enter the Minimax customer receivable account in the component Options before exporting Minimax XML.' => 'CALCULATOR_ENTER_RECEIVABLE_ACCOUNT_XML',
+    'Enter the base-country VAT liability account in the component Options before exporting Minimax XML.' => 'CALCULATOR_ENTER_BASE_COUNTRY_VAT_ACCOUNT_XML',
+    'Enter the foreign VAT liability account in the component Options before exporting Minimax XML.' => 'CALCULATOR_ENTER_FOREIGN_VAT_ACCOUNT_XML',
     'Minimax XML exported.' => 'CALCULATOR_XML_EXPORTED',
     'Full invoice exported to Minimax. Reconcile the partial payment through a Minimax bank statement or journal.' => 'CALCULATOR_XML_EXPORTED_PARTIAL_PAYMENT',
     'Full invoice exported to Minimax. Reconcile the recorded payment through a Minimax bank statement or journal.' => 'CALCULATOR_XML_EXPORTED_RECORDED_PAYMENT',
@@ -333,7 +345,7 @@ $normalizeOptionArray = static function ($value): array {
     return (array) $value;
 };
 $countryConfig = [];
-foreach ($normalizeOptionArray($params->get('countries', [])) as $countryRow) {
+foreach ($normalizeOptionArray($countriesSettings->get('countries', [])) as $countryRow) {
     $countryRow = $normalizeOptionArray($countryRow);
     if (isset($countryRow['country'])) {
         $countryRow = $normalizeOptionArray($countryRow['country']);
@@ -350,7 +362,7 @@ foreach ($normalizeOptionArray($params->get('countries', [])) as $countryRow) {
     ];
 }
 $minimaxCountryAccounts = [];
-foreach ($normalizeOptionArray($params->get('minimax_country_accounts', [])) as $accountRow) {
+foreach ($normalizeOptionArray($minimaxSettings->get('minimax_country_accounts', [])) as $accountRow) {
     $accountRow = $normalizeOptionArray($accountRow);
     if (isset($accountRow['minimax_account'])) {
         $accountRow = $normalizeOptionArray($accountRow['minimax_account']);
@@ -366,29 +378,29 @@ foreach ($normalizeOptionArray($params->get('minimax_country_accounts', [])) as 
 }
 
 $frontendConfig = [
-    'googleMapsApiKey' => (string) $params->get('google_maps_api_key', ''),
-    'baseCountry' => (string) $params->get('base_country', 'SI'),
+    'googleMapsApiKey' => (string) $googleMapsSettings->get('google_maps_api_key', ''),
+    'baseCountry' => (string) $countriesSettings->get('base_country', 'SI'),
     'company' => [
-        'name' => (string) $params->get('company_name', 'Example Transfer Ltd.'),
-        'address' => (string) $params->get('company_address', 'Example Street 1'),
-        'postcodeCity' => (string) $params->get('company_postcode_city', '1000 Example City'),
-        'taxNumber' => (string) $params->get('company_tax_number', 'EX12345678'),
-        'registrationNumber' => (string) $params->get('company_registration_number', '1234567890'),
-        'iban' => (string) $params->get('company_iban', 'EX001234567890123456'),
-        'email' => (string) $params->get('company_email', 'office@example.com'),
-        'phone' => (string) $params->get('company_phone', '+386 00 000 000'),
-        'issueCity' => (string) $params->get('company_issue_city', 'Example City'),
-        'logoImageUrl' => $resolvePdfImageUrl($params->get('pdf_logo_image_url', '')),
-        'footerText' => (string) $params->get('pdf_footer_text', ''),
-        'signatureImageUrl' => $resolvePdfImageUrl($params->get('pdf_signature_image_url', 'podpis-transparent.png')),
+        'name' => (string) $companyPdfSettings->get('company_name', 'Example Transfer Ltd.'),
+        'address' => (string) $companyPdfSettings->get('company_address', 'Example Street 1'),
+        'postcodeCity' => (string) $companyPdfSettings->get('company_postcode_city', '1000 Example City'),
+        'taxNumber' => (string) $companyPdfSettings->get('company_tax_number', 'EX12345678'),
+        'registrationNumber' => (string) $companyPdfSettings->get('company_registration_number', '1234567890'),
+        'iban' => (string) $companyPdfSettings->get('company_iban', 'EX001234567890123456'),
+        'email' => (string) $companyPdfSettings->get('company_email', 'office@example.com'),
+        'phone' => (string) $companyPdfSettings->get('company_phone', '+386 00 000 000'),
+        'issueCity' => (string) $companyPdfSettings->get('company_issue_city', 'Example City'),
+        'logoImageUrl' => $resolvePdfImageUrl($companyPdfSettings->get('pdf_logo_image_url', '')),
+        'footerText' => (string) $companyPdfSettings->get('pdf_footer_text', ''),
+        'signatureImageUrl' => $resolvePdfImageUrl($companyPdfSettings->get('pdf_signature_image_url', 'podpis-transparent.png')),
     ],
     'minimax' => [
-        'receivableAccount' => (string) $params->get('minimax_receivable_account', ''),
-        'baseCountryStandardVatAccount' => (string) $params->get('minimax_base_country_standard_vat_account', ''),
-        'defaultForeignRevenueAccount' => (string) $params->get('minimax_default_foreign_revenue_account', ''),
+        'receivableAccount' => (string) $minimaxSettings->get('minimax_receivable_account', ''),
+        'baseCountryStandardVatAccount' => (string) $minimaxSettings->get('minimax_base_country_standard_vat_account', ''),
+        'defaultForeignRevenueAccount' => (string) $minimaxSettings->get('minimax_default_foreign_revenue_account', ''),
         'countryAccounts' => $minimaxCountryAccounts,
     ],
-    'defaultForeignPassengerVatRate' => $params->get('default_foreign_passenger_vat_rate', ''),
+    'defaultForeignPassengerVatRate' => $countriesSettings->get('default_foreign_passenger_vat_rate', ''),
     'countries' => $countryConfig,
 ];
 $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;

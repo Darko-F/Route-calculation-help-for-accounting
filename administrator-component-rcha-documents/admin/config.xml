@@ -1,5 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <config>
+  <fieldset name="basic" label="COM_RCHA_DOCUMENTS_FIELDSET_OPTIONS">
+    <field name="google_maps_api_key" type="password" label="COM_RCHA_DOCUMENTS_FIELD_GOOGLE_MAPS_API_KEY_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_GOOGLE_MAPS_API_KEY_DESC" filter="raw" />
+    <field type="spacer" label="COM_RCHA_DOCUMENTS_SPACER_COMPANY_DETAILS" />
+    <field name="company_name" type="text" label="COM_RCHA_DOCUMENTS_FIELD_COMPANY_NAME_LABEL" default="Example Transfer Ltd." />
+    <field name="company_address" type="text" label="COM_RCHA_DOCUMENTS_FIELD_COMPANY_ADDRESS_LABEL" default="Example Street 1" />
+    <field name="company_postcode_city" type="text" label="COM_RCHA_DOCUMENTS_FIELD_COMPANY_POSTCODE_CITY_LABEL" default="1000 Example City" />
+    <field name="company_tax_number" type="text" label="COM_RCHA_DOCUMENTS_FIELD_COMPANY_TAX_NUMBER_LABEL" default="EX12345678" />
+    <field name="company_registration_number" type="text" label="COM_RCHA_DOCUMENTS_FIELD_COMPANY_REGISTRATION_NUMBER_LABEL" default="1234567890" />
+    <field name="company_iban" type="text" label="COM_RCHA_DOCUMENTS_FIELD_COMPANY_IBAN_LABEL" default="EX001234567890123456" />
+    <field name="company_email" type="email" label="COM_RCHA_DOCUMENTS_FIELD_COMPANY_EMAIL_LABEL" default="office@example.com" />
+    <field name="company_phone" type="text" label="COM_RCHA_DOCUMENTS_FIELD_COMPANY_PHONE_LABEL" default="+386 00 000 000" />
+    <field name="company_issue_city" type="text" label="COM_RCHA_DOCUMENTS_FIELD_COMPANY_ISSUE_CITY_LABEL" default="Example City" />
+    <field name="pdf_logo_image_url" type="media" label="COM_RCHA_DOCUMENTS_FIELD_PDF_LOGO_IMAGE_URL_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_PDF_LOGO_IMAGE_URL_DESC" default="" directory="images" preview="true" filter="string" />
+    <field name="pdf_footer_text" type="textarea" label="COM_RCHA_DOCUMENTS_FIELD_PDF_FOOTER_TEXT_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_PDF_FOOTER_TEXT_DESC" default="" rows="3" filter="raw" />
+    <field name="pdf_signature_image_url" type="text" label="COM_RCHA_DOCUMENTS_FIELD_PDF_SIGNATURE_IMAGE_URL_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_PDF_SIGNATURE_IMAGE_URL_DESC" default="podpis-transparent.png" filter="string" />
+  </fieldset>
+  <fieldset name="minimax" label="COM_RCHA_DOCUMENTS_FIELDSET_MINIMAX">
+    <field name="minimax_receivable_account" type="text" label="COM_RCHA_DOCUMENTS_FIELD_MINIMAX_RECEIVABLE_ACCOUNT_LABEL" default="" />
+    <field name="minimax_base_country_standard_vat_account" type="text" label="COM_RCHA_DOCUMENTS_FIELD_MINIMAX_BASE_COUNTRY_STANDARD_VAT_ACCOUNT_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_MINIMAX_BASE_COUNTRY_STANDARD_VAT_ACCOUNT_DESC" default="" />
+    <field name="minimax_default_foreign_revenue_account" type="text" label="COM_RCHA_DOCUMENTS_FIELD_MINIMAX_DEFAULT_FOREIGN_REVENUE_ACCOUNT_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_MINIMAX_DEFAULT_FOREIGN_REVENUE_ACCOUNT_DESC" default="" />
+    <field name="minimax_country_accounts" type="subform" label="COM_RCHA_DOCUMENTS_FIELD_MINIMAX_COUNTRY_ACCOUNTS_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_MINIMAX_COUNTRY_ACCOUNTS_DESC" formsource="administrator/components/com_rcha_documents/forms/minimax_account.xml" multiple="true" layout="joomla.form.field.subform.repeatable" buttons="add,remove,move" validate="Subform" />
+  </fieldset>
+  <fieldset name="countries" label="COM_RCHA_DOCUMENTS_FIELDSET_COUNTRIES">
+    <field name="base_country" type="list" label="COM_RCHA_DOCUMENTS_FIELD_BASE_COUNTRY_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_BASE_COUNTRY_DESC" default="SI">
+      <option value="SI">COM_RCHA_DOCUMENTS_COUNTRY_SLOVENIA</option>
+      <option value="IT">COM_RCHA_DOCUMENTS_COUNTRY_ITALY</option>
+      <option value="HR">COM_RCHA_DOCUMENTS_COUNTRY_CROATIA</option>
+      <option value="AT">COM_RCHA_DOCUMENTS_COUNTRY_AUSTRIA</option>
+      <option value="DE">COM_RCHA_DOCUMENTS_COUNTRY_GERMANY</option>
+      <option value="HU">COM_RCHA_DOCUMENTS_COUNTRY_HUNGARY</option>
+    </field>
+    <field name="default_foreign_passenger_vat_rate" type="number" label="COM_RCHA_DOCUMENTS_FIELD_DEFAULT_FOREIGN_PASSENGER_VAT_RATE_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_DEFAULT_FOREIGN_PASSENGER_VAT_RATE_DESC" default="" step="0.1" min="0" />
+    <field name="countries" type="subform" label="COM_RCHA_DOCUMENTS_FIELD_COUNTRIES_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_COUNTRIES_DESC" formsource="administrator/components/com_rcha_documents/forms/country.xml" multiple="true" layout="joomla.form.field.subform.repeatable" buttons="add,remove,move" validate="Subform" />
+  </fieldset>
   <fieldset name="permissions" label="JCONFIG_PERMISSIONS_LABEL">
     <field name="rules" type="rules" label="JCONFIG_PERMISSIONS_LABEL" filter="rules" validate="rules" component="com_rcha_documents" section="component" />
   </fieldset>

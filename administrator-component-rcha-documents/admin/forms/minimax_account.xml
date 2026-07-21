@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+  <fieldset name="minimax_account">
+    <field name="country_code" type="text" label="COM_RCHA_DOCUMENTS_FIELD_COUNTRY_CODE_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_COUNTRY_CODE_DESC" maxlength="2" filter="cmd" required="true" />
+    <field name="revenue_account" type="text" label="COM_RCHA_DOCUMENTS_FIELD_COUNTRY_REVENUE_ACCOUNT_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_COUNTRY_REVENUE_ACCOUNT_DESC" />
+    <field name="vat_account" type="text" label="COM_RCHA_DOCUMENTS_FIELD_COUNTRY_VAT_ACCOUNT_LABEL" />
+  </fieldset>
+</form>

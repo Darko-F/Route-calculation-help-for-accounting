@@ -9,11 +9,11 @@ namespace Topoweryou\Component\RchaDocuments\Administrator\Model;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Database\DatabaseInterface;
-use Joomla\Registry\Registry;
 use RuntimeException;
 use Throwable;
 
@@ -142,14 +142,7 @@ class DocumentsModel extends ListModel
 
     public function getCompanyDetails(): array
     {
-        $db = $this->getDatabase();
-        $query = $db->getQuery(true)
-            ->select($db->quoteName('params'))
-            ->from($db->quoteName('#__modules'))
-            ->where($db->quoteName('module') . ' = ' . $db->quote('mod_route_calculation_help_for_accounting'))
-            ->order($db->quoteName('published') . ' DESC')
-            ->order($db->quoteName('id') . ' ASC');
-        $params = new Registry((string) ($db->setQuery($query, 0, 1)->loadResult() ?: '{}'));
+        $params = ComponentHelper::getParams('com_rcha_documents');
         $signatureImageUrl = trim((string) $params->get('pdf_signature_image_url', 'podpis-transparent.png'));
         if ($signatureImageUrl !== '' && !preg_match('#^(?:https?:)?//#i', $signatureImageUrl) && !str_starts_with($signatureImageUrl, 'data:')) {
             if (defined('JPATH_ROOT') && str_starts_with($signatureImageUrl, rtrim(JPATH_ROOT, '/') . '/')) {

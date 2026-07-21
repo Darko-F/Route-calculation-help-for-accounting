@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+  <fieldset name="country">
+    <field name="country_code" type="text" label="COM_RCHA_DOCUMENTS_FIELD_COUNTRY_CODE_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_COUNTRY_CODE_DESC" maxlength="2" filter="cmd" required="true" />
+    <field name="country_name" type="text" label="COM_RCHA_DOCUMENTS_FIELD_COUNTRY_NAME_LABEL" required="true" />
+    <field name="vat_number" type="text" label="COM_RCHA_DOCUMENTS_FIELD_COUNTRY_VAT_NUMBER_LABEL" />
+    <field name="vat_rate" type="number" label="COM_RCHA_DOCUMENTS_FIELD_COUNTRY_VAT_RATE_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_COUNTRY_VAT_RATE_DESC" step="0.1" min="0" />
+    <field name="pdf_note" type="textarea" label="COM_RCHA_DOCUMENTS_FIELD_COUNTRY_PDF_NOTE_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_COUNTRY_PDF_NOTE_DESC" rows="3" />
+  </fieldset>
+</form>
