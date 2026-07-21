@@ -2,12 +2,12 @@
 <extension type="component" method="upgrade">
   <name>COM_RCHA_DOCUMENTS</name>
   <author>Darko Fatur</author>
-  <creationDate>2026-07-20</creationDate>
+  <creationDate>2026-07-21</creationDate>
   <copyright>Copyright (C) 2026 topoweryou.com</copyright>
   <license>GNU General Public License version 2 or later</license>
   <authorEmail>info@topoweryou.com</authorEmail>
   <authorUrl>https://topoweryou.com</authorUrl>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
   <description>COM_RCHA_DOCUMENTS_XML_DESCRIPTION</description>
   <element>com_rcha_documents</element>
   <namespace path="src">Topoweryou\Component\RchaDocuments</namespace>
@@ -21,6 +21,7 @@
     <menu>COM_RCHA_DOCUMENTS_MENU</menu>
     <files folder="admin">
       <folder>services</folder>
+      <folder>forms</folder>
       <folder>src</folder>
       <folder>tmpl</folder>
       <folder>sql</folder>

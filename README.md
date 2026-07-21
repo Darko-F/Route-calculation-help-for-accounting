@@ -64,10 +64,10 @@ For a new installation, install the combined suite ZIP package in Joomla:
 
 1. Go to Joomla Administrator.
 2. Open System -> Install -> Extensions.
-3. Upload `pkg_route_calculation_help_for_accounting_v1.5.0.zip`.
+3. Upload `pkg_route_calculation_help_for_accounting_v1.6.0.zip`.
 4. Open Content -> Site Modules.
 5. Create or open Route calculation help for accounting.
-6. Enter the Google Maps API key and company settings.
+6. Open Components -> Route calculation help -> Options, then enter the shared settings. Each module can independently choose global or module settings for Google Maps, company/PDF, Minimax, and countries.
 7. Publish the module in the desired position.
 
 The suite installs the site module, administrator-only document management
@@ -75,8 +75,7 @@ component, and subscriber update-key installer plugin. Enable the plugin and
 enter the subscriber key before using protected updates. Install and update the
 suite only through the combined package so all three extensions remain on the
 same compatible release. Document management is available under Joomla
-Administrator → Components → Invoices and Pro Forma Invoices, and from the
-lightweight link in the module's Document Management tab.
+Administrator → Components → Route calculation help.
 
 ## Source Package
 
@@ -94,7 +93,7 @@ pkg_route_calculation_help_for_accounting_vx.x.x.zip
 
 ## Security
 
-Do not commit real Google API keys. Configure the key in the Joomla module options and restrict it in Google Cloud to your website domain.
+Do not commit real Google API keys. Configure the key in the Joomla component Options and restrict it in Google Cloud to your website domain.
 
 ## License
 

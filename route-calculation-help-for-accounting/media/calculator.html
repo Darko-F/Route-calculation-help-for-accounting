@@ -554,8 +554,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function loadGoogleMaps() {
   if (!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY === 'PASTE_YOUR_GOOGLE_MAPS_API_KEY_HERE') {
-    setApiStatus('Google Maps API key is missing. Enter it in the module Options tab.', 'danger');
-    setStatus('Map cannot load until the module API key is configured.', 'danger');
+    setApiStatus('Google Maps API key is missing. Enter it in the component Options.', 'danger');
+    setStatus('Map cannot load until the component API key is configured.', 'danger');
     return;
   }
   if (window.google && google.maps) { initMap(); return; }
@@ -2841,7 +2841,7 @@ function exportMinimaxXml() {
   // receivable separately and must never reduce revenue, VAT, or the invoice debit.
   const totalAmount = roundMoney(d.invoiceTotalAmount ?? (routeTotalAmount + additionalCostsGross));
   if (!receivableAccount) {
-    setStatus('Enter the Minimax customer receivable account in the module options before exporting Minimax XML.', 'danger');
+    setStatus('Enter the Minimax customer receivable account in the component Options before exporting Minimax XML.', 'danger');
     return false;
   }
   if (!outsideSegments.length && outsideBaseAmount > 0) {
@@ -2850,11 +2850,11 @@ function exportMinimaxXml() {
     outsideSegments = [{ countryValue: outsideCountry, base: outsideBaseAmount, vatAmount: outsideVatAmount, vatRate: config.vatRate, revenueAccount: config.revenueAccount, vatAccount: config.vatAccount, isSlovenia: false }];
   }
   if (outsideSegments.some(segment => !getCountryOptionConfig(segment.countryValue).vatRateConfigured)) {
-    setStatus('Configure the VAT rate for every used country in the module options before exporting Minimax XML.', 'danger');
+    setStatus('Configure the VAT rate for every used country in the component Options before exporting Minimax XML.', 'danger');
     return false;
   }
   if ((siBaseAmount > 0 || additionalCosts.length > 0) && !baseRevenueAccount) {
-    setStatus('Enter Slovenia SifraKonta in the module options before exporting Minimax XML.', 'danger');
+    setStatus('Enter Slovenia SifraKonta in the component Options before exporting Minimax XML.', 'danger');
     return false;
   }
   if (outsideBaseAmount + outsideVatAmount > 0 && outsideSegments.some(segment => !String(getCountryOptionConfig(segment.countryValue).revenueAccount || '').trim())) {
@@ -2865,7 +2865,7 @@ function exportMinimaxXml() {
     getCountryOptionConfig(String(segment.countryValue || 'OTHER').toUpperCase()).vatAccount || ''
   ).trim();
   if (outsideSegments.some(segment => roundMoney(segment.vatAmount) > 0 && !getOutsideVatAccount(segment))) {
-    setStatus('Enter the foreign VAT liability account in the module options before exporting Minimax XML.', 'danger');
+    setStatus('Enter the foreign VAT liability account in the component Options before exporting Minimax XML.', 'danger');
     return false;
   }
   const isSlovenianBaseCountry = calculationBaseCountryCode === 'SI';
@@ -2876,15 +2876,15 @@ function exportMinimaxXml() {
   }
   const routeVatAccount = isSlovenianBaseCountry && baseVatCode === 'S' ? standardVatAccount : baseVatAccount;
   if (siVatAmount > 0 && !routeVatAccount) {
-    setStatus('Enter the base-country VAT liability account in the module options before exporting Minimax XML.', 'danger');
+    setStatus('Enter the base-country VAT liability account in the component Options before exporting Minimax XML.', 'danger');
     return false;
   }
   if (additionalCosts.some(cost => cost.vat > 0 && (cost.minimaxVatCode === 'S' || (!cost.minimaxVatCode && Math.abs(cost.vatRate - 22) < 0.0001))) && !standardVatAccount) {
-    setStatus('Enter the base-country VAT liability account in the module options before exporting Minimax XML.', 'danger');
+    setStatus('Enter the base-country VAT liability account in the component Options before exporting Minimax XML.', 'danger');
     return false;
   }
   if (additionalCosts.some(cost => cost.vat > 0 && (cost.minimaxVatCode === 'Z' || (!cost.minimaxVatCode && Math.abs(cost.vatRate - 9.5) < 0.0001))) && !baseVatAccount) {
-    setStatus('Enter the base-country VAT liability account in the module options before exporting Minimax XML.', 'danger');
+    setStatus('Enter the base-country VAT liability account in the component Options before exporting Minimax XML.', 'danger');
     return false;
   }
   const revenueAmountsByAccount = {};

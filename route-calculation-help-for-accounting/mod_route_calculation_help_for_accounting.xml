@@ -2,12 +2,12 @@
 <extension type="module" version="6.0" client="site" method="upgrade">
   <name>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING</name>
   <author>Darko Fatur</author>
-  <creationDate>2026-07-14</creationDate>
+  <creationDate>2026-07-21</creationDate>
   <copyright>Copyright (C) 2026 topoweryou.com</copyright>
   <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
   <authorEmail>info@topoweryou.com</authorEmail>
   <authorUrl>https://topoweryou.com</authorUrl>
-  <version>1.5.0</version>
+  <version>1.6.0</version>
   <description>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_XML_DESCRIPTION</description>
   <files>
     <filename module="mod_route_calculation_help_for_accounting">mod_route_calculation_help_for_accounting.php</filename>
@@ -41,20 +41,45 @@
   <config>
     <fields name="params">
       <fieldset name="basic" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELDSET_OPTIONS">
-        <field
-          name="google_maps_api_key"
-          type="password"
-          label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_GOOGLE_MAPS_API_KEY_LABEL"
-          description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_GOOGLE_MAPS_API_KEY_DESC"
-          filter="raw"
-        />
-        <field
-          name="base_country"
-          type="list"
-          label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_BASE_COUNTRY_LABEL"
-          description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_BASE_COUNTRY_DESC"
-          default="SI"
-        >
+        <field name="google_maps_settings_source" type="radio" layout="joomla.form.field.radio.switcher" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_GOOGLE_MAPS_SETTINGS_SOURCE_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_GOOGLE_MAPS_SETTINGS_SOURCE_DESC" default="global">
+          <option value="global">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_SETTINGS_SOURCE_GLOBAL</option>
+          <option value="module">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_SETTINGS_SOURCE_MODULE</option>
+        </field>
+        <field name="google_maps_api_key" type="password" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_GOOGLE_MAPS_API_KEY_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_GOOGLE_MAPS_API_KEY_DESC" filter="raw" showon="google_maps_settings_source:module" />
+        <field name="company_pdf_settings_source" type="radio" layout="joomla.form.field.radio.switcher" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_PDF_SETTINGS_SOURCE_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_PDF_SETTINGS_SOURCE_DESC" default="global">
+          <option value="global">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_SETTINGS_SOURCE_GLOBAL</option>
+          <option value="module">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_SETTINGS_SOURCE_MODULE</option>
+        </field>
+        <field type="spacer" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_SPACER_COMPANY_DETAILS" showon="company_pdf_settings_source:module" />
+        <field name="company_name" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_NAME_LABEL" default="Example Transfer Ltd." showon="company_pdf_settings_source:module" />
+        <field name="company_address" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_ADDRESS_LABEL" default="Example Street 1" showon="company_pdf_settings_source:module" />
+        <field name="company_postcode_city" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_POSTCODE_CITY_LABEL" default="1000 Example City" showon="company_pdf_settings_source:module" />
+        <field name="company_tax_number" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_TAX_NUMBER_LABEL" default="EX12345678" showon="company_pdf_settings_source:module" />
+        <field name="company_registration_number" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_REGISTRATION_NUMBER_LABEL" default="1234567890" showon="company_pdf_settings_source:module" />
+        <field name="company_iban" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_IBAN_LABEL" default="EX001234567890123456" showon="company_pdf_settings_source:module" />
+        <field name="company_email" type="email" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_EMAIL_LABEL" default="office@example.com" showon="company_pdf_settings_source:module" />
+        <field name="company_phone" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_PHONE_LABEL" default="+386 00 000 000" showon="company_pdf_settings_source:module" />
+        <field name="company_issue_city" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_ISSUE_CITY_LABEL" default="Example City" showon="company_pdf_settings_source:module" />
+        <field name="pdf_logo_image_url" type="media" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_PDF_LOGO_IMAGE_URL_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_PDF_LOGO_IMAGE_URL_DESC" default="" directory="images" preview="true" filter="string" showon="company_pdf_settings_source:module" />
+        <field name="pdf_footer_text" type="textarea" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_PDF_FOOTER_TEXT_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_PDF_FOOTER_TEXT_DESC" default="" rows="3" filter="raw" showon="company_pdf_settings_source:module" />
+        <field name="pdf_signature_image_url" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_PDF_SIGNATURE_IMAGE_URL_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_PDF_SIGNATURE_IMAGE_URL_DESC" default="podpis-transparent.png" filter="string" showon="company_pdf_settings_source:module" />
+      </fieldset>
+      <fieldset name="minimax" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELDSET_MINIMAX">
+        <field name="minimax_settings_source" type="radio" layout="joomla.form.field.radio.switcher" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_SETTINGS_SOURCE_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_SETTINGS_SOURCE_DESC" default="global">
+          <option value="global">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_SETTINGS_SOURCE_GLOBAL</option>
+          <option value="module">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_SETTINGS_SOURCE_MODULE</option>
+        </field>
+        <field name="minimax_receivable_account" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_RECEIVABLE_ACCOUNT_LABEL" default="" showon="minimax_settings_source:module" />
+        <field name="minimax_base_country_standard_vat_account" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_BASE_COUNTRY_STANDARD_VAT_ACCOUNT_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_BASE_COUNTRY_STANDARD_VAT_ACCOUNT_DESC" default="" showon="minimax_settings_source:module" />
+        <field name="minimax_default_foreign_revenue_account" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_DEFAULT_FOREIGN_REVENUE_ACCOUNT_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_DEFAULT_FOREIGN_REVENUE_ACCOUNT_DESC" default="" showon="minimax_settings_source:module" />
+        <field name="minimax_country_accounts" type="subform" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_COUNTRY_ACCOUNTS_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_COUNTRY_ACCOUNTS_DESC" formsource="modules/mod_route_calculation_help_for_accounting/forms/minimax_account.xml" multiple="true" layout="joomla.form.field.subform.repeatable" buttons="add,remove,move" validate="Subform" showon="minimax_settings_source:module" />
+      </fieldset>
+      <fieldset name="countries" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELDSET_COUNTRIES">
+        <field name="countries_settings_source" type="radio" layout="joomla.form.field.radio.switcher" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COUNTRIES_SETTINGS_SOURCE_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COUNTRIES_SETTINGS_SOURCE_DESC" default="global">
+          <option value="global">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_SETTINGS_SOURCE_GLOBAL</option>
+          <option value="module">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_SETTINGS_SOURCE_MODULE</option>
+        </field>
+        <field name="base_country" type="list" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_BASE_COUNTRY_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_BASE_COUNTRY_DESC" default="SI" showon="countries_settings_source:module">
           <option value="SI">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SLOVENIA</option>
           <option value="IT">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ITALY</option>
           <option value="HR">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CROATIA</option>
@@ -62,82 +87,8 @@
           <option value="DE">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GERMANY</option>
           <option value="HU">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_HUNGARY</option>
         </field>
-        <field type="spacer" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_SPACER_COMPANY_DETAILS" />
-        <field name="company_name" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_NAME_LABEL" default="Example Transfer Ltd." />
-        <field name="company_address" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_ADDRESS_LABEL" default="Example Street 1" />
-        <field name="company_postcode_city" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_POSTCODE_CITY_LABEL" default="1000 Example City" />
-        <field name="company_tax_number" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_TAX_NUMBER_LABEL" default="EX12345678" />
-        <field name="company_registration_number" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_REGISTRATION_NUMBER_LABEL" default="1234567890" />
-        <field name="company_iban" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_IBAN_LABEL" default="EX001234567890123456" />
-        <field name="company_email" type="email" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_EMAIL_LABEL" default="office@example.com" />
-        <field name="company_phone" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_PHONE_LABEL" default="+386 00 000 000" />
-        <field name="company_issue_city" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COMPANY_ISSUE_CITY_LABEL" default="Example City" />
-        <field
-          name="pdf_logo_image_url"
-          type="media"
-          label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_PDF_LOGO_IMAGE_URL_LABEL"
-          description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_PDF_LOGO_IMAGE_URL_DESC"
-          default=""
-          directory="images"
-          preview="true"
-          filter="string"
-        />
-        <field
-          name="pdf_footer_text"
-          type="textarea"
-          label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_PDF_FOOTER_TEXT_LABEL"
-          description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_PDF_FOOTER_TEXT_DESC"
-          default=""
-          rows="3"
-          filter="raw"
-        />
-        <field
-          name="pdf_signature_image_url"
-          type="text"
-          label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_PDF_SIGNATURE_IMAGE_URL_LABEL"
-          description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_PDF_SIGNATURE_IMAGE_URL_DESC"
-          default="podpis-transparent.png"
-          filter="string"
-        />
-      </fieldset>
-      <fieldset name="minimax" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELDSET_MINIMAX">
-        <field name="minimax_receivable_account" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_RECEIVABLE_ACCOUNT_LABEL" default="" />
-        <field name="minimax_base_country_standard_vat_account" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_BASE_COUNTRY_STANDARD_VAT_ACCOUNT_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_BASE_COUNTRY_STANDARD_VAT_ACCOUNT_DESC" default="" />
-        <field name="minimax_default_foreign_revenue_account" type="text" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_DEFAULT_FOREIGN_REVENUE_ACCOUNT_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_DEFAULT_FOREIGN_REVENUE_ACCOUNT_DESC" default="" />
-        <field
-          name="minimax_country_accounts"
-          type="subform"
-          label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_COUNTRY_ACCOUNTS_LABEL"
-          description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_MINIMAX_COUNTRY_ACCOUNTS_DESC"
-          formsource="modules/mod_route_calculation_help_for_accounting/forms/minimax_account.xml"
-          multiple="true"
-          layout="joomla.form.field.subform.repeatable"
-          buttons="add,remove,move"
-          validate="Subform"
-        />
-      </fieldset>
-      <fieldset name="countries" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELDSET_COUNTRIES">
-        <field name="default_foreign_passenger_vat_rate" type="number" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_DEFAULT_FOREIGN_PASSENGER_VAT_RATE_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_DEFAULT_FOREIGN_PASSENGER_VAT_RATE_DESC" default="" step="0.1" min="0" />
-        <field
-          name="countries"
-          type="subform"
-          label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COUNTRIES_LABEL"
-          description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COUNTRIES_DESC"
-          formsource="modules/mod_route_calculation_help_for_accounting/forms/country.xml"
-          multiple="true"
-          layout="joomla.form.field.subform.repeatable"
-          buttons="add,remove,move"
-          validate="Subform"
-        />
-      </fieldset>
-      <fieldset name="document_management" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELDSET_DOCUMENT_MANAGEMENT">
-        <field
-          name="document_manager"
-          type="documentmanager"
-          addfieldprefix="Joomla\Module\RouteCalculationHelpForAccounting\Site\Field"
-          hiddenLabel="true"
-          filter="raw"
-        />
+        <field name="default_foreign_passenger_vat_rate" type="number" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_DEFAULT_FOREIGN_PASSENGER_VAT_RATE_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_DEFAULT_FOREIGN_PASSENGER_VAT_RATE_DESC" default="" step="0.1" min="0" showon="countries_settings_source:module" />
+        <field name="countries" type="subform" label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COUNTRIES_LABEL" description="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_FIELD_COUNTRIES_DESC" formsource="modules/mod_route_calculation_help_for_accounting/forms/country.xml" multiple="true" layout="joomla.form.field.subform.repeatable" buttons="add,remove,move" validate="Subform" showon="countries_settings_source:module" />
       </fieldset>
     </fields>
   </config>

@@ -10,6 +10,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Installer\InstallerAdapter;
 use Joomla\CMS\Installer\InstallerScriptInterface;
 use Joomla\Database\DatabaseInterface;
+use Joomla\Registry\Registry;
 
 return new class implements InstallerScriptInterface {
     public function install(InstallerAdapter $adapter): bool
@@ -90,6 +91,73 @@ return new class implements InstallerScriptInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci"
         )->execute();
 
+        $this->migrateModuleSettings($db);
+
         return true;
+    }
+
+    private function migrateModuleSettings(DatabaseInterface $db): void
+    {
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('params'))
+            ->from($db->quoteName('#__modules'))
+            ->where($db->quoteName('module') . ' = ' . $db->quote('mod_route_calculation_help_for_accounting'))
+            ->order($db->quoteName('published') . ' DESC')
+            ->order($db->quoteName('id') . ' ASC');
+        $legacyJson = (string) ($db->setQuery($query, 0, 1)->loadResult() ?: '');
+        if ($legacyJson === '') {
+            return;
+        }
+
+        $query = $db->getQuery(true)
+            ->select([$db->quoteName('extension_id'), $db->quoteName('params')])
+            ->from($db->quoteName('#__extensions'))
+            ->where($db->quoteName('type') . ' = ' . $db->quote('component'))
+            ->where($db->quoteName('element') . ' = ' . $db->quote('com_rcha_documents'));
+        $extension = $db->setQuery($query)->loadObject();
+        if (!$extension) {
+            return;
+        }
+
+        $legacy = new Registry($legacyJson);
+        $component = new Registry((string) ($extension->params ?: '{}'));
+        $keys = [
+            'google_maps_api_key',
+            'base_country',
+            'company_name',
+            'company_address',
+            'company_postcode_city',
+            'company_tax_number',
+            'company_registration_number',
+            'company_iban',
+            'company_email',
+            'company_phone',
+            'company_issue_city',
+            'pdf_logo_image_url',
+            'pdf_footer_text',
+            'pdf_signature_image_url',
+            'minimax_receivable_account',
+            'minimax_base_country_standard_vat_account',
+            'minimax_default_foreign_revenue_account',
+            'minimax_country_accounts',
+            'default_foreign_passenger_vat_rate',
+            'countries',
+        ];
+        $changed = false;
+        foreach ($keys as $key) {
+            if (!$component->exists($key) && $legacy->exists($key)) {
+                $component->set($key, $legacy->get($key));
+                $changed = true;
+            }
+        }
+        if (!$changed) {
+            return;
+        }
+
+        $query = $db->getQuery(true)
+            ->update($db->quoteName('#__extensions'))
+            ->set($db->quoteName('params') . ' = ' . $db->quote($component->toString('JSON')))
+            ->where($db->quoteName('extension_id') . ' = ' . (int) $extension->extension_id);
+        $db->setQuery($query)->execute();
     }
 };

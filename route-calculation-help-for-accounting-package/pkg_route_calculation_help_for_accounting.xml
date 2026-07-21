@@ -2,8 +2,8 @@
 <extension type="package" method="upgrade">
   <name>Route Calculation Help for Accounting Suite</name>
   <packagename>route_calculation_help_for_accounting</packagename>
-  <version>1.5.0</version>
-  <creationDate>2026-07-20</creationDate>
+  <version>1.6.0</version>
+  <creationDate>2026-07-21</creationDate>
   <author>Darko Fatur</author>
   <authorEmail>info@topoweryou.com</authorEmail>
   <authorUrl>https://topoweryou.com</authorUrl>
@@ -14,8 +14,8 @@
     <server type="extension" priority="1" name="Route Calculation Help for Accounting Suite Updates">https://builder.topoweryou.com/routecalculationhelp/files/routecalculationhelp/updates/route-calculation-help-for-accounting-package.xml</server>
   </updateservers>
   <files folder="packages">
-    <file type="module" id="mod_route_calculation_help_for_accounting" client="site">route_calculation_help_for_accounting_v1.5.0.zip</file>
-    <file type="component" id="com_rcha_documents">com_rcha_documents_v1.1.0.zip</file>
+    <file type="module" id="mod_route_calculation_help_for_accounting" client="site">route_calculation_help_for_accounting_v1.6.0.zip</file>
+    <file type="component" id="com_rcha_documents">com_rcha_documents_v1.2.0.zip</file>
     <file type="plugin" id="routecalculationupdatekey" group="installer">plg_installer_routecalculationupdatekey_v1.0.4.zip</file>
   </files>
 </extension>
