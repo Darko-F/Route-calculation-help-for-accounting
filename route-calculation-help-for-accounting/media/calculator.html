@@ -181,7 +181,8 @@
             </div>
             <div class="col-md-6">
               <label for="customerCode" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SIFRA_STRANKE</label>
-              <input id="customerCode" class="form-control form-control-sm" maxlength="10" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_CUSTOMER_CODE" />
+              <input id="customerCode" class="form-control form-control-sm" maxlength="64" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_CUSTOMER_CODE" />
+              <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMER_CODE_HELP</div>
             </div>
             <div class="col-md-6 mt-2">
               <label for="serviceDate" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SERVICE_DATE</label>
@@ -227,6 +228,7 @@
             <div class="col-12 mt-2"><textarea id="customInvoiceMessage" class="form-control form-control-sm" rows="2" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_CUSTOM_MESSAGE"></textarea></div>
             <div class="col-12 mt-2 d-flex flex-wrap gap-2">
               <button class="btn btn-sm btn-primary" type="button" onclick="saveCustomerDetails()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SAVE_DETAILS</button>
+              <button class="btn btn-sm btn-outline-primary" type="button" onclick="clearCurrentCustomerForm()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_NEW_CUSTOMER</button>
               <button class="btn btn-sm btn-outline-success" type="button" onclick="addCurrentServiceToDraft()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADD_TO_DRAFT</button>
             </div>
             <div class="col-12">
@@ -252,6 +254,7 @@
           <div class="action-grid">
             <button class="btn btn-outline-info" onclick="generateProformaPdf()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GENERATE_PROFORMA_PDF</button>
             <button class="btn btn-info" onclick="generatePdf()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_GENERATE_PDF</button>
+            <button id="updateInvoiceButton" class="btn btn-warning d-none" onclick="updateLoadedInvoice()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_UPDATE_INVOICE</button>
             <button class="btn btn-success" onclick="exportCurrentMinimaxXml()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_EXPORT_MINIMAX_XML</button>
           </div>
         </div>
@@ -382,11 +385,13 @@ let lastCalculatedData = null;
 let restoredInvoiceIssueDate = '';
 let currentDocumentType = 'invoice';
 let currentDocumentId = 0;
+let editableInvoiceId = 0;
 let currentConvertedInvoiceId = 0;
 let currentPaidAmount = 0;
 let currentRemainingAmount = 0;
 let currentPaymentStatus = 'unpaid';
 let activeDraftRef = '';
+let activeCustomerId = 0;
 let savedCustomers = [];
 let customerPickerCustomers = [];
 let customerPickerPage = 1;
@@ -535,6 +540,7 @@ window.addEventListener('DOMContentLoaded', () => {
       event.currentTarget.dataset.generated = '0';
       currentDocumentType = /^PR-RCHA-/i.test(event.currentTarget.value) ? 'proforma' : 'invoice';
       currentDocumentId = 0;
+      setEditableInvoice();
       currentConvertedInvoiceId = 0;
       resetCurrentPaymentState();
     });
@@ -545,6 +551,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('customerCode')?.addEventListener('input', event => {
       event.currentTarget.dataset.generatedFromVat = '0';
+      event.currentTarget.dataset.manuallyEdited = '1';
     });
     document.getElementById('customerVatId')?.addEventListener('input', syncCustomerCodeFromVatId);
     document.getElementById('returnTrip')?.addEventListener('change', markRouteCalculationStale);
@@ -645,6 +652,69 @@ function addRouteStop(value = '') {
   }
 }
 
+function setRoutePlaceValue(inputId, value = '') {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  input.value = String(value || '');
+  const mount = document.getElementById(inputId === 'pickup' ? 'pickupPlaceAutocomplete' : 'dropoffPlaceAutocomplete');
+  const placeAutocomplete = mount?.querySelector('gmp-place-autocomplete');
+  if (placeAutocomplete && 'value' in placeAutocomplete) placeAutocomplete.value = input.value;
+}
+
+function restoreRouteAndCountryInputs(data, restoreAddresses = true) {
+  if (!data || typeof data !== 'object') return;
+  const pickup = String(data.pickup || '').trim();
+  let routeDropoff = String(data.routeDropoff || '').trim();
+  let stops = Array.isArray(data.stops) ? data.stops.map(value => String(value || '').trim()).filter(Boolean) : [];
+  let returnTrip = Boolean(data.returnTrip);
+
+  if (restoreAddresses && !routeDropoff) {
+    const routePlaces = String(data.dropoff || '').split(/\s*→\s*/).map(value => value.trim()).filter(Boolean);
+    if (routePlaces.length && pickup && routePlaces[0] === pickup) routePlaces.shift();
+    if (routePlaces.length > 1 && pickup && routePlaces.at(-1) === pickup) {
+      returnTrip = true;
+      routePlaces.pop();
+    }
+    routeDropoff = routePlaces.pop() || String(data.dropoff || '').trim();
+    if (!stops.length) stops = routePlaces;
+  }
+
+  if (restoreAddresses) {
+    setRoutePlaceValue('pickup', pickup);
+    setRoutePlaceValue('dropoff', routeDropoff);
+    document.getElementById('routeStopsList')?.replaceChildren();
+    stops.forEach(addRouteStop);
+    const returnTripInput = document.getElementById('returnTrip');
+    if (returnTripInput) returnTripInput.checked = returnTrip;
+  }
+
+  const countrySegments = Array.isArray(data.countrySegments) ? data.countrySegments : [];
+  const countryRows = document.getElementById('countrySplitRows');
+  if (countryRows) {
+    lastEditedCountrySplitRow = null;
+    countryRows.replaceChildren();
+    countrySegments.forEach(addCountrySplitRow);
+  }
+  if (document.getElementById('vatRate') && Number.isFinite(Number(data.vatRate))) document.getElementById('vatRate').value = String(data.vatRate);
+  if (document.getElementById('splitMethod') && data.splitMethod) document.getElementById('splitMethod').value = data.splitMethod;
+  setPriceInputValue('grossPrice', Number(data.grossPrice || data.invoiceTotalAmount || 0));
+  setPriceInputValue('price', Number(data.netPrice || 0));
+  setPriceSource(data.priceSource === 'net' ? 'net' : 'gross');
+  lastRouteData = {
+    pickup,
+    dropoff: String(data.dropoff || '').trim(),
+    routeDropoff,
+    stops,
+    returnTrip,
+    totalKm: Number(data.totalKm || 0),
+    grossPrice: Number(data.grossPrice || 0),
+    netPriceInput: Number(data.netPrice || 0),
+    priceSource: data.priceSource === 'net' ? 'net' : 'gross',
+    vatRate: Number(data.vatRate || 0),
+    path: []
+  };
+}
+
 function scheduleAutoRouteCalculation() {
   clearTimeout(autoRouteTimer);
   autoRouteTimer = setTimeout(() => {
@@ -660,7 +730,7 @@ function markRouteCalculationStale() {
   currentDocumentType = 'invoice';
   currentDocumentId = 0;
   currentConvertedInvoiceId = 0;
-  resetCurrentPaymentState();
+  if (!editableInvoiceId) resetCurrentPaymentState();
   const documentNumber = document.getElementById('invoiceNumber');
   if (documentNumber && /^PR-RCHA-/i.test(documentNumber.value)) documentNumber.value = '';
   setStatus('Route settings changed. Click Calculate route to update totals.', 'warning');
@@ -670,6 +740,11 @@ function resetCurrentPaymentState() {
   currentPaidAmount = 0;
   currentRemainingAmount = 0;
   currentPaymentStatus = 'unpaid';
+}
+
+function setEditableInvoice(invoiceId = 0, documentType = '') {
+  editableInvoiceId = documentType === 'invoice' ? Math.max(0, Number(invoiceId || 0)) : 0;
+  document.getElementById('updateInvoiceButton')?.classList.toggle('d-none', !editableInvoiceId);
 }
 
 function getRouteStops() {
@@ -1037,7 +1112,7 @@ function rebalanceCountrySplitRows() {
 
 function calculateFromCountrySegments(countrySegments, successMessage) {
   if (!lastRouteData) return;
-  const { pickup, dropoff, totalKm } = lastRouteData;
+  const { pickup, dropoff, routeDropoff, stops, returnTrip, totalKm } = lastRouteData;
   const segmentKmTotal = countrySegments.reduce((sum, segment) => sum + segment.km, 0);
   if (!countrySegments.length || segmentKmTotal <= 0) {
     setStatus('Enter at least one country row with km.', 'danger');
@@ -1080,7 +1155,7 @@ function calculateFromCountrySegments(countrySegments, successMessage) {
   setPriceSource(priceSource);
   const invoiceTotalAmount = totalAmount + deductionsGrossTotal;
   restoredInvoiceIssueDate = '';
-  lastCalculatedData = { createdAt: new Date().toISOString(), baseCountry: getBaseCountryCode(), pickup, dropoff, totalKm, sloveniaKm: siKm, outsideSloveniaKm: outsideKm, grossPrice, priceSource, deductions, deductionsTotal, deductionsVatTotal, deductionsGrossTotal, grossAfterDeductions, netPrice, taxableBaseSlovenia: taxableBase, outsideSloveniaBase: outsideBase, vatRate, vatAmount, outsideVatRate, outsideVatAmount, totalAmount, invoiceTotalAmount, splitMethod: document.getElementById('splitMethod').value, currency: 'EUR', invoiceTextEn: '', invoiceTextSl: '', countrySegments: calculatedSegments, isDomesticSloveniaOnly };
+  lastCalculatedData = { createdAt: new Date().toISOString(), baseCountry: getBaseCountryCode(), pickup, dropoff, routeDropoff, stops, returnTrip, totalKm, sloveniaKm: siKm, outsideSloveniaKm: outsideKm, grossPrice, priceSource, deductions, deductionsTotal, deductionsVatTotal, deductionsGrossTotal, grossAfterDeductions, netPrice, taxableBaseSlovenia: taxableBase, outsideSloveniaBase: outsideBase, vatRate, vatAmount, outsideVatRate, outsideVatAmount, totalAmount, invoiceTotalAmount, splitMethod: document.getElementById('splitMethod').value, currency: 'EUR', invoiceTextEn: '', invoiceTextSl: '', countrySegments: calculatedSegments, isDomesticSloveniaOnly };
   showResults(totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate, calculatedSegments, deductions);
   buildInvoiceText(pickup, dropoff, totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, invoiceTotalAmount, vatRate, outsideVatRate, isDomesticSloveniaOnly);
   lastCalculatedData.invoiceTextEn = document.getElementById('invoiceTextEn').value;
@@ -1088,7 +1163,7 @@ function calculateFromCountrySegments(countrySegments, successMessage) {
   setStatus(successMessage, 'success');
 }
 
-function addAdjustment() {
+function addAdjustment(adjustment = null) {
   const id = Date.now().toString(36);
   const container = document.getElementById('adjustmentsList');
   const row = document.createElement('div');
@@ -1102,14 +1177,35 @@ function addAdjustment() {
       <option value="N">${xmlEscape(t('0% N - Non-taxable'))}</option>
     </select>
     <button class="btn btn-sm btn-outline-danger" type="button">${xmlEscape(t('Remove'))}</button>`;
-  row.querySelector('button').addEventListener('click', () => { row.remove(); updateDeductionsDisplay(); });
+  if (adjustment && typeof adjustment === 'object') {
+    const savedVatCode = String(adjustment.minimaxVatCode || '').toUpperCase();
+    const savedVatRate = Number(adjustment.vatRate || 0);
+    const taxPreset = ['S', 'Z', 'N'].includes(savedVatCode)
+      ? savedVatCode
+      : Math.abs(savedVatRate - 22) < 0.0001 ? 'S' : Math.abs(savedVatRate - 9.5) < 0.0001 ? 'Z' : 'N';
+    row.querySelector('.adjustment-desc').value = String(adjustment.description || '');
+    row.querySelector('.adjustment-amount').value = String(Math.max(0, Number(adjustment.amount) || 0));
+    row.querySelector('.adjustment-tax-preset').value = taxPreset;
+  }
+  row.querySelector('button').addEventListener('click', () => { row.remove(); updateDeductionsDisplay(); markRouteCalculationStale(); });
+  row.querySelector('.adjustment-desc').addEventListener('input', markRouteCalculationStale);
   row.querySelector('.adjustment-amount').addEventListener('input', () => { updateDeductionsDisplay(); markRouteCalculationStale(); });
   row.querySelector('.adjustment-tax-preset').addEventListener('change', () => { updateDeductionsDisplay(); markRouteCalculationStale(); });
   container.appendChild(row);
   updateDeductionsDisplay();
 }
 
-function clearAdjustments() { document.getElementById('adjustmentsList').innerHTML = ''; updateDeductionsDisplay(); }
+function clearAdjustments() { document.getElementById('adjustmentsList').innerHTML = ''; updateDeductionsDisplay(); markRouteCalculationStale(); }
+
+function restoreAdjustments(adjustments = []) {
+  const container = document.getElementById('adjustmentsList');
+  if (!container) return;
+  container.replaceChildren();
+  (Array.isArray(adjustments) ? adjustments : [])
+    .filter(adjustment => adjustment && typeof adjustment === 'object')
+    .forEach(addAdjustment);
+  updateDeductionsDisplay();
+}
 
 function updateDeductionsDisplay() { const total = getAdjustmentsTotal(); document.getElementById('deductionsTotal').textContent = Number(total || 0).toFixed(2); }
 
@@ -1188,13 +1284,9 @@ async function postJoomlaAjax(method, payload) {
 function getCustomerPayload() {
   const customerName = (document.getElementById('customerName')?.value || '').trim();
   const customerCodeInput = document.getElementById('customerCode');
-  const customerCode = (customerCodeInput?.value || '').trim() || buildCustomerCodeFromVatId();
-  if (customerCodeInput && !customerCodeInput.value.trim() && customerCode) {
-    customerCodeInput.value = customerCode;
-    customerCodeInput.dataset.generatedFromVat = '1';
-    customerCodeInput.dataset.generatedVatCode = customerCode;
-  }
+  const customerCode = (customerCodeInput?.value || '').trim();
   return {
+    customer_id: activeCustomerId,
     customer_code: customerCode,
     customer_name: customerName,
     customer_address: (document.getElementById('customerAddress')?.value || '').trim(),
@@ -1209,12 +1301,13 @@ function getCustomerPayload() {
 }
 
 function buildCustomerCodeFromVatId() {
-  return (document.getElementById('customerVatId')?.value || '').replace(/\D+/g, '').slice(0, 10);
+  return (document.getElementById('customerVatId')?.value || '').replace(/\D+/g, '').slice(0, 64);
 }
 
 function syncCustomerCodeFromVatId() {
   const customerCodeInput = document.getElementById('customerCode');
   if (!customerCodeInput) return;
+  if (customerCodeInput.dataset.manuallyEdited === '1') return;
   const generatedCode = buildCustomerCodeFromVatId();
   const currentCode = customerCodeInput.value.trim();
   const previousGeneratedCode = customerCodeInput.dataset.generatedVatCode || '';
@@ -1228,16 +1321,18 @@ function syncCustomerCodeFromVatId() {
 async function saveCustomerDetails() {
   try {
     const payload = getCustomerPayload();
-    if (!payload.customer_code) { showDatabaseStatus('Sifra Stranke is required.', 'danger'); return; }
-    if (!payload.customer_name) { showDatabaseStatus('Customer name is required.', 'danger'); return; }
+    if (!payload.customer_name) { showDatabaseStatus('Customer name is required.', 'danger'); return null; }
     showDatabaseStatus('Saving customer details...', 'warning');
-    await postJoomlaAjax('saveCustomer', payload);
-    showDatabaseStatus(t('Customer details saved for') + ' ' + payload.customer_code + '.', 'success');
+    const data = await postJoomlaAjax('saveCustomer', payload);
+    activeCustomerId = Number(data?.customer?.id || 0);
+    showDatabaseStatus(t('Customer details saved for') + ' ' + payload.customer_name + '.', 'success');
     savedCustomers = [];
     await ensureSavedCustomersLoaded();
     await loadInvoiceHistory();
+    return data?.customer || null;
   } catch (err) {
     showDatabaseStatus(err.message, 'danger');
+    return null;
   }
 }
 
@@ -1273,13 +1368,13 @@ async function ensureSavedCustomersLoaded() {
 }
 
 function mergeSavedCustomers(customers) {
-  const byCode = new Map(savedCustomers.map(customer => [String(customer.customer_code || ''), customer]));
+  const byId = new Map(savedCustomers.map(customer => [Number(customer.id || 0), customer]));
   customers.forEach(customer => {
-    const code = String(customer.customer_code || '');
-    if (!code) return;
-    byCode.set(code, customer);
+    const id = Number(customer.id || 0);
+    if (!id) return;
+    byId.set(id, customer);
   });
-  savedCustomers = Array.from(byCode.values());
+  savedCustomers = Array.from(byId.values());
   return savedCustomers;
 }
 
@@ -1301,7 +1396,7 @@ function renderSavedCustomerSuggestions(customers) {
     button.type = 'button';
     button.className = 'list-group-item list-group-item-action py-1 small d-flex justify-content-between gap-2';
     button.innerHTML = `<span>${xmlEscape(customer.customer_name || '')}</span><span class="text-muted text-nowrap">${xmlEscape(customer.customer_code || '')}</span>`;
-    button.addEventListener('click', () => selectSavedCustomer(customer.customer_code || ''));
+    button.addEventListener('click', () => selectSavedCustomer(Number(customer.id || 0)));
     list.appendChild(button);
   });
 }
@@ -1327,25 +1422,14 @@ async function onCustomerNameInput() {
   }
 }
 
-async function selectSavedCustomer(customerCode) {
-  if (!customerCode) return;
+async function selectSavedCustomer(customerId) {
+  if (!customerId) return;
   document.getElementById('savedCustomerSuggestions')?.replaceChildren();
-  document.getElementById('customerCode').value = customerCode;
-  await loadCustomerDetails(customerCode);
+  await loadCustomerDetails(customerId);
 }
 
-async function resolveCustomerCodeFromName() {
-  const currentCode = (document.getElementById('customerCode')?.value || '').trim();
-  const name = (document.getElementById('customerName')?.value || '').trim().toLocaleLowerCase();
-  if (!name) return currentCode;
-
-  await ensureSavedCustomersLoaded();
-  const exact = savedCustomers.find(customer => String(customer.customer_name || '').trim().toLocaleLowerCase() === name);
-  const match = exact || savedCustomers.find(customer => String(customer.customer_name || '').toLocaleLowerCase().includes(name));
-  if (!match) return currentCode;
-
-  if (document.getElementById('customerCode')) document.getElementById('customerCode').value = match.customer_code || '';
-  return match.customer_code || currentCode;
+function getActiveCustomerId() {
+  return activeCustomerId;
 }
 
 function scheduleCustomerPickerSearch() {
@@ -1391,6 +1475,7 @@ function renderCustomerPicker(customers) {
   if (!customers.length) status.textContent = t('No matching customers found.');
 
   customers.forEach(customer => {
+    const id = Number(customer.id || 0);
     const code = String(customer.customer_code || '');
     const name = String(customer.customer_name || '');
     const row = document.createElement('div');
@@ -1401,29 +1486,29 @@ function renderCustomerPicker(customers) {
     loadButton.type = 'button';
     loadButton.className = 'btn btn-sm btn-outline-primary';
     loadButton.textContent = t('Load');
-    loadButton.addEventListener('click', () => selectCustomerFromPicker(code));
+    loadButton.addEventListener('click', () => selectCustomerFromPicker(id));
     const deleteButton = document.createElement('button');
     deleteButton.type = 'button';
     deleteButton.className = 'btn btn-sm btn-outline-danger';
     deleteButton.textContent = t('Delete');
-    deleteButton.addEventListener('click', () => deleteSavedCustomer(code, name));
+    deleteButton.addEventListener('click', () => deleteSavedCustomer(id, name, code));
     row.append(nameElement, loadButton, deleteButton);
     list.appendChild(row);
   });
 }
 
-async function deleteSavedCustomer(customerCode, customerName = '') {
-  if (!customerCode) return;
-  const label = customerName ? `${customerName} (${customerCode})` : customerCode;
+async function deleteSavedCustomer(customerId, customerName = '', customerCode = '') {
+  if (!customerId) return;
+  const label = [customerName, customerCode].filter(Boolean).join(' — ') || `#${customerId}`;
   if (!window.confirm(`${t('Warning: Delete this saved customer? The customer will be removed, but invoice history will stay saved. This cannot be undone.')}\n\n${label}`)) return;
 
   const status = document.getElementById('customerPickerStatus');
   try {
     if (status) status.textContent = t('Deleting customer...');
-    await postJoomlaAjax('deleteCustomer', { customer_code: customerCode });
-    savedCustomers = savedCustomers.filter(customer => String(customer.customer_code || '') !== customerCode);
+    await postJoomlaAjax('deleteCustomer', { customer_id: customerId });
+    savedCustomers = savedCustomers.filter(customer => Number(customer.id || 0) !== customerId);
 
-    if ((document.getElementById('customerCode')?.value || '').trim() === customerCode) {
+    if (activeCustomerId === customerId) {
       clearCurrentCustomerForm();
     }
 
@@ -1437,33 +1522,43 @@ async function deleteSavedCustomer(customerCode, customerName = '') {
 }
 
 function clearCurrentCustomerForm() {
+  activeCustomerId = 0;
+  setEditableInvoice();
+  setActiveDraftRef('');
+  renderDraftLines([]);
   ['customerCode', 'customerName', 'customerAddress', 'customerPostcode', 'customerCity', 'customerVatId', 'customInvoiceMessage'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
   const countryCode = document.getElementById('customerCountryCode');
   if (countryCode) countryCode.value = 'SI';
+  const customerCode = document.getElementById('customerCode');
+  if (customerCode) {
+    customerCode.dataset.generatedFromVat = '0';
+    customerCode.dataset.generatedVatCode = '';
+    customerCode.dataset.manuallyEdited = '0';
+  }
   const historyEl = document.getElementById('invoiceHistory');
   if (historyEl) historyEl.textContent = '';
 }
 
-function selectCustomerFromPicker(customerCode) {
-  document.getElementById('customerCode').value = customerCode;
+function selectCustomerFromPicker(customerId) {
   const modalElement = document.getElementById('customerPickerModal');
   bootstrap.Modal.getInstance(modalElement)?.hide();
-  loadCustomerDetails(customerCode);
+  loadCustomerDetails(customerId);
 }
 
-async function loadCustomerDetails(selectedCustomerCode = '') {
-  const customerCode = selectedCustomerCode || (document.getElementById('customerCode')?.value || '').trim();
-  if (!customerCode) { showDatabaseStatus('Enter Sifra Stranke to load a customer.', 'danger'); return; }
+async function loadCustomerDetails(selectedCustomerId = 0) {
+  const customerId = Number(selectedCustomerId || activeCustomerId || 0);
+  if (!customerId) { showDatabaseStatus('Select a saved customer to load.', 'danger'); return; }
 
   try {
     showDatabaseStatus('Loading customer details...', 'warning');
-    const data = await postJoomlaAjax('loadCustomer', { customer_code: customerCode });
+    const data = await postJoomlaAjax('loadCustomer', { customer_id: customerId });
     const customer = data.customer || {};
 
-    document.getElementById('customerCode').value = customer.customer_code || customerCode;
+    activeCustomerId = Number(customer.id || customerId);
+    document.getElementById('customerCode').value = customer.customer_code || '';
     document.getElementById('customerName').value = customer.customer_name || '';
     document.getElementById('customerAddress').value = customer.customer_address || '';
     document.getElementById('customerPostcode').value = customer.customer_postcode || '';
@@ -1471,6 +1566,9 @@ async function loadCustomerDetails(selectedCustomerCode = '') {
     document.getElementById('customerCountryCode').value = customer.customer_country_code || 'SI';
     document.getElementById('customerVatId').value = customer.vat_id || '';
     document.getElementById('customInvoiceMessage').value = customer.custom_invoice_message || '';
+    document.getElementById('customerCode').dataset.generatedFromVat = '0';
+    document.getElementById('customerCode').dataset.generatedVatCode = '';
+    document.getElementById('customerCode').dataset.manuallyEdited = '1';
 
     showDatabaseStatus('Customer details loaded.', 'success');
     await loadInvoiceHistory();
@@ -1519,6 +1617,7 @@ async function generateNextInvoiceNumber(force = false, documentType = 'invoice'
       if (force) {
         currentDocumentType = documentType;
         currentDocumentId = 0;
+        setEditableInvoice();
         currentConvertedInvoiceId = 0;
         resetCurrentPaymentState();
       }
@@ -1534,7 +1633,6 @@ async function generateNextInvoiceNumber(force = false, documentType = 'invoice'
 async function saveInvoiceHistory(documentType = 'invoice', sourceDocumentId = 0) {
   try {
     const invoiceNumberInput = document.getElementById('invoiceNumber');
-    await resolveCustomerCodeFromName();
     const expectedPrefix = documentType === 'proforma' ? 'PR-RCHA-' : 'RCHA-';
     if (!String(invoiceNumberInput?.value || '').toUpperCase().startsWith(expectedPrefix)) {
       invoiceNumberInput.value = '';
@@ -1542,16 +1640,17 @@ async function saveInvoiceHistory(documentType = 'invoice', sourceDocumentId = 0
     await generateNextInvoiceNumber(false, documentType);
     const payload = getInvoiceHistoryPayload(documentType, sourceDocumentId);
     if (!payload) { showDatabaseStatus('Calculate a route or add draft services before saving invoice history.', 'warning'); return; }
-    if (!payload.customer.customer_code) { showDatabaseStatus('Sifra Stranke is required.', 'danger'); return; }
     if (!payload.invoice_number) { showDatabaseStatus('Invoice number is required.', 'danger'); return; }
     showDatabaseStatus('Saving invoice history...', 'warning');
     const data = await postJoomlaAjax('saveInvoice', payload);
     const savedInvoice = data?.invoice || null;
+    activeCustomerId = Number(savedInvoice?.customer_id || activeCustomerId || 0);
     if (savedInvoice?.invoice_number) {
       invoiceNumberInput.value = savedInvoice.invoice_number;
       invoiceNumberInput.dataset.generated = '0';
       currentDocumentType = savedInvoice.document_type || documentType;
       currentDocumentId = Number(data?.invoice_id || 0);
+      setEditableInvoice(currentDocumentId, currentDocumentType);
       currentConvertedInvoiceId = Number(savedInvoice.converted_invoice_id || 0);
       resetCurrentPaymentState();
       restoredInvoiceIssueDate = getTodayIsoDate();
@@ -1561,8 +1660,48 @@ async function saveInvoiceHistory(documentType = 'invoice', sourceDocumentId = 0
       setActiveDraftRef('');
       renderDraftLines([]);
     }
-    await loadInvoiceHistory(savedInvoice?.customer_code || payload.customer.customer_code, savedInvoice?.customer_name || payload.customer.customer_name, savedInvoice);
+    await loadInvoiceHistory(savedInvoice?.customer_id || activeCustomerId, savedInvoice);
     return savedInvoice;
+  } catch (err) {
+    showDatabaseStatus(err.message, 'danger');
+    return null;
+  }
+}
+
+async function updateLoadedInvoice() {
+  if (!editableInvoiceId) {
+    showDatabaseStatus('Load a saved invoice before updating it.', 'warning');
+    return;
+  }
+
+  const payload = getInvoiceHistoryPayload('invoice', 0);
+  if (!payload) {
+    showDatabaseStatus('Calculate the corrected route before updating the invoice.', 'warning');
+    return;
+  }
+
+  const invoiceNumber = String(document.getElementById('invoiceNumber')?.value || '').trim();
+  if (!window.confirm(tf('Update saved invoice {documentNumber} with the current values?', { documentNumber: invoiceNumber }))) return;
+
+  try {
+    showDatabaseStatus('Updating invoice...', 'warning');
+    payload.invoice_id = editableInvoiceId;
+    const data = await postJoomlaAjax('updateInvoice', payload);
+    const updatedInvoice = data?.invoice || null;
+    if (!updatedInvoice) throw new Error(t('Invoice update failed.'));
+
+    activeCustomerId = Number(updatedInvoice.customer_id || activeCustomerId || 0);
+    currentDocumentType = 'invoice';
+    currentDocumentId = Number(data.invoice_id || editableInvoiceId);
+    setEditableInvoice(currentDocumentId, currentDocumentType);
+    currentConvertedInvoiceId = Number(updatedInvoice.converted_invoice_id || 0);
+    currentRemainingAmount = Math.max(0, roundMoney(Number(updatedInvoice.total_amount || 0) - currentPaidAmount));
+    currentPaymentStatus = currentPaidAmount <= 0.004 ? 'unpaid' : (currentRemainingAmount <= 0.004 ? 'paid' : 'partially_paid');
+    document.getElementById('invoiceNumber').value = updatedInvoice.invoice_number || invoiceNumber;
+    document.getElementById('invoiceNumber').dataset.generated = '0';
+    showDatabaseStatus('Invoice updated.', 'success');
+    await loadInvoiceHistory(activeCustomerId, updatedInvoice);
+    return updatedInvoice;
   } catch (err) {
     showDatabaseStatus(err.message, 'danger');
     return null;
@@ -1627,12 +1766,11 @@ function getDraftLinePayload() {
 
 async function addCurrentServiceToDraft() {
   try {
-    await resolveCustomerCodeFromName();
     const payload = getDraftLinePayload();
     if (!payload) { showDatabaseStatus('Calculate a route before adding a draft line.', 'warning'); return; }
-    if (!payload.customer.customer_code) { showDatabaseStatus('Sifra Stranke is required.', 'danger'); return; }
     showDatabaseStatus('Adding service to draft invoice...', 'warning');
     const data = await postJoomlaAjax('addDraftLine', payload);
+    activeCustomerId = Number(data?.customer_id || activeCustomerId || 0);
     renderDraftLines(data.draft_lines || []);
     resetCurrentServiceAfterDraftAdd();
     showDatabaseStatus('Service added to draft invoice.', 'success');
@@ -1658,8 +1796,8 @@ async function loadDraftLines() {
   const draftEl = document.getElementById('invoiceDraft');
   if (!draftEl) return [];
   try {
-    const customerCode = await resolveCustomerCodeFromName();
-    if (!customerCode) {
+    const customerId = getActiveCustomerId();
+    if (!customerId) {
       draftEl.textContent = t('Select or save a customer before loading draft invoice.');
       return [];
     }
@@ -1668,7 +1806,7 @@ async function loadDraftLines() {
       return [];
     }
     draftEl.textContent = t('Loading draft invoice...');
-    const data = await postJoomlaAjax('listDraftLines', { customer_code: customerCode, project_ref: getDraftProjectRef() });
+    const data = await postJoomlaAjax('listDraftLines', { customer_id: customerId, project_ref: getDraftProjectRef() });
     const lines = data.draft_lines || [];
     renderDraftLines(lines);
     return lines;
@@ -1719,9 +1857,9 @@ async function deleteDraftLine(id) {
 
 async function clearDraftLines() {
   try {
-    const customerCode = await resolveCustomerCodeFromName();
-    if (!customerCode) { showDatabaseStatus('Sifra Stranke is required.', 'danger'); return; }
-    await postJoomlaAjax('clearDraftLines', { customer_code: customerCode, project_ref: getDraftProjectRef() });
+    const customerId = getActiveCustomerId();
+    if (!customerId) { showDatabaseStatus('Select or save a customer first.', 'danger'); return; }
+    await postJoomlaAjax('clearDraftLines', { customer_id: customerId, project_ref: getDraftProjectRef() });
     setActiveDraftRef('');
     renderDraftLines([]);
     showDatabaseStatus('Draft invoice cleared.', 'success');
@@ -1982,19 +2120,18 @@ function restoreInvoiceFromModalOrHistory(source, index) {
   else restoreInvoiceFromModal(source, index);
 }
 
-async function loadInvoiceHistory(customerCodeOverride = '', customerNameOverride = '', savedInvoice = null) {
+async function loadInvoiceHistory(customerIdOverride = 0, savedInvoice = null) {
   const historyEl = document.getElementById('invoiceHistory');
   if (!historyEl) return;
   try {
-    const resolvedCode = await resolveCustomerCodeFromName();
-    const customerCode = customerCodeOverride || resolvedCode;
-    const customerName = customerNameOverride || (document.getElementById('customerName')?.value || '').trim();
-    if (!customerCode && !customerName) {
+    const resolvedId = getActiveCustomerId();
+    const customerId = Number(customerIdOverride || resolvedId || 0);
+    if (!customerId) {
       historyEl.textContent = t('Select or save a customer before loading invoice history.');
       return;
     }
     historyEl.textContent = t('Loading invoice history...');
-    const data = await postJoomlaAjax('listInvoices', { customer_code: customerCode, customer_name: customerName });
+    const data = await postJoomlaAjax('listInvoices', { customer_id: customerId });
     const invoices = data.invoices || [];
     renderInvoiceHistory(invoices.length ? invoices : (savedInvoice ? [savedInvoice] : []));
   } catch (err) {
@@ -2028,9 +2165,8 @@ async function openAllCustomerInvoices() {
   const list = document.getElementById('customerInvoiceHistoryList');
   if (!modalElement || !status || !list || !window.bootstrap) return;
   scrollCalculatorToTop();
-  const customerCode = await resolveCustomerCodeFromName();
-  const customerName = (document.getElementById('customerName')?.value || '').trim();
-  if (!customerCode && !customerName) {
+  const customerId = getActiveCustomerId();
+  if (!customerId) {
     showDatabaseStatus('Select or save a customer before loading invoice history.', 'warning');
     return;
   }
@@ -2038,7 +2174,7 @@ async function openAllCustomerInvoices() {
   list.replaceChildren();
   bootstrap.Modal.getOrCreateInstance(modalElement).show();
   try {
-    const data = await postJoomlaAjax('listInvoices', { customer_code: customerCode, customer_name: customerName, load_all: true });
+    const data = await postJoomlaAjax('listInvoices', { customer_id: customerId, load_all: true });
     allCustomerInvoices = data.invoices || [];
     status.textContent = tf('{count} invoices found.', { count: allCustomerInvoices.length });
     list.innerHTML = modalInvoiceRowsHtml(allCustomerInvoices, 'customer', false);
@@ -2198,7 +2334,18 @@ function restoreInvoiceRecord(invoice) {
   }
 
   const customer = payload.customer || {};
-  document.getElementById('customerCode').value = customer.customer_code || invoice.customer_code || '';
+  const previousCustomerId = Number(activeCustomerId || 0);
+  const previousCustomerCode = (document.getElementById('customerCode')?.value || '').trim();
+  activeCustomerId = Number(invoice.customer_id || customer.customer_id || 0);
+  document.getElementById('customerCode').value = invoice.current_customer_code
+    || (previousCustomerId === activeCustomerId ? previousCustomerCode : '')
+    || customer.customer_code
+    || invoice.customer_code
+    || '';
+  refreshRestoredCustomerCode(activeCustomerId);
+  document.getElementById('customerCode').dataset.generatedFromVat = '0';
+  document.getElementById('customerCode').dataset.generatedVatCode = '';
+  document.getElementById('customerCode').dataset.manuallyEdited = '1';
   document.getElementById('customerName').value = customer.customer_name || invoice.customer_name || '';
   document.getElementById('customerAddress').value = customer.customer_address || invoice.customer_address || '';
   document.getElementById('customerPostcode').value = customer.customer_postcode || '';
@@ -2210,6 +2357,7 @@ function restoreInvoiceRecord(invoice) {
   invoiceNumberInput.dataset.generated = '0';
   currentDocumentType = invoice.document_type || payload.document_type || (/^PR-RCHA-/i.test(invoiceNumberInput.value) ? 'proforma' : 'invoice');
   currentDocumentId = Number(invoice.id || 0);
+  setEditableInvoice(currentDocumentId, currentDocumentType);
   currentConvertedInvoiceId = Number(invoice.converted_invoice_id || 0);
   currentPaidAmount = Math.max(0, roundMoney(Number(invoice.paid_amount || 0)));
   currentRemainingAmount = Math.max(0, roundMoney(Number(invoice.remaining_amount ?? (Number(invoice.total_amount || 0) - currentPaidAmount))));
@@ -2234,6 +2382,9 @@ function restoreInvoiceRecord(invoice) {
     renderDraftLines([]);
   }
 
+  restoreAdjustments(lastCalculatedData.deductions);
+  restoreRouteAndCountryInputs(lastCalculatedData, !(Array.isArray(payload.draft_lines) && payload.draft_lines.length));
+
   showResults(
     Number(lastCalculatedData.totalKm || 0),
     Number(lastCalculatedData.sloveniaKm || 0),
@@ -2252,6 +2403,19 @@ function restoreInvoiceRecord(invoice) {
   document.getElementById('invoiceTextSl').value = payload.invoice_text_sl || lastCalculatedData.invoiceTextSl || '';
   showDatabaseStatus('Saved invoice restored. PDF and XML can be generated without recalculating the route.', 'success');
   return true;
+}
+
+async function refreshRestoredCustomerCode(customerId) {
+  const requestedCustomerId = Number(customerId || 0);
+  if (!requestedCustomerId) return;
+  try {
+    const data = await postJoomlaAjax('loadCustomer', { customer_id: requestedCustomerId });
+    if (Number(activeCustomerId || 0) !== requestedCustomerId) return;
+    const currentCustomer = data?.customer || {};
+    document.getElementById('customerCode').value = String(currentCustomer.customer_code || '');
+  } catch (error) {
+    console.warn('Could not refresh the current customer code after restoring the invoice.', error);
+  }
 }
 
 async function generateProformaPdf() {
@@ -2769,11 +2933,45 @@ async function exportDraftMinimaxXml() {
 }
 
 async function exportCurrentMinimaxXml() {
-  if (getRenderedDraftLines().length) {
+  const hasDraftLines = getRenderedDraftLines().length > 0;
+  if (currentDocumentType === 'proforma') {
+    setStatus('Predračun cannot be exported to Minimax. Create the invoice first.', 'warning');
+    return;
+  }
+  if (!hasDraftLines && !lastCalculatedData) {
+    setStatus('Calculate a route first, then export Minimax XML.', 'warning');
+    return;
+  }
+  if (await resolveCustomerCodeForXml() === null) return;
+  if (hasDraftLines) {
     await exportDraftMinimaxXml();
     return;
   }
   exportMinimaxXml();
+}
+
+async function resolveCustomerCodeForXml() {
+  const customerCodeInput = document.getElementById('customerCode');
+  let code = getCurrentCustomerCode();
+  if (!code && activeCustomerId) {
+    try {
+      const data = await postJoomlaAjax('loadCustomer', { customer_id: activeCustomerId });
+      const savedCode = String(data?.customer?.customer_code || '').trim();
+      if (savedCode) {
+        code = savedCode;
+        if (customerCodeInput) customerCodeInput.value = savedCode;
+      }
+    } catch (error) {
+      console.warn('Could not refresh the customer code before XML export.', error);
+      setStatus('Could not load the current customer code. XML export was stopped.', 'danger');
+      return null;
+    }
+  }
+  return code;
+}
+
+function getCurrentCustomerCode() {
+  return String(document.getElementById('customerCode')?.value || '').trim();
 }
 
 function exportMinimaxXml() {
@@ -2788,20 +2986,21 @@ function exportMinimaxXml() {
   const serviceDateXml = calculatedServiceDates.at(-1) || getServiceDateIso();
   const dueDateXml = getDueDateIso(today);
   const invoiceRef = (document.getElementById('invoiceNumber')?.value || '').trim();
-  const sifraStranke = (document.getElementById('customerCode')?.value || '').trim();
+  const sifraStranke = getCurrentCustomerCode();
   const naziv = (document.getElementById('customerName')?.value || '').trim();
   const naslov = (document.getElementById('customerAddress')?.value || '').trim();
   const postnaStevilka = (document.getElementById('customerPostcode')?.value || '').trim();
   const nazivPoste = (document.getElementById('customerCity')?.value || '').trim();
   const kraticaDrzave = (document.getElementById('customerCountryCode')?.value || 'SI').trim().toUpperCase();
   const vatId = (document.getElementById('customerVatId')?.value || '').trim();
-  const requiredFields = [[invoiceRef, 'Invoice number'], [sifraStranke, 'Customer code'], [naziv, 'Customer name'], [naslov, 'Customer address'], [postnaStevilka, 'Customer postcode'], [nazivPoste, 'Customer city']];
+  if (!sifraStranke) { setStatus('Customer code is required for Minimax XML.', 'danger'); return false; }
+  const requiredFields = [[invoiceRef, 'Invoice number'], [naziv, 'Customer name'], [naslov, 'Customer address'], [postnaStevilka, 'Customer postcode'], [nazivPoste, 'Customer city']];
   const missingField = requiredFields.find(([value]) => !value);
   if (missingField) { setStatus(`${missingField[1]} is required for Minimax XML.`, 'danger'); return false; }
-  if (invoiceRef.length > 30 || sifraStranke.length > 10 || naziv.length > 100 || naslov.length > 50 || postnaStevilka.length > 30 || nazivPoste.length > 250 || vatId.length > 14) {
+  if (invoiceRef.length > 30 || sifraStranke.length > 10 || naziv.length > 250 || naslov.length > 250 || postnaStevilka.length > 30 || nazivPoste.length > 250 || vatId.length > 14) {
     setStatus('Customer or invoice data exceeds a Minimax XML field length.', 'danger'); return false;
   }
-  if (!/^[A-Za-z0-9#._-]+$/.test(sifraStranke)) { setStatus('Customer code contains characters that are not supported by Minimax XML.', 'danger'); return false; }
+  if (!/^[A-Za-z0-9#._-]+$/.test(sifraStranke)) { setStatus('Customer code contains characters unsupported by Minimax.', 'danger'); return false; }
   if (!/^[A-Z]{2}$/.test(kraticaDrzave)) { setStatus('Customer country code must contain exactly two letters.', 'danger'); return false; }
   const calculationBaseCountryCode = String(d.baseCountry || getBaseCountryCode()).toUpperCase();
   const baseCountryConfig = getCountryOptionConfig(calculationBaseCountryCode);
@@ -2971,21 +3170,28 @@ function exportMinimaxXml() {
   const vatLines = Object.entries(vatAmountsByAccount).map(([account, amount]) => `\n\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)} - DDV</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(account)}</SifraKonta>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>0.00</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>0.00</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>${moneyXml(amount)}</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>`).join('');
   const minimaxXmlNamespace = 'https://moj.minimax.si/SI/CommonWeb/documents/schemas/miniMAXUvozKnjigovodstvo';
   const minimaxXmlSchemaUrl = `${minimaxXmlNamespace}.xsd`;
-  const xml = `<?xml version="1.0" encoding="utf-8"?>\n<miniMAXUvozKnjigovodstvo xmlns="${minimaxXmlNamespace}" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="${minimaxXmlNamespace} ${minimaxXmlSchemaUrl}">\n\n  <Temeljnice>\n    <Temeljnica>\n      <GlavaTemeljnice>\n        <SifraVrsteTemeljnice>IR</SifraVrsteTemeljnice>\n        <DatumTemeljnice>${today}</DatumTemeljnice>\n        <OpisGlaveTemeljnice>${xmlEscape(invoiceRef)}</OpisGlaveTemeljnice>\n      </GlavaTemeljnice>\n\n      <DDV>\n        <DDVVrstica>\n          <DDVGlava>\n            <DatumDDV>${today}</DatumDDV>\n            <KnjigaDDV>IR</KnjigaDDV>\n            <DatumKnjizenjaDDV>${today}</DatumKnjizenjaDDV>\n            <SifraStranke>${sifraStranke}</SifraStranke>\n            <Listina>${xmlEscape(invoiceRef)}</Listina>\n            <DatumListine>${today}</DatumListine>\n            <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n            <VrstaPorocanja>Obračun</VrstaPorocanja>\n          </DDVGlava>\n\n          <DDVStopnje>${ddvStopnjeXml}\n          </DDVStopnje>\n        </DDVVrstica>\n      </DDV>\n\n      <VrsticeTemeljnice>\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(receivableAccount)}</SifraKonta>\n          <SifraStranke>${sifraStranke}</SifraStranke>\n          <DatumZapadlosti>${today}</DatumZapadlosti>\n          <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>${total}</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>0.00</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>${total}</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>0.00</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${revenueLines}${vatLines}\n      </VrsticeTemeljnice>\n    </Temeljnica>\n  </Temeljnice>\n\n  <Stranke>\n    <Stranka>\n      <Sifra>${xmlEscape(sifraStranke)}</Sifra>\n      <Naziv>${xmlEscape(naziv)}</Naziv>\n      <Naslov>${xmlEscape(naslov)}</Naslov>\n      <KraticaDrzave>SI</KraticaDrzave>\n      <PostnaStevilka>1000</PostnaStevilka>\n      <NazivPoste>Ljubljana</NazivPoste>\n      <DavcniZavezanec>${vatId ? 'D' : 'N'}</DavcniZavezanec>\n      <IdentifikacijskaStevilka>${xmlEscape(vatId)}</IdentifikacijskaStevilka>\n    </Stranka>\n  </Stranke>\n\n</miniMAXUvozKnjigovodstvo>`;
+  const xml = `<?xml version="1.0" encoding="utf-8"?>\n<miniMAXUvozKnjigovodstvo xmlns="${minimaxXmlNamespace}" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="${minimaxXmlNamespace} ${minimaxXmlSchemaUrl}">\n\n  <Temeljnice>\n    <Temeljnica>\n      <GlavaTemeljnice>\n        <SifraVrsteTemeljnice>IR</SifraVrsteTemeljnice>\n        <DatumTemeljnice>${today}</DatumTemeljnice>\n        <OpisGlaveTemeljnice>${xmlEscape(invoiceRef)}</OpisGlaveTemeljnice>\n      </GlavaTemeljnice>\n\n      <DDV>\n        <DDVVrstica>\n          <DDVGlava>\n            <DatumDDV>${today}</DatumDDV>\n            <KnjigaDDV>IR</KnjigaDDV>\n            <DatumKnjizenjaDDV>${today}</DatumKnjizenjaDDV>\n            <SifraStranke>${xmlEscape(sifraStranke)}</SifraStranke>\n            <Listina>${xmlEscape(invoiceRef)}</Listina>\n            <DatumListine>${today}</DatumListine>\n            <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n            <VrstaPorocanja>Obračun</VrstaPorocanja>\n          </DDVGlava>\n\n          <DDVStopnje>${ddvStopnjeXml}\n          </DDVStopnje>\n        </DDVVrstica>\n      </DDV>\n\n      <VrsticeTemeljnice>\n        <VrsticaTemeljnice>\n          <DatumKnjizbe>${today}</DatumKnjizbe>\n          <OpisVrsticeTemeljnice>${xmlEscape(invoiceRef)}</OpisVrsticeTemeljnice>\n          <SifraKonta>${xmlEscape(receivableAccount)}</SifraKonta>\n          <SifraStranke>${xmlEscape(sifraStranke)}</SifraStranke>\n          <DatumZapadlosti>${today}</DatumZapadlosti>\n          <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>\n          <ZnesekVBremeVDenarniEnoti>${total}</ZnesekVBremeVDenarniEnoti>\n          <ZnesekVDobroVDenarniEnoti>0.00</ZnesekVDobroVDenarniEnoti>\n          <ZnesekVBremeVDomaciDenarniEnoti>${total}</ZnesekVBremeVDomaciDenarniEnoti>\n          <ZnesekVDobroVDomaciDenarniEnoti>0.00</ZnesekVDobroVDomaciDenarniEnoti>\n        </VrsticaTemeljnice>${revenueLines}${vatLines}\n      </VrsticeTemeljnice>\n    </Temeljnica>\n  </Temeljnice>\n\n  <Stranke>\n    <Stranka>\n      <Sifra>${xmlEscape(sifraStranke)}</Sifra>\n      <Naziv>${xmlEscape(naziv)}</Naziv>\n      <Naslov>${xmlEscape(naslov)}</Naslov>\n      <KraticaDrzave>${xmlEscape(kraticaDrzave)}</KraticaDrzave>\n      <PostnaStevilka>${xmlEscape(postnaStevilka)}</PostnaStevilka>\n      <NazivPoste>${xmlEscape(nazivPoste)}</NazivPoste>\n      <DavcniZavezanec>${vatId ? 'D' : 'N'}</DavcniZavezanec>\n      <IdentifikacijskaStevilka>${xmlEscape(vatId)}</IdentifikacijskaStevilka>\n    </Stranka>\n  </Stranke>\n\n</miniMAXUvozKnjigovodstvo>`;
   const normalizedXml = xml
     .replaceAll(`<DatumTemeljnice>${today}</DatumTemeljnice>`, `<DatumTemeljnice>${serviceDateXml}</DatumTemeljnice>`)
     .replaceAll(`<DatumDDV>${today}</DatumDDV>`, `<DatumDDV>${serviceDateXml}</DatumDDV>`)
     .replaceAll(`<DatumKnjizenjaDDV>${today}</DatumKnjizenjaDDV>`, `<DatumKnjizenjaDDV>${serviceDateXml}</DatumKnjizenjaDDV>`)
     .replaceAll(`<DatumKnjizbe>${today}</DatumKnjizbe>`, `<DatumKnjizbe>${serviceDateXml}</DatumKnjizbe>`)
-    .replace(`<DatumZapadlosti>${today}</DatumZapadlosti>`, `<DatumZapadlosti>${dueDateXml}</DatumZapadlosti>`)
-    .replace('<KraticaDrzave>SI</KraticaDrzave>', `<KraticaDrzave>${xmlEscape(kraticaDrzave)}</KraticaDrzave>`)
-    .replace('<PostnaStevilka>1000</PostnaStevilka>', `<PostnaStevilka>${xmlEscape(postnaStevilka)}</PostnaStevilka>`)
-    .replace('<NazivPoste>Ljubljana</NazivPoste>', `<NazivPoste>${xmlEscape(nazivPoste)}</NazivPoste>`);
-  const xmlWithVatCalculationType = normalizedXml.replace(
+    .replace(`<DatumZapadlosti>${today}</DatumZapadlosti>`, `<DatumZapadlosti>${dueDateXml}</DatumZapadlosti>`);
+  const xmlWithVatAccountingType = normalizedXml.replace(
     '            <KnjigaDDV>IR</KnjigaDDV>\n',
     '            <KnjigaDDV>IR</KnjigaDDV>\n            <VrstaObracunaDDV>PP</VrstaObracunaDDV>\n'
   );
-  const blob = new Blob([xmlWithVatCalculationType], { type: 'application/xml;charset=utf-8' });
+  const xmlWithPaymentReference = xmlWithVatAccountingType.replace(
+    `          <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>`,
+    `          <DatumOpravljanja>${serviceDateXml}</DatumOpravljanja>\n          <VezaZaPlacilo>${xmlEscape(invoiceRef)}</VezaZaPlacilo>\n          <SifraDenarneEnote>EUR</SifraDenarneEnote>`
+  );
+  // Minimax resolves customer references while processing journal lines, so
+  // customer master data must precede Temeljnice in the import document.
+  const orderedXml = xmlWithPaymentReference.replace(
+    /(\n  <Temeljnice>[\s\S]*?<\/Temeljnice>)(\n\n  <Stranke>[\s\S]*?<\/Stranke>)/,
+    '$2$1'
+  );
+  const blob = new Blob([orderedXml], { type: 'application/xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = getInvoiceXmlFileName(invoiceRef); document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   if (currentPaymentStatus === 'partially_paid') {

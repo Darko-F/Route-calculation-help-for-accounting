@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS `#__route_calculation_help_for_accounting_customers` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `customer_code` varchar(64) NOT NULL,
+  `customer_code` varchar(64) NULL DEFAULT NULL,
   `customer_name` varchar(255) NOT NULL DEFAULT '',
   `customer_address` varchar(512) NOT NULL DEFAULT '',
   `customer_postcode` varchar(30) NOT NULL DEFAULT '',
@@ -34,8 +34,8 @@ CREATE TABLE IF NOT EXISTS `#__route_calculation_help_for_accounting_invoices` (
   `converted_invoice_id` int unsigned NULL DEFAULT NULL,
   `converted_invoice_number` varchar(64) NOT NULL DEFAULT '',
   `output_file_name` varchar(255) NOT NULL DEFAULT '',
-  `pickup` varchar(255) NOT NULL DEFAULT '',
-  `dropoff` varchar(255) NOT NULL DEFAULT '',
+  `pickup` text NOT NULL,
+  `dropoff` text NOT NULL,
   `total_km` decimal(12,4) NOT NULL DEFAULT 0,
   `slovenia_km` decimal(12,4) NOT NULL DEFAULT 0,
   `outside_slovenia_km` decimal(12,4) NOT NULL DEFAULT 0,
@@ -64,14 +64,14 @@ CREATE TABLE IF NOT EXISTS `#__route_calculation_help_for_accounting_invoice_dra
   `customer_name` varchar(255) NOT NULL DEFAULT '',
   `project_ref` varchar(255) NOT NULL DEFAULT '',
   `service_date` date NULL,
-  `line_label` varchar(512) NOT NULL DEFAULT '',
+  `line_label` text NOT NULL,
   `total_amount` decimal(12,4) NOT NULL DEFAULT 0,
   `payload_json` mediumtext NULL,
   `created_by` int unsigned NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `idx_customer_project` (`customer_code`, `project_ref`),
+  KEY `idx_customer_project` (`customer_id`, `project_ref`),
   KEY `idx_customer_id` (`customer_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 

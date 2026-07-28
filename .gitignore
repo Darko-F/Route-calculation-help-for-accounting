@@ -1,5 +1,6 @@
 # Package/build output
 *.zip
+!downloads/pkg_route_calculation_help_for_accounting_v1.6.1.zip
 
 # Local test/prototype files
 test.html
@@ -11,3 +12,21 @@ docs/PRIVATE_UPDATE_SERVER.md
 Thumbs.db
 .vscode/
 .idea/
+
+!downloads/pkg_route_calculation_help_for_accounting_v1.6.2.zip
+
+!downloads/pkg_route_calculation_help_for_accounting_v1.6.3.zip
+
+!downloads/pkg_route_calculation_help_for_accounting_v1.6.4.zip
+
+!downloads/pkg_route_calculation_help_for_accounting_v1.6.5.zip
+
+!downloads/pkg_route_calculation_help_for_accounting_v1.6.6.zip
+
+!downloads/pkg_route_calculation_help_for_accounting_v1.6.7.zip
+
+!downloads/pkg_route_calculation_help_for_accounting_v1.6.8.zip
+
+!downloads/pkg_route_calculation_help_for_accounting_v1.6.9.zip
+
+!downloads/pkg_route_calculation_help_for_accounting_v1.6.11.zip
