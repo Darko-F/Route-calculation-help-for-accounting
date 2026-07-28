@@ -64,7 +64,7 @@ For a new installation, install the combined suite ZIP package in Joomla:
 
 1. Go to Joomla Administrator.
 2. Open System -> Install -> Extensions.
-3. Upload `pkg_route_calculation_help_for_accounting_v1.6.0.zip`.
+3. Upload `pkg_route_calculation_help_for_accounting_v1.6.11.zip`.
 4. Open Content -> Site Modules.
 5. Create or open Route calculation help for accounting.
 6. Open Components -> Route calculation help -> Options, then enter the shared settings. Each module can independently choose global or module settings for Google Maps, company/PDF, Minimax, and countries.
@@ -90,6 +90,20 @@ The supported installable suite is distributed as:
 ```text
 pkg_route_calculation_help_for_accounting_vx.x.x.zip
 ```
+
+## Release Build
+
+After updating the suite, module, and enclosed extension versions and package
+references, run:
+
+```bash
+scripts/build-release.sh
+```
+
+The script builds and validates all ZIPs, updates the package download URL and
+SHA-256 checksum, and makes the advertised suite ZIP trackable by Git. Commit
+that generated suite ZIP with the update feed so the server can never advertise
+a package that was omitted from deployment.
 
 ## Security
 

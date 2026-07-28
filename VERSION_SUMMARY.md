@@ -1,5 +1,86 @@
 # Version Summary
 
+## Suite Package 1.6.11
+
+- Loading a saved invoice now also restores its additional-cost rows, amounts, and VAT presets into the calculator form.
+- Added an Update Invoice action for loaded invoices, preserving the original invoice number, issue timestamp, conversion links, and payments while saving corrected route, customer, text, date, VAT, and additional-cost data.
+- Updated the enclosed versions to module 1.6.11, component 1.2.1, and installer update-key plugin 1.0.4.
+
+## Suite Package 1.6.10
+
+- Consolidated local and Minimax customer codes into the single **Customer code** field.
+- Removed the separate Minimax customer-code input and all runtime persistence, loading, search, and export dependencies on it.
+- Minimax XML now uses the current customer code exactly as entered and validates Minimax's 10-character and supported-character requirements at export time.
+- Restored historical invoice codes remain final fallbacks; the current saved customer code and same-customer form value retain priority.
+- Updated the enclosed versions to module 1.6.10, component 1.2.1, and installer update-key plugin 1.0.4.
+
+## Suite Package 1.6.9
+
+- Removed historical local and Minimax customer codes from the invoice-restoration source order.
+- Invoice restoration now uses the invoice table's database `customer_id` first and refreshes both code fields directly from that exact current customer record.
+- Invoice lists include the customer's current local code alongside the current Minimax code, avoiding old payload values while the refresh completes.
+- Updated the enclosed versions to module 1.6.9, component 1.2.1, and installer update-key plugin 1.0.4.
+
+## Suite Package 1.6.8
+
+- XML export now always reloads a saved customer's current Minimax code, even when the loaded invoice contains a different non-empty historical code.
+- The current customer database value overrides the invoice payload and the value previously displayed by the loaded invoice.
+- XML export stops safely if the current customer record cannot be loaded, instead of exporting a potentially stale customer code.
+- Updated the enclosed versions to module 1.6.8, component 1.2.1, and installer update-key plugin 1.0.4.
+
+## Suite Package 1.6.7
+
+- XML export now reloads the selected customer's saved Minimax code when an older invoice leaves the form value empty.
+- If no dedicated Minimax code is saved, XML can use the local customer code when it satisfies Minimax's 10-character and supported-character rules.
+- Relabeled the local customer code as optional so it is clearly distinguished from the dedicated Minimax customer code.
+- Updated the enclosed versions to module 1.6.7, component 1.2.1, and installer update-key plugin 1.0.4.
+
+## Suite Package 1.6.6
+
+- Loading a saved invoice now restores pickup, drop-off, additional places, and the return-trip selection into the route form.
+- Restores the saved country split rows, kilometres, VAT rates, Minimax accounts, and country PDF notes.
+- New invoices store the raw drop-off, stop list, and return-trip state for exact restoration; older invoices reconstruct them from the saved route description.
+- Updated the enclosed versions to module 1.6.6, component 1.2.1, and installer update-key plugin 1.0.4.
+
+## Suite Package 1.6.5
+
+- Restoring an invoice now reads the current Minimax customer code from the customer record instead of relying only on the historical invoice payload.
+- Older invoices created before the Minimax code field was added can therefore be exported after the code is added to the existing customer.
+- Preserved a currently loaded Minimax code when restoring a historical invoice for the same customer.
+- Updated the enclosed versions to module 1.6.5, component 1.2.1, and installer update-key plugin 1.0.4.
+
+## Suite Package 1.6.4
+
+- Added a separate customer code specifically for Minimax, independent from the module's editable local customer code.
+- Minimax XML now uses only the exact configured Minimax customer code for both `Sifra` and `SifraStranke`; database-ID codes such as `DB11` are no longer generated.
+- XML export stops with a clear message when the Minimax customer code is empty, instead of creating a duplicate customer in Minimax.
+- Enforced uniqueness for non-empty local and Minimax customer codes while continuing to allow multiple customers with either code empty.
+- Updated the enclosed versions to module 1.6.4, component 1.2.1, and installer update-key plugin 1.0.4.
+
+## Suite Package 1.6.3
+
+- Moved Minimax customer master data before journal entries so account 1200 can resolve the imported or existing customer.
+- Preserved `VrstaObracunaDDV=PP` (`Prevoz potnikov`) while correcting customer-first XML processing so Minimax can validate it with the resolved customer.
+- Added the invoice reference as `VezaZaPlacilo` on the customer-receivable line.
+- Updated the enclosed versions to module 1.6.3, component 1.2.1, and installer update-key plugin 1.0.4.
+
+## Suite Package 1.6.2
+
+- Corrected Minimax XML exports so customers with an empty business code are included with a stable XML-only code based on their database customer ID.
+- Automatically saves a new code-less customer before XML export so a database identity is available.
+- Aligned the exported customer field-length validation with the published Minimax XSD.
+- Updated the enclosed versions to module 1.6.2, component 1.2.1, and installer update-key plugin 1.0.4.
+
+## Suite Package 1.6.1
+
+- Made the customer code editable and optional while retaining automatic generation from the VAT ID.
+- Changed customer identity, invoice history, draft services, loading, editing, and deletion to use the unique database customer ID.
+- Allowed multiple customers with no customer code while continuing to reject duplicate non-empty customer codes.
+- Allowed Minimax XML export without requiring a business customer code.
+- Expanded stored route descriptions and draft labels to support invoices with many additional stops without database truncation errors.
+- Added a tracked updater package and a repeatable release-build script so update feeds cannot deploy without their matching downloadable ZIP.
+- Updated the enclosed versions to module 1.6.1, component 1.2.1, and installer update-key plugin 1.0.4.
+
 ## Suite Package 1.6.0
 
 - Renamed the administrator component to Route calculation help, with a localized Slovenian name.
