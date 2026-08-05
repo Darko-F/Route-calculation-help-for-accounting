@@ -38,15 +38,30 @@ Demo: https://builder.topoweryou.com/routecalculationhelp/
 Subscribers receive extension updates through the Joomla updater. A subscriber
 download key is required for private update downloads.
 
-After purchase, install and enable the update-key plugin, then enter your
-subscriber key in:
+After purchase, enter your subscriber key with the suite's other shared settings:
 
 ```text
-System -> Manage -> Plugins -> Installer - Route Calculation Help update key
+Components -> Route Calculation Help -> Options -> Subscriber update key
 ```
 
-The plugin appends the subscriber key when Joomla downloads the combined suite
-update package.
+The field is directly below **Google Maps API key**. The bundled installer
+helper reads this shared option and appends it to protected combined-suite
+downloads. Keep the helper plugin enabled; it has no separate key field.
+
+When upgrading from version 1.6.11 or earlier, make a note of the key in
+**Installer - Route Calculation Help update key** before installing version
+1.6.12. After the update, enter that key in **Components -> Route Calculation
+Help -> Options -> Subscriber update key**. Keys are not migrated automatically.
+
+The public Joomla update feed is:
+
+```text
+https://shop.topoweryou.com/files/updatesxml/route-calculation-help-for-accounting-package.xml
+```
+
+Release ZIPs are stored outside the public web root under the VirtueMart Safe
+Path at `vmfiles/salefiles/routecalculationhelp` and are served only through the
+protected VirtueMart Update Key Manager download endpoint.
 
 ## Default Configuration
 
@@ -64,17 +79,17 @@ For a new installation, install the combined suite ZIP package in Joomla:
 
 1. Go to Joomla Administrator.
 2. Open System -> Install -> Extensions.
-3. Upload `pkg_route_calculation_help_for_accounting_v1.6.11.zip`.
+3. Upload `pkg_route_calculation_help_for_accounting_v1.6.12.zip`.
 4. Open Content -> Site Modules.
 5. Create or open Route calculation help for accounting.
 6. Open Components -> Route calculation help -> Options, then enter the shared settings. Each module can independently choose global or module settings for Google Maps, company/PDF, Minimax, and countries.
 7. Publish the module in the desired position.
 
 The suite installs the site module, administrator-only document management
-component, and subscriber update-key installer plugin. Enable the plugin and
-enter the subscriber key before using protected updates. Install and update the
-suite only through the combined package so all three extensions remain on the
-same compatible release. Document management is available under Joomla
+component, and update-download helper. Enter the subscriber key in the
+component's global Options and keep the helper plugin enabled before using
+protected updates. Install and update the suite only through the combined
+package so all extensions remain on the same compatible release. Document management is available under Joomla
 Administrator → Components → Route calculation help.
 
 ## Source Package

@@ -9,24 +9,22 @@
 
 defined('_JEXEC') or die;
 
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\CMS\Uri\Uri;
 
 /**
- * Adds the subscriber download key to Route Calculation Help update downloads.
+ * Adds the shared subscriber key to Route Calculation Help update downloads.
  */
 class PlgInstallerRoutecalculationupdatekey extends CMSPlugin
 {
-    /**
-     * @var boolean
-     */
     protected $autoloadLanguage = true;
 
     /**
      * Appends the configured key before Joomla downloads the update package.
      *
-     * @param   string  $url      Package download URL.
-     * @param   array   $headers  Request headers.
+     * @param   mixed  $url      Package download URL or Joomla event.
+     * @param   array  $headers  Request headers.
      *
      * @return  boolean
      */
@@ -38,26 +36,30 @@ class PlgInstallerRoutecalculationupdatekey extends CMSPlugin
             $url = $event->getUrl();
         }
 
-        $key = trim((string) $this->params->get('download_key', ''));
+        $componentParams = ComponentHelper::getParams('com_rcha_documents');
+        $key = trim((string) $componentParams->get('download_key', ''));
+
+        // Keep existing installations working until the old plugin key is
+        // manually copied into the component's shared Options.
+        if ($key === '') {
+            $key = trim((string) $this->params->get('download_key', ''));
+        }
 
         if ($key === '' || !is_string($url) || $url === '') {
             return true;
         }
 
-        $parts = parse_url($url);
-        $host = strtolower($parts['host'] ?? '');
-        $path = $parts['path'] ?? '';
+        $uri = new Uri($url);
+        $host = strtolower((string) $uri->getHost());
+        $file = (string) $uri->getVar('file', '');
+        $isLicenseEndpoint = $uri->getVar('option') === 'com_vmupdatekeymanager'
+            && $uri->getVar('task') === 'download.get';
 
-        if ($host !== 'builder.topoweryou.com' || strpos($path, '/routecalculationhelp/files/routecalculationhelp/downloads/download.php') === false) {
+        if ($host !== 'shop.topoweryou.com' || !$isLicenseEndpoint) {
             return true;
         }
 
-        $uri = new Uri($url);
-        $file = (string) $uri->getVar('file', '');
-
-        $allowedPackagePattern = '/^pkg_route_calculation_help_for_accounting_v\d+\.\d+\.\d+\.zip$/';
-
-        if (!preg_match($allowedPackagePattern, $file)) {
+        if (!preg_match('/^pkg_route_calculation_help_for_accounting_v\d+\.\d+\.\d+\.zip$/', $file)) {
             return true;
         }
 

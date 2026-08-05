@@ -2,6 +2,7 @@
 <config>
   <fieldset name="basic" label="COM_RCHA_DOCUMENTS_FIELDSET_OPTIONS">
     <field name="google_maps_api_key" type="password" label="COM_RCHA_DOCUMENTS_FIELD_GOOGLE_MAPS_API_KEY_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_GOOGLE_MAPS_API_KEY_DESC" filter="raw" />
+    <field name="download_key" type="password" label="COM_RCHA_DOCUMENTS_FIELD_DOWNLOAD_KEY_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_DOWNLOAD_KEY_DESC" filter="raw" />
     <field type="spacer" label="COM_RCHA_DOCUMENTS_SPACER_COMPANY_DETAILS" />
     <field name="company_name" type="text" label="COM_RCHA_DOCUMENTS_FIELD_COMPANY_NAME_LABEL" default="Example Transfer Ltd." />
     <field name="company_address" type="text" label="COM_RCHA_DOCUMENTS_FIELD_COMPANY_ADDRESS_LABEL" default="Example Street 1" />

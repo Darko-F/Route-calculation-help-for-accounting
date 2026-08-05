@@ -1,5 +1,18 @@
 # Version Summary
 
+## Update distribution
+
+- Moved the public Joomla update feed to `https://shop.topoweryou.com/files/updatesxml/route-calculation-help-for-accounting-package.xml`.
+- Routed protected package downloads through the VirtueMart Update Key Manager, backed by `vmfiles/salefiles/routecalculationhelp`.
+- Centralized the subscriber update key in the Route Calculation Help component's global Options alongside the Google Maps API key.
+
+## Suite Package 1.6.12
+
+- Added a shared **Subscriber update key** field directly below the Google Maps API key in component Options.
+- Updated the installer helper to read the shared component key while retaining the old plugin parameter as a transition fallback.
+- Existing subscribers should note their old plugin key before updating and enter it into **Components -> Route Calculation Help -> Options** after installing 1.6.12.
+- Updated the enclosed versions to module 1.6.11, component 1.2.2, and installer update helper 1.0.5.
+
 ## Suite Package 1.6.11
 
 - Loading a saved invoice now also restores its additional-cost rows, amounts, and VAT presets into the calculator form.
