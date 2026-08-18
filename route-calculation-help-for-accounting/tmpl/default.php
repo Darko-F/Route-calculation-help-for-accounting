@@ -32,7 +32,7 @@ $getSettingsGroup = static function (string $sourceKey) use ($params, $globalSet
 };
 $googleMapsSettings = $getSettingsGroup('google_maps_settings_source');
 $companyPdfSettings = $getSettingsGroup('company_pdf_settings_source');
-$minimaxSettings = $getSettingsGroup('minimax_settings_source');
+$useModuleMinimaxOverrides = (string) $params->get('minimax_settings_source', $legacySettingsSource) === 'module';
 $countriesSettings = $getSettingsGroup('countries_settings_source');
 $resolvePdfImageUrl = static function ($value): string {
     $value = trim((string) $value);
@@ -65,10 +65,14 @@ $calculatorTextKeys = [
     'Additional places' => 'CALCULATOR_ADDITIONAL_PLACES',
     'Add place' => 'CALCULATOR_ADD_PLACE',
     'Return trip to pickup' => 'CALCULATOR_RETURN_TRIP',
-    'Additional costs (deduct from gross price)' => 'CALCULATOR_ADDITIONAL_COSTS',
+    'Additional costs' => 'CALCULATOR_ADDITIONAL_COSTS',
+    'Additional cost treatment' => 'CALCULATOR_ADDITIONAL_COST_MODE',
+    'Add to entered gross price' => 'CALCULATOR_ADDITIONAL_COST_MODE_ADD',
+    'Included in entered gross price' => 'CALCULATOR_ADDITIONAL_COST_MODE_INCLUDED',
+    'Choose whether additional costs increase the invoice total or are already included in the entered gross price.' => 'CALCULATOR_ADDITIONAL_COST_MODE_HELP',
     'Add cost' => 'CALCULATOR_ADD_COST',
     'Clear' => 'CALCULATOR_CLEAR',
-    'Total deductions:' => 'CALCULATOR_TOTAL_DEDUCTIONS',
+    'Total additional costs:' => 'CALCULATOR_TOTAL_DEDUCTIONS',
     'Final price with VAT (€)' => 'CALCULATOR_GROSS_PRICE',
     'Enter final price or price without tax charged to the customer. Other price will be calculated automatically.' => 'CALCULATOR_GROSS_PRICE_HELP',
     'Only price without VAT (€)' => 'CALCULATOR_NET_PRICE',
@@ -113,7 +117,6 @@ $calculatorTextKeys = [
     'Outside Slovenia VAT' => 'CALCULATOR_OUTSIDE_VAT',
     'Total invoice amount' => 'CALCULATOR_TOTAL_INVOICE_AMOUNT',
     'Total VAT' => 'CALCULATOR_TOTAL_VAT',
-    'Additional costs' => 'CALCULATOR_RESULTS_ADDITIONAL_COSTS',
     '{base} + tax {rate}% ({tax}) = {gross}' => 'CALCULATOR_RESULTS_COST_DETAIL',
     'Additional costs total' => 'CALCULATOR_RESULTS_ADDITIONAL_COSTS_TOTAL',
     'Base: {base} / Tax: {tax} / Total: {total}' => 'CALCULATOR_RESULTS_COST_TOTAL_DETAIL',
@@ -122,6 +125,7 @@ $calculatorTextKeys = [
     'Generate' => 'CALCULATOR_GENERATE',
     'Sifra Stranke' => 'CALCULATOR_SIFRA_STRANKE',
     'Customer code help' => 'CALCULATOR_CUSTOMER_CODE_HELP',
+    'Issue date' => 'CALCULATOR_ISSUE_DATE',
     'Service date' => 'CALCULATOR_SERVICE_DATE',
     'Due date' => 'CALCULATOR_DUE_DATE',
     'Customer name' => 'CALCULATOR_CUSTOMER_NAME',
@@ -186,6 +190,7 @@ $calculatorTextKeys = [
     'Pickup and drop-off are required.' => 'CALCULATOR_PICKUP_DROPOFF_REQUIRED',
     'Routes API supports a maximum of 25 additional places.' => 'CALCULATOR_MAX_STOPS',
     'Enter a valid final price or price without tax.' => 'CALCULATOR_VALID_GROSS_PRICE',
+    'The entered gross price must be at least the total additional costs when costs are included in it.' => 'CALCULATOR_GROSS_PRICE_BELOW_ADDITIONAL_COSTS',
     'Calculating route...' => 'CALCULATOR_CALCULATING_ROUTE',
     'Route error: no route found.' => 'CALCULATOR_ROUTE_NO_ROUTE',
     'Domestic Slovenia route detected. Outside Slovenia set to 0 km.' => 'CALCULATOR_DOMESTIC_ROUTE',
@@ -275,6 +280,7 @@ $calculatorTextKeys = [
     'Enter SifraKonta in every outside country split row before exporting Minimax XML.' => 'CALCULATOR_ENTER_OUTSIDE_ACCOUNT_XML',
     'Configure the VAT rate for every used country in the component Options before exporting Minimax XML.' => 'CALCULATOR_CONFIGURE_COUNTRY_VAT_RATE_XML',
     'Enter the Minimax customer receivable account in the component Options before exporting Minimax XML.' => 'CALCULATOR_ENTER_RECEIVABLE_ACCOUNT_XML',
+    'Enter the additional-cost revenue account in the component Options before exporting Minimax XML.' => 'CALCULATOR_ENTER_ADDITIONAL_COST_REVENUE_ACCOUNT_XML',
     'Enter the base-country VAT liability account in the component Options before exporting Minimax XML.' => 'CALCULATOR_ENTER_BASE_COUNTRY_VAT_ACCOUNT_XML',
     'Enter the foreign VAT liability account in the component Options before exporting Minimax XML.' => 'CALCULATOR_ENTER_FOREIGN_VAT_ACCOUNT_XML',
     'Minimax XML exported.' => 'CALCULATOR_XML_EXPORTED',
@@ -373,21 +379,44 @@ foreach ($normalizeOptionArray($countriesSettings->get('countries', [])) as $cou
         'pdfNote' => trim((string) ($countryRow['pdf_note'] ?? '')),
     ];
 }
-$minimaxCountryAccounts = [];
-foreach ($normalizeOptionArray($minimaxSettings->get('minimax_country_accounts', [])) as $accountRow) {
-    $accountRow = $normalizeOptionArray($accountRow);
-    if (isset($accountRow['minimax_account'])) {
-        $accountRow = $normalizeOptionArray($accountRow['minimax_account']);
+$readMinimaxCountryAccounts = static function ($value) use ($normalizeOptionArray): array {
+    $accounts = [];
+    foreach ($normalizeOptionArray($value) as $accountRow) {
+        $accountRow = $normalizeOptionArray($accountRow);
+        if (isset($accountRow['minimax_account'])) {
+            $accountRow = $normalizeOptionArray($accountRow['minimax_account']);
+        }
+        $countryCode = strtoupper(trim((string) ($accountRow['country_code'] ?? '')));
+        if (!preg_match('/^[A-Z]{2}$/', $countryCode)) {
+            continue;
+        }
+        $accounts[$countryCode] = [
+            'revenueAccount' => trim((string) ($accountRow['revenue_account'] ?? '')),
+            'vatAccount' => trim((string) ($accountRow['vat_account'] ?? '')),
+        ];
     }
-    $countryCode = strtoupper(trim((string) ($accountRow['country_code'] ?? '')));
-    if (!preg_match('/^[A-Z]{2}$/', $countryCode)) {
-        continue;
+    return $accounts;
+};
+$minimaxCountryAccounts = $readMinimaxCountryAccounts($globalSettings->get('minimax_country_accounts', []));
+if ($useModuleMinimaxOverrides) {
+    foreach ($readMinimaxCountryAccounts($params->get('minimax_country_accounts', [])) as $countryCode => $overrides) {
+        $current = $minimaxCountryAccounts[$countryCode] ?? ['revenueAccount' => '', 'vatAccount' => ''];
+        foreach ($overrides as $key => $value) {
+            if ($value !== '') {
+                $current[$key] = $value;
+            }
+        }
+        $minimaxCountryAccounts[$countryCode] = $current;
     }
-    $minimaxCountryAccounts[$countryCode] = [
-        'revenueAccount' => trim((string) ($accountRow['revenue_account'] ?? '')),
-        'vatAccount' => trim((string) ($accountRow['vat_account'] ?? '')),
-    ];
 }
+$getMinimaxSetting = static function (string $key, string $default = '') use ($params, $globalSettings, $useModuleMinimaxOverrides): string {
+    $globalValue = (string) $globalSettings->get($key, $default);
+    if (!$useModuleMinimaxOverrides) {
+        return $globalValue;
+    }
+    $moduleValue = trim((string) $params->get($key, ''));
+    return $moduleValue !== '' ? $moduleValue : $globalValue;
+};
 
 $frontendConfig = [
     'googleMapsApiKey' => (string) $googleMapsSettings->get('google_maps_api_key', ''),
@@ -407,9 +436,10 @@ $frontendConfig = [
         'signatureImageUrl' => $resolvePdfImageUrl($companyPdfSettings->get('pdf_signature_image_url', 'podpis-transparent.png')),
     ],
     'minimax' => [
-        'receivableAccount' => (string) $minimaxSettings->get('minimax_receivable_account', ''),
-        'baseCountryStandardVatAccount' => (string) $minimaxSettings->get('minimax_base_country_standard_vat_account', ''),
-        'defaultForeignRevenueAccount' => (string) $minimaxSettings->get('minimax_default_foreign_revenue_account', ''),
+        'receivableAccount' => $getMinimaxSetting('minimax_receivable_account'),
+        'baseCountryStandardVatAccount' => $getMinimaxSetting('minimax_base_country_standard_vat_account'),
+        'additionalCostRevenueAccount' => $getMinimaxSetting('minimax_additional_cost_revenue_account'),
+        'defaultForeignRevenueAccount' => $getMinimaxSetting('minimax_default_foreign_revenue_account'),
         'countryAccounts' => $minimaxCountryAccounts,
     ],
     'defaultForeignPassengerVatRate' => $countriesSettings->get('default_foreign_passenger_vat_rate', ''),

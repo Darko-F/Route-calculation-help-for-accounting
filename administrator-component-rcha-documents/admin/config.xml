@@ -20,6 +20,7 @@
   <fieldset name="minimax" label="COM_RCHA_DOCUMENTS_FIELDSET_MINIMAX">
     <field name="minimax_receivable_account" type="text" label="COM_RCHA_DOCUMENTS_FIELD_MINIMAX_RECEIVABLE_ACCOUNT_LABEL" default="" />
     <field name="minimax_base_country_standard_vat_account" type="text" label="COM_RCHA_DOCUMENTS_FIELD_MINIMAX_BASE_COUNTRY_STANDARD_VAT_ACCOUNT_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_MINIMAX_BASE_COUNTRY_STANDARD_VAT_ACCOUNT_DESC" default="" />
+    <field name="minimax_additional_cost_revenue_account" type="text" label="COM_RCHA_DOCUMENTS_FIELD_MINIMAX_ADDITIONAL_COST_REVENUE_ACCOUNT_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_MINIMAX_ADDITIONAL_COST_REVENUE_ACCOUNT_DESC" default="" />
     <field name="minimax_default_foreign_revenue_account" type="text" label="COM_RCHA_DOCUMENTS_FIELD_MINIMAX_DEFAULT_FOREIGN_REVENUE_ACCOUNT_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_MINIMAX_DEFAULT_FOREIGN_REVENUE_ACCOUNT_DESC" default="" />
     <field name="minimax_country_accounts" type="subform" label="COM_RCHA_DOCUMENTS_FIELD_MINIMAX_COUNTRY_ACCOUNTS_LABEL" description="COM_RCHA_DOCUMENTS_FIELD_MINIMAX_COUNTRY_ACCOUNTS_DESC" formsource="administrator/components/com_rcha_documents/forms/minimax_account.xml" multiple="true" layout="joomla.form.field.subform.repeatable" buttons="add,remove,move" validate="Subform" />
   </fieldset>

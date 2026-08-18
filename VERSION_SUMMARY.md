@@ -6,6 +6,23 @@
 - Routed protected package downloads through the VirtueMart Update Key Manager, backed by `vmfiles/salefiles/routecalculationhelp`.
 - Centralized the subscriber update key in the Route Calculation Help component's global Options alongside the Google Maps API key.
 
+## Suite Package 1.6.14
+
+- Added a selectable invoice issue date alongside the service date and payment due date, defaulting to the current date as before.
+- Persisted and restored the selected issue date for invoices and used it in generated PDFs and Minimax XML exports.
+- Kept backward compatibility for saved invoices without an explicit issue date by falling back to their original creation date.
+- Added an additional-cost treatment option: costs are added on top of the entered gross price by default, while the previous included-in-gross calculation remains available.
+- Preserved the old included-in-gross behavior when restoring invoices saved before this option existed.
+- Updated the enclosed module to version 1.6.13; the component remains at 1.2.3 and the installer update helper at 1.0.5.
+
+## Suite Package 1.6.13
+
+- Kept Minimax country accounts in the component's global Options and changed Joomla module-specific Minimax settings into optional overrides.
+- Merged module country-account overrides into global country accounts by two-letter ISO code; blank module account fields inherit their global values.
+- Added a separate Minimax revenue account for additional costs in global Options and as an optional Joomla module override.
+- Posted taxable and non-taxable additional costs to their configured revenue account while retaining the base-country revenue account as a backward-compatible fallback.
+- Updated the enclosed versions to module 1.6.12, component 1.2.3, and installer update helper 1.0.5.
+
 ## Suite Package 1.6.12
 
 - Added a shared **Subscriber update key** field directly below the Google Maps API key in component Options.
