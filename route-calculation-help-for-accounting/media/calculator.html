@@ -93,6 +93,14 @@
           </div>
           <div class="border rounded p-3 mb-3">
             <h3 class="h6 mb-2">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADDITIONAL_COSTS</h3>
+            <div class="mb-2">
+              <label for="additionalCostMode" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADDITIONAL_COST_MODE</label>
+              <select id="additionalCostMode" class="form-select form-select-sm">
+                <option value="add" selected>MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADDITIONAL_COST_MODE_ADD</option>
+                <option value="included">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADDITIONAL_COST_MODE_INCLUDED</option>
+              </select>
+              <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADDITIONAL_COST_MODE_HELP</div>
+            </div>
             <div id="adjustmentsList"></div>
             <div class="d-flex flex-wrap gap-2">
               <button class="btn btn-sm btn-outline-primary" type="button" onclick="addAdjustment()">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ADD_COST</button>
@@ -184,7 +192,15 @@
               <input id="customerCode" class="form-control form-control-sm" maxlength="64" placeholder="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_PLACEHOLDER_CUSTOMER_CODE" />
               <div class="form-text">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CUSTOMER_CODE_HELP</div>
             </div>
-            <div class="col-md-6 mt-2">
+            <div class="col-md-4 mt-2">
+              <label for="issueDate" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_ISSUE_DATE</label>
+              <div class="input-group input-group-sm">
+                <input id="issueDate" class="form-control" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" />
+                <button class="btn btn-outline-secondary" type="button" onclick="openIssueDatePicker()" aria-label="MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_CHOOSE_DATE">&#128197;</button>
+                <input id="issueDatePicker" type="date" tabindex="-1" aria-hidden="true" onchange="onIssueDatePicked()" style="position:absolute; width:1px; height:1px; opacity:0; right:0; bottom:0; pointer-events:none;" />
+              </div>
+            </div>
+            <div class="col-md-4 mt-2">
               <label for="serviceDate" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_SERVICE_DATE</label>
               <div class="input-group input-group-sm">
                 <input id="serviceDate" class="form-control" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" />
@@ -192,7 +208,7 @@
                 <input id="serviceDatePicker" type="date" tabindex="-1" aria-hidden="true" onchange="onServiceDatePicked()" style="position:absolute; width:1px; height:1px; opacity:0; right:0; bottom:0; pointer-events:none;" />
               </div>
             </div>
-            <div class="col-md-6 mt-2">
+            <div class="col-md-4 mt-2">
               <label for="dueDate" class="form-label small mb-1">MOD_ROUTE_CALCULATION_HELP_FOR_ACCOUNTING_CALCULATOR_DUE_DATE</label>
               <div class="input-group input-group-sm">
                 <input id="dueDate" class="form-control" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" />
@@ -529,6 +545,7 @@ window.addEventListener('DOMContentLoaded', () => {
   translateStaticUi();
   loadGoogleMaps();
   try {
+    setDefaultIssueDate();
     setDefaultServiceDate();
     setDefaultDueDate();
     applyBaseCountryDefaults();
@@ -544,6 +561,7 @@ window.addEventListener('DOMContentLoaded', () => {
       currentConvertedInvoiceId = 0;
       resetCurrentPaymentState();
     });
+    document.getElementById('issueDate')?.addEventListener('blur', event => normalizeVisibleDateInput(event.currentTarget));
     document.getElementById('serviceDate')?.addEventListener('blur', event => normalizeVisibleDateInput(event.currentTarget));
     document.getElementById('dueDate')?.addEventListener('blur', event => normalizeVisibleDateInput(event.currentTarget));
     document.getElementById('vatRate')?.addEventListener('input', () => {
@@ -555,6 +573,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('customerVatId')?.addEventListener('input', syncCustomerCodeFromVatId);
     document.getElementById('returnTrip')?.addEventListener('change', markRouteCalculationStale);
+    document.getElementById('additionalCostMode')?.addEventListener('change', markRouteCalculationStale);
     setTimeout(() => ensureSavedCustomersLoaded().catch(() => {}), 500);
   } catch (e) { /* ignore */ }
 });
@@ -697,6 +716,8 @@ function restoreRouteAndCountryInputs(data, restoreAddresses = true) {
   }
   if (document.getElementById('vatRate') && Number.isFinite(Number(data.vatRate))) document.getElementById('vatRate').value = String(data.vatRate);
   if (document.getElementById('splitMethod') && data.splitMethod) document.getElementById('splitMethod').value = data.splitMethod;
+  const additionalCostMode = document.getElementById('additionalCostMode');
+  if (additionalCostMode) additionalCostMode.value = data.additionalCostMode === 'add' ? 'add' : 'included';
   setPriceInputValue('grossPrice', Number(data.grossPrice || data.invoiceTotalAmount || 0));
   setPriceInputValue('price', Number(data.netPrice || 0));
   setPriceSource(data.priceSource === 'net' ? 'net' : 'gross');
@@ -781,6 +802,10 @@ function setPriceSource(source) {
 
 function getPriceSource() {
   return document.getElementById('grossPrice')?.dataset.priceSource === 'net' ? 'net' : 'gross';
+}
+
+function getAdditionalCostMode() {
+  return document.getElementById('additionalCostMode')?.value === 'included' ? 'included' : 'add';
 }
 
 function setPriceInputValue(id, value) {
@@ -1118,7 +1143,6 @@ function calculateFromCountrySegments(countrySegments, successMessage) {
     setStatus('Enter at least one country row with km.', 'danger');
     return;
   }
-  // apply deductions from adjustments
   const deductions = getAdjustmentsArray();
   const deductionTotals = getAdjustmentTotals(deductions);
   const deductionsTotal = deductionTotals.base;
@@ -1126,13 +1150,17 @@ function calculateFromCountrySegments(countrySegments, successMessage) {
   const deductionsGrossTotal = deductionTotals.gross;
   const weightedVatRate = countrySegments.reduce((sum, segment) => sum + (segment.km / segmentKmTotal) * (segment.vatRate / 100), 0);
   const priceSource = getPriceSource();
+  const additionalCostMode = getAdditionalCostMode();
   const grossInput = parseFloat(document.getElementById('grossPrice')?.value || String(lastRouteData.grossPrice || '0')) || 0;
   const netInput = parseFloat(document.getElementById('price')?.value || String(lastRouteData.netPriceInput || '0')) || 0;
+  if (priceSource === 'gross' && additionalCostMode === 'included' && grossInput + 0.004 < deductionsGrossTotal) {
+    setStatus('The entered gross price must be at least the total additional costs when costs are included in it.', 'danger');
+    return;
+  }
   const netPrice = priceSource === 'net'
     ? Math.max(0, netInput)
-    : Math.max(0, grossInput - deductionsGrossTotal) / (1 + weightedVatRate);
-  const grossAfterDeductions = netPrice * (1 + weightedVatRate);
-  const grossPrice = grossAfterDeductions + deductionsGrossTotal;
+    : Math.max(0, grossInput - (additionalCostMode === 'included' ? deductionsGrossTotal : 0)) / (1 + weightedVatRate);
+  const routeGrossPrice = netPrice * (1 + weightedVatRate);
   const calculatedSegments = countrySegments.map(segment => {
     const base = netPrice * (segment.km / segmentKmTotal);
     const vatAmount = base * (segment.vatRate / 100);
@@ -1151,11 +1179,12 @@ function calculateFromCountrySegments(countrySegments, successMessage) {
   const outsideVatRate = outsideSegments.length === 1 ? outsideSegments[0].vatRate : 0;
   const isDomesticSloveniaOnly = outsideSegments.length === 0 && sloveniaSegments.length > 0;
   setPriceInputValue('price', netPrice);
+  const invoiceTotalAmount = totalAmount + deductionsGrossTotal;
+  const grossPrice = additionalCostMode === 'add' ? routeGrossPrice : invoiceTotalAmount;
   setPriceInputValue('grossPrice', grossPrice);
   setPriceSource(priceSource);
-  const invoiceTotalAmount = totalAmount + deductionsGrossTotal;
   restoredInvoiceIssueDate = '';
-  lastCalculatedData = { createdAt: new Date().toISOString(), baseCountry: getBaseCountryCode(), pickup, dropoff, routeDropoff, stops, returnTrip, totalKm, sloveniaKm: siKm, outsideSloveniaKm: outsideKm, grossPrice, priceSource, deductions, deductionsTotal, deductionsVatTotal, deductionsGrossTotal, grossAfterDeductions, netPrice, taxableBaseSlovenia: taxableBase, outsideSloveniaBase: outsideBase, vatRate, vatAmount, outsideVatRate, outsideVatAmount, totalAmount, invoiceTotalAmount, splitMethod: document.getElementById('splitMethod').value, currency: 'EUR', invoiceTextEn: '', invoiceTextSl: '', countrySegments: calculatedSegments, isDomesticSloveniaOnly };
+  lastCalculatedData = { createdAt: new Date().toISOString(), baseCountry: getBaseCountryCode(), pickup, dropoff, routeDropoff, stops, returnTrip, totalKm, sloveniaKm: siKm, outsideSloveniaKm: outsideKm, grossPrice, priceSource, additionalCostMode, deductions, deductionsTotal, deductionsVatTotal, deductionsGrossTotal, routeGrossPrice, netPrice, taxableBaseSlovenia: taxableBase, outsideSloveniaBase: outsideBase, vatRate, vatAmount, outsideVatRate, outsideVatAmount, totalAmount, invoiceTotalAmount, splitMethod: document.getElementById('splitMethod').value, currency: 'EUR', invoiceTextEn: '', invoiceTextSl: '', countrySegments: calculatedSegments, isDomesticSloveniaOnly };
   showResults(totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, totalAmount, vatRate, outsideVatRate, calculatedSegments, deductions);
   buildInvoiceText(pickup, dropoff, totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmount, outsideVatAmount, invoiceTotalAmount, vatRate, outsideVatRate, isDomesticSloveniaOnly);
   lastCalculatedData.invoiceTextEn = document.getElementById('invoiceTextEn').value;
@@ -1586,6 +1615,7 @@ function getInvoicePayload(documentType = 'invoice', sourceDocumentId = 0) {
     invoice_number_auto: invoiceNumberInput?.dataset.generated === '1',
     document_type: documentType,
     source_document_id: sourceDocumentId || null,
+    issue_date: getIssueDateIso(),
     service_date: getServiceDateIso(),
     due_date: getDueDateIso(),
     output_file_name: '',
@@ -1653,7 +1683,7 @@ async function saveInvoiceHistory(documentType = 'invoice', sourceDocumentId = 0
       setEditableInvoice(currentDocumentId, currentDocumentType);
       currentConvertedInvoiceId = Number(savedInvoice.converted_invoice_id || 0);
       resetCurrentPaymentState();
-      restoredInvoiceIssueDate = getTodayIsoDate();
+      restoredInvoiceIssueDate = getIssueDateIso();
     }
     showDatabaseStatus('Invoice history saved.', 'success');
     if (payload.is_draft_invoice) {
@@ -1727,6 +1757,7 @@ function getDraftInvoiceHistoryPayload(draftLines, documentType = 'invoice', sou
     invoice_number_auto: invoiceNumberInput?.dataset.generated === '1',
     document_type: documentType,
     source_document_id: sourceDocumentId || null,
+    issue_date: getIssueDateIso(),
     service_date: payloads[0]?.service_date || getServiceDateIso(),
     due_date: getDueDateIso(),
     output_file_name: '',
@@ -2302,7 +2333,7 @@ async function generateSavedInvoicePdf(source, index) {
   if (!invoice || !restoreInvoiceRecord(invoice)) return;
   const modalId = source === 'browser' ? 'invoiceBrowserModal' : source === 'customer' ? 'customerInvoiceHistoryModal' : '';
   if (modalId) bootstrap.Modal.getInstance(document.getElementById(modalId))?.hide();
-  await generatePdf(false, invoice.created_at || '', invoice.document_type === 'proforma' ? 'proforma' : 'invoice');
+  await generatePdf(false, getIssueDateIso(), invoice.document_type === 'proforma' ? 'proforma' : 'invoice');
 }
 
 async function convertProformaToInvoice(source, index) {
@@ -2319,6 +2350,7 @@ async function convertProformaToInvoice(source, index) {
   if (modalId) bootstrap.Modal.getInstance(document.getElementById(modalId))?.hide();
   document.getElementById('invoiceNumber').value = '';
   restoredInvoiceIssueDate = getTodayIsoDate();
+  document.getElementById('issueDate').value = formatIsoDateDisplay(restoredInvoiceIssueDate);
   document.getElementById('dueDate').value = formatIsoDateDisplay(restoredInvoiceIssueDate);
   await generatePdf(true, '', 'invoice', Number(proforma.id || 0));
 }
@@ -2365,7 +2397,8 @@ function restoreInvoiceRecord(invoice) {
     ? invoice.payment_status
     : (currentPaidAmount <= 0.004 ? 'unpaid' : (currentRemainingAmount <= 0.004 ? 'paid' : 'partially_paid'));
   document.getElementById('serviceDate').value = formatIsoDateDisplay(payload.service_date || getTodayIsoDate());
-  restoredInvoiceIssueDate = normalizeIsoDate(invoice.created_at || payload.issue_date || '') || getTodayIsoDate();
+  restoredInvoiceIssueDate = normalizeIsoDate(payload.issue_date || invoice.created_at || '') || getTodayIsoDate();
+  document.getElementById('issueDate').value = formatIsoDateDisplay(restoredInvoiceIssueDate);
   document.getElementById('dueDate').value = formatIsoDateDisplay(payload.due_date || addDaysIso(restoredInvoiceIssueDate, 15));
   document.getElementById('customInvoiceMessage').value = customer.custom_invoice_message || '';
 
@@ -2454,7 +2487,7 @@ async function generatePdf(saveInvoice = true, issueDateOverride = '', documentT
   const customerVatId = (document.getElementById('customerVatId')?.value || '').trim();
   const customInvoiceMessage = (document.getElementById('customInvoiceMessage')?.value || '').trim();
   const paymentReference = invoiceNo.replace(/[^0-9]/g, '');
-  const issueDateIso = normalizeIsoDate(issueDateOverride) || getTodayIsoDate();
+  const issueDateIso = normalizeIsoDate(issueDateOverride) || getIssueDateIso();
   const issueDateObject = new Date(`${issueDateIso}T12:00:00`);
   const issueDate = formatDateDisplay(issueDateObject);
   const serviceDate = formatIsoDateDisplay(getServiceDateIso());
@@ -2597,7 +2630,7 @@ async function generateDraftPdf(payloads = null, issueDateOverride = '', documen
   const customerVatId = (document.getElementById('customerVatId')?.value || '').trim();
   const customInvoiceMessage = (document.getElementById('customInvoiceMessage')?.value || '').trim();
   const paymentReference = invoiceNo.replace(/[^0-9]/g, '');
-  const issueDateIso = normalizeIsoDate(issueDateOverride) || getTodayIsoDate();
+  const issueDateIso = normalizeIsoDate(issueDateOverride) || getIssueDateIso();
   const issueDateObject = new Date(`${issueDateIso}T12:00:00`);
   const issueDate = formatDateDisplay(issueDateObject);
   const dueDate = formatIsoDateDisplay(getDueDateIso(issueDateIso));
@@ -2978,7 +3011,7 @@ function exportMinimaxXml() {
   if (currentDocumentType === 'proforma') { setStatus('Predračun cannot be exported to Minimax. Create the invoice first.', 'warning'); return false; }
   if (!lastCalculatedData) { setStatus('Calculate a route first, then export Minimax XML.', 'warning'); return false; }
   const d = lastCalculatedData;
-  const today = restoredInvoiceIssueDate || getTodayIsoDate();
+  const today = getIssueDateIso();
   const calculatedServiceDates = (Array.isArray(d.countrySegments) ? d.countrySegments : [])
     .map(segment => normalizeIsoDate(segment.serviceDate || ''))
     .filter(Boolean)
@@ -3007,6 +3040,7 @@ function exportMinimaxXml() {
   const baseRevenueAccount = String(baseCountryConfig.revenueAccount || '').trim();
   const baseVatAccount = String(baseCountryConfig.vatAccount || '').trim();
   const standardVatAccount = String(MINIMAX_CONFIG.baseCountryStandardVatAccount || '').trim();
+  const additionalCostRevenueAccount = String(MINIMAX_CONFIG.additionalCostRevenueAccount || baseRevenueAccount).trim();
   const receivableAccount = String(MINIMAX_CONFIG.receivableAccount || '').trim();
   const countrySegments = Array.isArray(d.countrySegments) ? d.countrySegments : [];
   const baseRouteSegments = countrySegments.filter(segment =>
@@ -3052,8 +3086,12 @@ function exportMinimaxXml() {
     setStatus('Configure the VAT rate for every used country in the component Options before exporting Minimax XML.', 'danger');
     return false;
   }
-  if ((siBaseAmount > 0 || additionalCosts.length > 0) && !baseRevenueAccount) {
+  if (siBaseAmount > 0 && !baseRevenueAccount) {
     setStatus('Enter Slovenia SifraKonta in the component Options before exporting Minimax XML.', 'danger');
+    return false;
+  }
+  if (additionalCosts.length > 0 && !additionalCostRevenueAccount) {
+    setStatus('Enter the additional-cost revenue account in the component Options before exporting Minimax XML.', 'danger');
     return false;
   }
   if (outsideBaseAmount + outsideVatAmount > 0 && outsideSegments.some(segment => !String(getCountryOptionConfig(segment.countryValue).revenueAccount || '').trim())) {
@@ -3127,14 +3165,14 @@ function exportMinimaxXml() {
     const minimaxVatCode = cost.minimaxVatCode;
 
     if (minimaxVatCode === 'S' || minimaxVatCode === 'Z') {
-      addAmount(revenueAmountsByAccount, baseRevenueAccount, base);
+      addAmount(revenueAmountsByAccount, additionalCostRevenueAccount, base);
       addAmount(vatAmountsByAccount, minimaxVatCode === 'S' ? standardVatAccount : baseVatAccount, vat);
       addDdvAmount(isSlovenianBaseCountry ? minimaxVatCode : 'N', base, isSlovenianBaseCountry ? vat : 0);
       return;
     }
 
     // Non-taxable costs are posted at their full gross amount with zero VAT.
-    addAmount(revenueAmountsByAccount, baseRevenueAccount, gross);
+    addAmount(revenueAmountsByAccount, additionalCostRevenueAccount, gross);
     addDdvAmount('N', gross, 0);
   });
   const journalCredits = () => roundMoney(
@@ -3144,7 +3182,11 @@ function exportMinimaxXml() {
   const journalBalanceDiff = roundMoney(totalAmount - journalCredits());
   if (journalBalanceDiff) {
     const outsideBalanceSegment = outsideSegments.find(segment => String(getCountryOptionConfig(segment.countryValue).revenueAccount || '').trim());
-    const balancingRevenueAccount = String(outsideBalanceSegment ? getCountryOptionConfig(outsideBalanceSegment.countryValue).revenueAccount : baseRevenueAccount).trim();
+    const balancingRevenueAccount = String(
+      outsideBalanceSegment
+        ? getCountryOptionConfig(outsideBalanceSegment.countryValue).revenueAccount
+        : (siBaseAmount > 0 ? baseRevenueAccount : additionalCostRevenueAccount)
+    ).trim();
     const balancingVatCode = outsideBalanceSegment ? 'N' : (siBaseAmount > 0 || siVatAmount > 0 ? baseVatCode : Object.keys(ddvAmountsByCode)[0]);
     if (!balancingRevenueAccount || !balancingVatCode) {
       setStatus('Minimax XML totals could not be balanced because no revenue line is available.', 'danger');
@@ -3474,6 +3516,11 @@ function buildInvoiceText(pickup, dropoff, totalKm, siKm, outsideKm, taxableBase
   document.getElementById('invoiceTextEn').value = tf('International passenger transfer {pickup} → {dropoff}.\nTotal route: {totalKm}. Estimated Slovenia part: {siKm}. Outside Slovenia: {outsideKm}.\nSlovenian VAT is calculated only on the part of the route performed in Slovenia, proportionate to kilometres driven in Slovenia.\nTaxable base Slovenia: {taxableBase}. Outside Slovenia part: {outsideBase}.{outsideVatText} VAT {vatRate}%: {vatAmount}. Total: {totalAmount}.', { ...replacements, outsideVatText: Number(outsideVatRate) ? tf(' Outside VAT {outsideVatRate}%: {outsideVatAmount}.', { outsideVatRate, outsideVatAmount: fmtEur(outsideVatAmount) }) : '' });
   document.getElementById('invoiceTextSl').value = tf('Mednarodni prevoz potnikov {pickup} → {dropoff}.\nSkupna pot: {totalKm}. Ocenjen del poti po Sloveniji: {siKm}. Del poti izven Slovenije: {outsideKm}.\nDDV je obračunan samo od dela poti, opravljenega na ozemlju Slovenije, sorazmerno glede na kilometre v Sloveniji.\nDavčna osnova Slovenija: {taxableBase}. Del izven Slovenije: {outsideBase}.{outsideVatText} DDV {vatRate}%: {vatAmount}. Skupaj: {totalAmount}.', { ...replacements, outsideVatText: Number(outsideVatRate) ? tf(' DDV izven: {outsideVatRate}%: {outsideVatAmount}.', { outsideVatRate, outsideVatAmount: fmtEur(outsideVatAmount) }) : '' });
 }
+function setDefaultIssueDate() {
+  const issueDate = document.getElementById('issueDate');
+  if (!issueDate || issueDate.value) return;
+  issueDate.value = formatIsoDateDisplay(getTodayIsoDate());
+}
 function setDefaultServiceDate() {
   const serviceDate = document.getElementById('serviceDate');
   if (!serviceDate || serviceDate.value) return;
@@ -3483,6 +3530,24 @@ function setDefaultDueDate(issueDate = getTodayIsoDate()) {
   const dueDate = document.getElementById('dueDate');
   if (!dueDate || dueDate.value) return;
   dueDate.value = formatIsoDateDisplay(addDaysIso(issueDate, 15));
+}
+function openIssueDatePicker() {
+  const picker = document.getElementById('issueDatePicker');
+  const visibleInput = document.getElementById('issueDate');
+  if (!picker || !visibleInput) return;
+  picker.value = normalizeIsoDate(visibleInput.value) || getTodayIsoDate();
+  try {
+    if (typeof picker.showPicker === 'function') picker.showPicker();
+    else picker.click();
+  } catch (err) {
+    picker.click();
+  }
+}
+function onIssueDatePicked() {
+  const picker = document.getElementById('issueDatePicker');
+  const visibleInput = document.getElementById('issueDate');
+  if (!picker || !visibleInput || !picker.value) return;
+  visibleInput.value = formatIsoDateDisplay(picker.value);
 }
 function openServiceDatePicker() {
   const picker = document.getElementById('serviceDatePicker');
@@ -3506,7 +3571,7 @@ function openDueDatePicker() {
   const picker = document.getElementById('dueDatePicker');
   const visibleInput = document.getElementById('dueDate');
   if (!picker || !visibleInput) return;
-  picker.value = normalizeIsoDate(visibleInput.value) || addDaysIso(restoredInvoiceIssueDate || getTodayIsoDate(), 15);
+  picker.value = normalizeIsoDate(visibleInput.value) || addDaysIso(getIssueDateIso(), 15);
   try {
     if (typeof picker.showPicker === 'function') picker.showPicker();
     else picker.click();
@@ -3543,6 +3608,14 @@ function isValidDateParts(year, month, day) {
   const date = new Date(Date.UTC(year, month - 1, day));
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
+function getIssueDateIso() {
+  const issueDate = document.getElementById('issueDate');
+  const value = normalizeIsoDate(issueDate?.value || '');
+  if (value) return value;
+  const today = getTodayIsoDate();
+  if (issueDate) issueDate.value = formatIsoDateDisplay(today);
+  return today;
+}
 function getServiceDateIso() {
   const serviceDate = document.getElementById('serviceDate');
   const value = normalizeIsoDate(serviceDate?.value || '');
@@ -3557,7 +3630,7 @@ function addDaysIso(value, days) {
   const date = new Date(Date.UTC(year, month - 1, day + Number(days || 0)));
   return date.toISOString().slice(0, 10);
 }
-function getDueDateIso(issueDate = restoredInvoiceIssueDate || getTodayIsoDate()) {
+function getDueDateIso(issueDate = getIssueDateIso()) {
   const dueDate = document.getElementById('dueDate');
   const value = normalizeIsoDate(dueDate?.value || '');
   if (value) return value;

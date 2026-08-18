@@ -14,7 +14,9 @@ Route calculation help for accounting is a Joomla 6 site module for taxi and pas
 - Invoice payment tracking with unpaid, partially paid, and paid statuses
 - Unicode payment-confirmation PDFs with payment history and remaining balance
 - Full-value Minimax invoice exports that preserve correct receivables for partial-payment reconciliation
-- Configurable company details, origin-country accounts, and foreign-country accounts
+- Configurable company details, country accounts, and a separate additional-cost revenue account
+- Global Minimax country accounts with optional per-Joomla-module overrides merged by ISO country code
+- Selectable invoice issue date and configurable additional-cost treatment, documented in the packaged `documentation.html`
 - English and Slovenian Joomla language files
 
 ## Demo
@@ -79,10 +81,10 @@ For a new installation, install the combined suite ZIP package in Joomla:
 
 1. Go to Joomla Administrator.
 2. Open System -> Install -> Extensions.
-3. Upload `pkg_route_calculation_help_for_accounting_v1.6.12.zip`.
+3. Upload `pkg_route_calculation_help_for_accounting_v1.6.14.zip`.
 4. Open Content -> Site Modules.
 5. Create or open Route calculation help for accounting.
-6. Open Components -> Route calculation help -> Options, then enter the shared settings. Each module can independently choose global or module settings for Google Maps, company/PDF, Minimax, and countries.
+6. Open Components -> Route calculation help -> Options, then enter the shared settings. Each module can independently choose global or module settings for Google Maps, company/PDF, and countries. Minimax can use only global settings or layer optional module overrides over them.
 7. Publish the module in the desired position.
 
 The suite installs the site module, administrator-only document management
