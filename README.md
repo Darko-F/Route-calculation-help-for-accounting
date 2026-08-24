@@ -1,4 +1,14 @@
-# Route calculation help for accounting
+# Transport Accounting – Route, Country VAT & Invoice Calculator
+
+Route Calculation Help for Accounting is being renamed to : Transport Accounting – Route, Country VAT & Invoice Calculator
+The reason is purely commercial, the new name more clearly reflects what the component actually does and makes its purpose easier for potential customers to understand.
+It highlights the three main functions:
+route and distance calculation,
+country-based VAT calculation,
+invoice/accounting preparation.
+The functionality of the component remains unchanged,  only the product name is being updated to better describe its features.
+
+# Transport Accounting – Route, Country VAT & Invoice Calculator (Route calculation help for accounting)
 
 Route calculation help for accounting is a Joomla 6 site module for taxi and passenger transfer invoicing. It calculates route distance, estimates the split between the country of origin and foreign countries, prepares invoice text, and exports invoice data for PDF and accouting program as is Minimax XML workflows.
 
