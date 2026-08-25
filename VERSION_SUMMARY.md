@@ -2,9 +2,20 @@
 
 ## Update distribution
 
-- Moved the public Joomla update feed to `https://shop.topoweryou.com/files/updatesxml/route-calculation-help-for-accounting-package.xml`.
+- Moved the public Joomla update feed to `https://shop.topoweryou.com/files/updatesxml/transport-accounting-package.xml`.
 - Routed protected package downloads through the VirtueMart Update Key Manager, backed by `vmfiles/salefiles/routecalculationhelp`.
-- Centralized the subscriber update key in the Route Calculation Help component's global Options alongside the Google Maps API key.
+- Centralized the subscriber update key in the Transport Accounting component's global Options alongside the Google Maps API key.
+
+## Transport Accounting 2.0.0
+
+- Renamed the complete Joomla suite to **Transport Accounting**.
+- Replaced the package, module, component, and installer-plugin identifiers with `pkg_transport_accounting`, `mod_transport_accounting`, `com_transport_accounting`, and `plg_installer_transportaccountingupdatekey`.
+- Renamed PHP namespaces, language constants, ACL assets, AJAX routes, form paths, database tables, iframe integration identifiers, and build artifacts to match the new identity.
+- Changed newly generated invoice numbers to the `TA-YY-NNNN` format and pro forma numbers to `PR-TA-YY-NNNN`; existing historical invoice numbers should remain unchanged when records are migrated manually.
+- Added JED-recognizable GPL license notices to every packaged PHP file reported by the checker.
+- Changed the JED/package listing name to **Transport Accounting** and retained the intentional same-origin calculator iframe architecture.
+- This is a clean-break identity change without automatic migration from the former Joomla identifiers. Back up the database and manually copy required historical customers, invoices, drafts, and payments before removing the former extension.
+- Set the suite package, module, administrator component, and installer update-key plugin to version 2.0.0.
 
 ## Suite Package 1.6.14
 
@@ -27,7 +38,7 @@
 
 - Added a shared **Subscriber update key** field directly below the Google Maps API key in component Options.
 - Updated the installer helper to read the shared component key while retaining the old plugin parameter as a transition fallback.
-- Existing subscribers should note their old plugin key before updating and enter it into **Components -> Route Calculation Help -> Options** after installing 1.6.12.
+- Existing subscribers should note their old plugin key before updating and enter it into **Components -> Transport Accounting -> Options** after installing 1.6.12.
 - Updated the enclosed versions to module 1.6.11, component 1.2.2, and installer update helper 1.0.5.
 
 ## Suite Package 1.6.11
@@ -113,7 +124,7 @@
 
 ## Suite Package 1.6.0
 
-- Renamed the administrator component to Route calculation help, with a localized Slovenian name.
+- Renamed the administrator component to Transport Accounting, with a localized Slovenian name.
 - Moved the Google Maps key, base country, company/PDF identity, country VAT configuration, and Minimax accounts from individual module instances into the component's shared Options.
 - Added independent global/module choices for Google Maps, company/PDF, Minimax, and country settings, while keeping global settings as each default.
 - Enabled language-assigned modules to use their own translated PDF footer while continuing to share settings such as the global Google Maps API key.
@@ -132,7 +143,7 @@
 - Kept Minimax XML at the full original invoice value for paid and partially paid invoices; payments are reconciled separately through a Minimax bank statement or journal.
 - Prevented long payment methods, references, and notes from overlapping adjacent columns in confirmation PDFs.
 - Added payment status and administrator Add payment links to the front-end Računi / Invoices browser; payment-confirmation PDFs automatically follow Joomla's active site language.
-- Updated the enclosed versions to module 1.5.0, RCHA Document Management component 1.1.0, and installer update-key plugin 1.0.4.
+- Updated the enclosed versions to module 1.5.0, Transport Accounting component 1.1.0, and installer update-key plugin 1.0.4.
 - Localized the prominent paid label to PAID in English confirmations and PLAČANO in Slovenian confirmations.
 - Added the configured signature label and signature image to payment-confirmation PDFs.
 
@@ -140,18 +151,18 @@
 
 - Made the combined suite the single supported installation and update unit.
 - Removed individual update feeds and update-server registrations from the module, component, and plugin to prevent duplicate or incompatible partial updates.
-- Updated the enclosed versions to module 1.4.1, RCHA Document Management component 1.0.1, and installer update-key plugin 1.0.4.
+- Updated the enclosed versions to module 1.4.1, Transport Accounting component 1.0.1, and installer update-key plugin 1.0.4.
 - Retained only the combined-suite update feed in the `updates` folder.
 
 ## Suite Package 1.4.1
 
-- Combined the site module 1.4.0, RCHA Document Management component 1.0.0, and installer update-key plugin 1.0.3 into one Joomla installation ZIP.
+- Combined the site module 1.4.0, Transport Accounting component 1.0.0, and installer update-key plugin 1.0.3 into one Joomla installation ZIP.
 - Kept plugin enablement and subscriber-key configuration under Joomla's plugin manager.
 - Added a dedicated Joomla update feed for future combined-suite upgrades.
 
 ## Version 1.4.0
 
-- Moved invoice and Predračun / pro forma deletion out of the module editor into the dedicated administrator-only RCHA Document Management component.
+- Moved invoice and Predračun / pro forma deletion out of the module editor into the dedicated administrator-only Transport Accounting component.
 - Added server-side search, invoice/pro forma filtering, sortable columns, and 25/50/100-row pagination; only the current page is loaded from the database.
 - Added Joomla component `core.manage`, `core.delete`, and `core.admin` ACL rules plus POST-only CSRF-protected bulk deletion.
 - Preserved conversion integrity: a converted pro forma and its linked invoice can be deleted together, and deleting only the invoice reopens the source pro forma.
@@ -180,10 +191,10 @@
 
 ## Version 1.3.2
 
-- Added saved Predračun documents with their own automatic `PR-RCHA-YY-NNNN` number sequence.
+- Added saved Predračun documents with their own automatic `PR-TA-YY-NNNN` number sequence.
 - Added a dedicated Predračun PDF action and Slovenian/English PDF labels, including a prominent `PREDRAČUN` heading and `Predračun št.` number.
 - Predračun PDFs omit the stamp/signature and cannot be exported to Minimax.
-- Added one-click conversion from an open Predračun to a separately numbered `RCHA-YY-NNNN` invoice while retaining the source/conversion link in history.
+- Added one-click conversion from an open Predračun to a separately numbered `TA-YY-NNNN` invoice while retaining the source/conversion link in history.
 - Added open/converted Predračun status badges and guarded conversions against duplicate invoices.
 - Added configurable invoice header logo and centered Unicode-safe footer text, including support for `š`, `č`, and `ć`.
 
@@ -232,7 +243,7 @@
 
 ## Version 1.2.72
 
-- Minimax XML filenames now use the currently displayed invoice number, for example `temeljnica-RCHA-26-0008.xml`, without saving the invoice or advancing its number.
+- Minimax XML filenames now use the currently displayed invoice number, for example `temeljnica-TA-26-0008.xml`, without saving the invoice or advancing its number.
 - Added an independently configurable XML filename prefix in both English and Slovenian language INI files, with `temeljnica` as the default in both languages.
 
 ## Version 1.2.71
@@ -261,20 +272,20 @@
 
 ## Version 1.2.67
 
-- PDF filenames now use the saved invoice number, producing names such as `racun-RCHA-26-0003.pdf` in Slovenian and `invoice-RCHA-26-0003.pdf` in English.
+- PDF filenames now use the saved invoice number, producing names such as `racun-TA-26-0003.pdf` in Slovenian and `invoice-TA-26-0003.pdf` in English.
 - Moved the localized PDF filename prefixes into the English and Slovenian language files, with a safe English fallback for future translations.
 - Strengthened customer and invoice deletion confirmations in modal windows with explicit irreversible-action warnings in English and Slovenian.
 
 ## Version 1.2.66
 
 - Renamed the combined invoice action to Generate PDF / Save in English and Ustvari PDF / Shrani in Slovenian.
-- Every press now saves a new invoice; when the displayed `RCHA-YY-NNNN` number already exists, the server assigns the next available database number before generating the PDF.
+- Every press now saves a new invoice; when the displayed `TA-YY-NNNN` number already exists, the server assigns the next available database number before generating the PDF.
 
 ## Version 1.2.65
 
-- Changed automatic invoice numbering to the yearly `RCHA-YY-NNNN` format, starting at `RCHA-26-0001` for 2026 and resetting the sequence for each new year.
+- Changed automatic invoice numbering to the yearly `TA-YY-NNNN` format, starting at `TA-26-0001` for 2026 and resetting the sequence for each new year.
 - The next invoice number is loaded from saved database records when the calculator opens and rechecked when an automatically numbered invoice is saved.
-- Invoice numbers with custom suffixes separated by a hyphen or whitespace, such as `RCHA-26-0007-(custom text)` or `RCHA-26-0007 (custom text)`, now advance the sequence to `RCHA-26-0008`.
+- Invoice numbers with custom suffixes separated by a hyphen or whitespace, such as `TA-26-0007-(custom text)` or `TA-26-0007 (custom text)`, now advance the sequence to `TA-26-0008`.
 - Removed the separate Save Invoice button and replaced Generate PDF with Invoice PDF / Save, which saves the invoice before generating its PDF.
 - Applied the combined save-and-PDF workflow to regular and draft invoices while allowing saved invoices to be downloaded again without duplicate records.
 - Added a SHA-256 package checksum to the Joomla update feed for update integrity verification.
@@ -347,7 +358,7 @@
 - Added dynamic base-country labels and map defaults based on the selected base country.
 - Updated invoice/PDF/XML behavior to use base-country logic instead of hardcoded Slovenia where applicable.
 - Updated English and Slovenian translation strings.
-- Updated Joomla update server and download URLs to the `/routecalculationhelp/files/routecalculationhelp/` paths.
+- Updated Joomla update server and download URLs to the `/transportaccounting/files/transportaccounting/` paths.
 - Updated protected downloads `.htaccess` so `download.php` is reachable while ZIPs and key files stay blocked from direct access.
 
 ## Installer Plugin 1.0.2
@@ -358,10 +369,10 @@
 
 ## Installer Plugin 1.0.3
 
-- Added subscriber-key support for protected RCHA Document Management component and combined suite package downloads.
+- Added subscriber-key support for protected Transport Accounting component and combined suite package downloads.
 
 ## Update Server
 
-- Version update XML now points to `route_calculation_help_for_accounting_v1.2.39.zip`.
-- Installer plugin update XML now points to `plg_installer_routecalculationupdatekey_v1.0.2.zip`.
+- Version update XML now points to `transport_accounting_v1.2.39.zip`.
+- Installer plugin update XML now points to `plg_installer_transportaccountingupdatekey_v1.0.2.zip`.
 - `download.php` accepts valid keys through `key` or `dlid` and can run from inside the `downloads/` directory.

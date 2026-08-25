@@ -4,19 +4,19 @@ This project includes or loads the following third-party software, fonts, data, 
 
 ## Bootstrap
 
-- Use: UI CSS and JavaScript bundled in `route-calculation-help-for-accounting/media/vendor/bootstrap/`.
+- Use: UI CSS and JavaScript bundled in `transport-accounting/media/vendor/bootstrap/`.
 - Version: 5.3.3.
 - License: MIT License.
-- Bundled license: `route-calculation-help-for-accounting/media/vendor/bootstrap/LICENSE`.
+- Bundled license: `transport-accounting/media/vendor/bootstrap/LICENSE`.
 - Source: https://getbootstrap.com/
 - License information: https://getbootstrap.com/docs/5.3/about/license/
 
 ## jsPDF
 
-- Use: PDF generation library bundled in `route-calculation-help-for-accounting/media/vendor/jspdf/`.
+- Use: PDF generation library bundled in `transport-accounting/media/vendor/jspdf/`.
 - Version: 2.5.1.
 - License: MIT License.
-- Bundled license: `route-calculation-help-for-accounting/media/vendor/jspdf/LICENSE`.
+- Bundled license: `transport-accounting/media/vendor/jspdf/LICENSE`.
 - Source: https://github.com/parallax/jsPDF
 - License information: https://github.com/parallax/jsPDF/blob/master/LICENSE
 
@@ -24,9 +24,9 @@ This project includes or loads the following third-party software, fonts, data, 
 
 - Use: Bundled fonts for PDF generation.
 - Files:
-  - `route-calculation-help-for-accounting/media/fonts/NotoSans-Regular.ttf`
-  - `route-calculation-help-for-accounting/media/fonts/NotoSans-Bold.ttf`
-  - `route-calculation-help-for-accounting/media/fonts/NotoSans-OFL-1.1.txt`
+  - `transport-accounting/media/fonts/NotoSans-Regular.ttf`
+  - `transport-accounting/media/fonts/NotoSans-Bold.ttf`
+  - `transport-accounting/media/fonts/NotoSans-OFL-1.1.txt`
 - License: SIL Open Font License 1.1.
 - Source: https://github.com/googlefonts/noto-fonts
 - Notice: The fonts may be bundled, embedded, redistributed, and sold with software under the OFL terms. The fonts must not be sold by themselves, and the OFL copyright and license notice must remain with redistributed copies.
@@ -35,13 +35,13 @@ This project includes or loads the following third-party software, fonts, data, 
 
 - Use: Country boundary polygons used for route/country distance splitting.
 - Files:
-  - `route-calculation-help-for-accounting/media/geoBoundaries-SVN-ADM0.geojson`
-  - `route-calculation-help-for-accounting/media/slovenia_polygon_precise.js`
-  - `route-calculation-help-for-accounting/media/geoBoundaries-ITA-ADM0_simplified.geojson`
-  - `route-calculation-help-for-accounting/media/geoBoundaries-HRV-ADM0_simplified.geojson`
-  - `route-calculation-help-for-accounting/media/geoBoundaries-AUT-ADM0_simplified.geojson`
-  - `route-calculation-help-for-accounting/media/geoBoundaries-DEU-ADM0_simplified.geojson`
-  - `route-calculation-help-for-accounting/media/geoBoundaries-HUN-ADM0.geojson`
+  - `transport-accounting/media/geoBoundaries-SVN-ADM0.geojson`
+  - `transport-accounting/media/slovenia_polygon_precise.js`
+  - `transport-accounting/media/geoBoundaries-ITA-ADM0_simplified.geojson`
+  - `transport-accounting/media/geoBoundaries-HRV-ADM0_simplified.geojson`
+  - `transport-accounting/media/geoBoundaries-AUT-ADM0_simplified.geojson`
+  - `transport-accounting/media/geoBoundaries-DEU-ADM0_simplified.geojson`
+  - `transport-accounting/media/geoBoundaries-HUN-ADM0.geojson`
 - Source: https://www.geoboundaries.org/
 - Source API: https://www.geoboundaries.org/api.html
 
@@ -58,7 +58,7 @@ Attribution and share-alike/database-license requirements may apply depending on
 
 ## Google Maps Platform
 
-- Use: Maps JavaScript API, Routes API, Places API, and optional Geocoding API access from `route-calculation-help-for-accounting/media/calculator.html`.
+- Use: Maps JavaScript API, Routes API, Places API, and optional Geocoding API access from `transport-accounting/media/calculator.html`.
 - Service URL used by the application: `https://maps.googleapis.com/maps/api/js`
 - Terms: https://cloud.google.com/maps-platform/terms
 - Notice: Google Maps Platform is a third-party service, not bundled project code. Users must provide their own Google Maps API key, enable the required APIs, configure billing if required by Google, and comply with Google Maps Platform terms, including restrictions on caching, copying, or deriving data from Google Maps content.

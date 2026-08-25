@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="package" method="upgrade">
+  <name>Transport Accounting</name>
+  <packagename>transport_accounting</packagename>
+  <version>2.0.0</version>
+  <creationDate>2026-08-25</creationDate>
+  <author>Darko Fatur</author>
+  <authorEmail>info@topoweryou.com</authorEmail>
+  <authorUrl>https://topoweryou.com</authorUrl>
+  <copyright>Copyright (C) 2026 topoweryou.com</copyright>
+  <license>GNU General Public License version 2 or later</license>
+  <description>Transport Accounting package with the invoicing module, administrator component, and update-download helper.</description>
+  <updateservers>
+    <server type="extension" priority="1" name="Transport Accounting Updates">https://shop.topoweryou.com/files/updatesxml/transport-accounting-package.xml</server>
+  </updateservers>
+  <files folder="packages">
+    <file type="module" id="mod_transport_accounting" client="site">mod_transport_accounting_v2.0.0.zip</file>
+    <file type="component" id="com_transport_accounting">com_transport_accounting_v2.0.0.zip</file>
+    <file type="plugin" id="transportaccountingupdatekey" group="installer">plg_installer_transportaccountingupdatekey_v2.0.0.zip</file>
+  </files>
+</extension>
