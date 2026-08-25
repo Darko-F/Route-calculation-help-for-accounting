@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transport Accounting — Release 2.0.0</title>
+  <style>
+    body { max-width: 860px; margin: 2rem auto; padding: 0 1rem; color: #212529; font: 16px/1.55 system-ui, sans-serif; }
+    h1, h2 { line-height: 1.25; }
+    section { margin-top: 2rem; }
+    .note { padding: 1rem; border-left: 4px solid #0d6efd; background: #eef5ff; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Transport Accounting — 2.0.0</h1>
+
+    <section>
+      <h2>New extension identity</h2>
+      <p>Version 2.0.0 introduces the Transport Accounting name throughout the Joomla package, module, component, and installer plugin.</p>
+      <p>The new Joomla identifiers are <code>pkg_transport_accounting</code>, <code>mod_transport_accounting</code>, <code>com_transport_accounting</code>, and <code>plg_installer_transportaccountingupdatekey</code>.</p>
+      <div class="note">This is a clean-break release. Existing records under the previous database-table names are not migrated automatically. Back up the database and copy required historical records before removing the previous extension.</div>
+    </section>
+
+    <section>
+      <h2>Invoice dates</h2>
+      <p>The invoice form now provides separate selectors for the issue date, service date, and payment due date. The issue date defaults to the current date and is saved with the invoice, printed on the PDF, and used in Minimax XML.</p>
+      <p>Previously saved invoices without an explicit issue date continue to use their original creation date.</p>
+    </section>
+
+    <section>
+      <h2>Additional costs</h2>
+      <p>The <strong>Add to entered gross price</strong> mode is selected by default. In this mode, the entered gross price is the transport price and additional costs increase the final invoice total.</p>
+      <p>Select <strong>Included in entered gross price</strong> to retain the previous calculation, where additional costs are deducted from the entered gross price before the transport base and VAT are calculated.</p>
+      <div class="note">Invoices saved before this option was introduced automatically retain the previous included-in-gross calculation when restored.</div>
+    </section>
+
+    <section lang="sl">
+      <h2>Opomba v slovenščini</h2>
+      <p>Privzeta možnost <strong>Prištej k vneseni bruto ceni</strong> obravnava vneseno bruto ceno kot ceno prevoza in dodatne stroške prišteje h končnemu znesku računa. Možnost <strong>Vključeni v vneseno bruto ceno</strong> ohrani prejšnji način izračuna.</p>
+    </section>
+  </main>
+</body>
+</html>

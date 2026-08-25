@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="installer" method="upgrade">
+  <name>Transport Accounting</name>
+  <author>Darko Fatur</author>
+  <creationDate>2026-08-25</creationDate>
+  <copyright>Copyright (C) 2026 topoweryou.com</copyright>
+  <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+  <authorEmail>info@topoweryou.com</authorEmail>
+  <authorUrl>https://topoweryou.com</authorUrl>
+  <version>2.0.0</version>
+  <description>PLG_INSTALLER_TRANSPORTACCOUNTINGUPDATEKEY_XML_DESCRIPTION</description>
+  <files>
+    <filename plugin="transportaccountingupdatekey">transportaccountingupdatekey.php</filename>
+    <folder>language</folder>
+  </files>
+  <languages folder="language">
+    <language tag="en-GB">en-GB/en-GB.plg_installer_transportaccountingupdatekey.ini</language>
+    <language tag="en-GB">en-GB/en-GB.plg_installer_transportaccountingupdatekey.sys.ini</language>
+    <language tag="sl-SI">sl-SI/sl-SI.plg_installer_transportaccountingupdatekey.ini</language>
+    <language tag="sl-SI">sl-SI/sl-SI.plg_installer_transportaccountingupdatekey.sys.ini</language>
+  </languages>
+</extension>

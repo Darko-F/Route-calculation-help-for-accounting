@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<updates>
+  <update>
+    <name>Transport Accounting</name>
+    <description>Transport Accounting package containing the invoicing module, administrator component, and update-download helper.</description>
+    <element>pkg_transport_accounting</element>
+    <type>package</type>
+    <client>site</client>
+    <version>2.0.0</version>
+    <infourl title="Transport Accounting">https://builder.topoweryou.com/routecalculationhelp/</infourl>
+    <downloads>
+      <downloadurl type="full" format="zip">https://shop.topoweryou.com/index.php?option=com_vmupdatekeymanager&amp;task=download.get&amp;file=pkg_transport_accounting_v2.0.0.zip&amp;channel=update</downloadurl>
+    </downloads>
+    <tags>
+      <tag>stable</tag>
+    </tags>
+    <sha256>5f1163af12b87f782f8d25ea5a618a97aa36ffabd2255c1c049e03f211ae9f11</sha256>
+    <maintainer>topoweryou.com</maintainer>
+    <maintainerurl>https://topoweryou.com</maintainerurl>
+    <targetplatform name="joomla" version="6\..*" />
+  </update>
+</updates>

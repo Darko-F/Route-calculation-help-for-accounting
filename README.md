@@ -1,16 +1,16 @@
 # Transport Accounting – Route, Country VAT & Invoice Calculator
 
-Route Calculation Help for Accounting is being renamed to : Transport Accounting – Route, Country VAT & Invoice Calculator
-The reason is purely commercial, the new name more clearly reflects what the component actually does and makes its purpose easier for potential customers to understand.
-It highlights the three main functions:
-route and distance calculation,
-country-based VAT calculation,
-invoice/accounting preparation.
-The functionality of the component remains unchanged,  only the product name is being updated to better describe its features.
+Transport Accounting is a Joomla 6 site module for taxi and passenger transfer invoicing. It calculates route distance, estimates the split between the country of origin and foreign countries, prepares invoice text, and exports invoice data for PDF and accounting programs such as Minimax through XML workflows.
 
-# Transport Accounting – Route, Country VAT & Invoice Calculator (Route calculation help for accounting)
+## Version 2.0.0 — Transport Accounting rename
 
-Route calculation help for accounting is a Joomla 6 site module for taxi and passenger transfer invoicing. It calculates route distance, estimates the split between the country of origin and foreign countries, prepares invoice text, and exports invoice data for PDF and accouting program as is Minimax XML workflows.
+**Transport Accounting** is the new name for **Route Calculation Help for Accounting**. The new commercial name describes the extension's three principal functions more clearly: route and distance calculation, country-based VAT calculation, and invoice/accounting preparation.
+
+The calculator's functionality remains unchanged, but version 2.0.0 also adopts the new name in every Joomla identifier: `pkg_transport_accounting`, `mod_transport_accounting`, `com_transport_accounting`, and `plg_installer_transportaccountingupdatekey`. Joomla therefore treats 2.0.0 as a new extension rather than an in-place update of the former identifiers.
+
+Existing customers, invoices, drafts, payments, module instances, and global settings can be migrated manually to the new database tables and extension records. Back up the Joomla database and verify the copied records before uninstalling the former extension. Newly generated invoice numbers use `TA-YY-NNNN`, while migrated historical invoice numbers should remain unchanged.
+
+See [VERSION_SUMMARY.md](VERSION_SUMMARY.md) for the complete 2.0.0 change summary and earlier release history.
 
 ## Features
 
@@ -53,22 +53,17 @@ download key is required for private update downloads.
 After purchase, enter your subscriber key with the suite's other shared settings:
 
 ```text
-Components -> Route Calculation Help -> Options -> Subscriber update key
+Components -> Transport Accounting -> Options -> Subscriber update key
 ```
 
 The field is directly below **Google Maps API key**. The bundled installer
 helper reads this shared option and appends it to protected combined-suite
 downloads. Keep the helper plugin enabled; it has no separate key field.
 
-When upgrading from version 1.6.11 or earlier, make a note of the key in
-**Installer - Route Calculation Help update key** before installing version
-1.6.12. After the update, enter that key in **Components -> Route Calculation
-Help -> Options -> Subscriber update key**. Keys are not migrated automatically.
-
 The public Joomla update feed is:
 
 ```text
-https://shop.topoweryou.com/files/updatesxml/route-calculation-help-for-accounting-package.xml
+https://shop.topoweryou.com/files/updatesxml/transport-accounting-package.xml
 ```
 
 Release ZIPs are stored outside the public web root under the VirtueMart Safe
@@ -91,10 +86,10 @@ For a new installation, install the combined suite ZIP package in Joomla:
 
 1. Go to Joomla Administrator.
 2. Open System -> Install -> Extensions.
-3. Upload `pkg_route_calculation_help_for_accounting_v1.6.14.zip`.
+3. Upload `pkg_transport_accounting_v2.0.0.zip`.
 4. Open Content -> Site Modules.
-5. Create or open Route calculation help for accounting.
-6. Open Components -> Route calculation help -> Options, then enter the shared settings. Each module can independently choose global or module settings for Google Maps, company/PDF, and countries. Minimax can use only global settings or layer optional module overrides over them.
+5. Create or open Transport Accounting.
+6. Open Components -> Transport Accounting -> Options, then enter the shared settings. Each module can independently choose global or module settings for Google Maps, company/PDF, and countries. Minimax can use only global settings or layer optional module overrides over them.
 7. Publish the module in the desired position.
 
 The suite installs the site module, administrator-only document management
@@ -102,20 +97,20 @@ component, and update-download helper. Enter the subscriber key in the
 component's global Options and keep the helper plugin enabled before using
 protected updates. Install and update the suite only through the combined
 package so all extensions remain on the same compatible release. Document management is available under Joomla
-Administrator → Components → Route calculation help.
+Administrator → Components → Transport Accounting.
 
 ## Source Package
 
 The source code is in:
 
 ```text
-route-calculation-help-for-accounting/
+transport-accounting/
 ```
 
 The supported installable suite is distributed as:
 
 ```text
-pkg_route_calculation_help_for_accounting_vx.x.x.zip
+pkg_transport_accounting_vx.x.x.zip
 ```
 
 ## Release Build
@@ -138,7 +133,7 @@ Do not commit real Google API keys. Configure the key in the Joomla component Op
 
 ## License
 
-GNU General Public License version 2 or later. See `route-calculation-help-for-accounting/LICENSE.txt`.
+GNU General Public License version 2 or later. See `transport-accounting/LICENSE.txt`.
 
 Author: Darko Fatur
 
