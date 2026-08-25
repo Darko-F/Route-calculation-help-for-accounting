@@ -3445,9 +3445,9 @@ function showResults(totalKm, siKm, outsideKm, taxableBase, outsideBase, vatAmou
   document.getElementById('siKm').textContent = fmtKm(siKm);
   document.getElementById('outsideKm').textContent = fmtKm(outsideKm);
   document.getElementById('netTotal').textContent = fmtEur(netTotal);
-  document.getElementById('taxableBase').textContent = fmtEur(taxableBase) + ' ' + t('VAT ') + vatRate + '%';
+  document.getElementById('taxableBase').textContent = fmtEur(taxableBase) + ' ' + t('VAT') + ' ' + vatRate + '%';
   document.getElementById('outsideBase').textContent = fmtEur(outsideBase)
-    + (outsideSegments.length > 1 ? tf(' / {count} countries', { count: outsideSegments.length }) : (Number(outsideVatRate) ? (' ' + t('VAT ') + outsideVatRate + '%') : t(' not subject to Slovenian VAT')))
+    + (outsideSegments.length > 1 ? (' ' + tf('/ {count} countries', { count: outsideSegments.length })) : (Number(outsideVatRate) ? (' ' + t('VAT') + ' ' + outsideVatRate + '%') : (' ' + t('not subject to Slovenian VAT'))))
     + (outsideRates.length > 1 ? (' (' + outsideRates.map(rate => `${formatRate(rate)}%`).join(', ') + ')') : '');
   document.getElementById('vatAmount').textContent = fmtEur(vatAmount);
   document.getElementById('outsideVatAmount').textContent = fmtEur(outsideVatAmount || 0);
@@ -3513,8 +3513,8 @@ function buildInvoiceText(pickup, dropoff, totalKm, siKm, outsideKm, taxableBase
     document.getElementById('invoiceTextSl').value = tf('Prevoz potnikov {pickup} → {dropoff}.\nSkupna pot: {totalKm}. DDV {vatRate}%: {vatAmount}. Skupaj: {totalAmount}.', replacements);
     return;
   }
-  document.getElementById('invoiceTextEn').value = tf('International passenger transfer {pickup} → {dropoff}.\nTotal route: {totalKm}. Estimated Slovenia part: {siKm}. Outside Slovenia: {outsideKm}.\nSlovenian VAT is calculated only on the part of the route performed in Slovenia, proportionate to kilometres driven in Slovenia.\nTaxable base Slovenia: {taxableBase}. Outside Slovenia part: {outsideBase}.{outsideVatText} VAT {vatRate}%: {vatAmount}. Total: {totalAmount}.', { ...replacements, outsideVatText: Number(outsideVatRate) ? tf(' Outside VAT {outsideVatRate}%: {outsideVatAmount}.', { outsideVatRate, outsideVatAmount: fmtEur(outsideVatAmount) }) : '' });
-  document.getElementById('invoiceTextSl').value = tf('Mednarodni prevoz potnikov {pickup} → {dropoff}.\nSkupna pot: {totalKm}. Ocenjen del poti po Sloveniji: {siKm}. Del poti izven Slovenije: {outsideKm}.\nDDV je obračunan samo od dela poti, opravljenega na ozemlju Slovenije, sorazmerno glede na kilometre v Sloveniji.\nDavčna osnova Slovenija: {taxableBase}. Del izven Slovenije: {outsideBase}.{outsideVatText} DDV {vatRate}%: {vatAmount}. Skupaj: {totalAmount}.', { ...replacements, outsideVatText: Number(outsideVatRate) ? tf(' DDV izven: {outsideVatRate}%: {outsideVatAmount}.', { outsideVatRate, outsideVatAmount: fmtEur(outsideVatAmount) }) : '' });
+  document.getElementById('invoiceTextEn').value = tf('International passenger transfer {pickup} → {dropoff}.\nTotal route: {totalKm}. Estimated Slovenia part: {siKm}. Outside Slovenia: {outsideKm}.\nSlovenian VAT is calculated only on the part of the route performed in Slovenia, proportionate to kilometres driven in Slovenia.\nTaxable base Slovenia: {taxableBase}. Outside Slovenia part: {outsideBase}.{outsideVatText} VAT {vatRate}%: {vatAmount}. Total: {totalAmount}.', { ...replacements, outsideVatText: Number(outsideVatRate) ? (' ' + tf('Outside VAT {outsideVatRate}%: {outsideVatAmount}.', { outsideVatRate, outsideVatAmount: fmtEur(outsideVatAmount) })) : '' });
+  document.getElementById('invoiceTextSl').value = tf('Mednarodni prevoz potnikov {pickup} → {dropoff}.\nSkupna pot: {totalKm}. Ocenjen del poti po Sloveniji: {siKm}. Del poti izven Slovenije: {outsideKm}.\nDDV je obračunan samo od dela poti, opravljenega na ozemlju Slovenije, sorazmerno glede na kilometre v Sloveniji.\nDavčna osnova Slovenija: {taxableBase}. Del izven Slovenije: {outsideBase}.{outsideVatText} DDV {vatRate}%: {vatAmount}. Skupaj: {totalAmount}.', { ...replacements, outsideVatText: Number(outsideVatRate) ? (' ' + tf('DDV izven: {outsideVatRate}%: {outsideVatAmount}.', { outsideVatRate, outsideVatAmount: fmtEur(outsideVatAmount) })) : '' });
 }
 function setDefaultIssueDate() {
   const issueDate = document.getElementById('issueDate');
