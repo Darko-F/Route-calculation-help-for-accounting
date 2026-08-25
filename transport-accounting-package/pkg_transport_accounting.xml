@@ -10,6 +10,10 @@
   <copyright>Copyright (C) 2026 topoweryou.com</copyright>
   <license>GNU General Public License version 2 or later</license>
   <description>Transport Accounting package with the invoicing module, administrator component, and update-download helper.</description>
+  <languages folder="language">
+    <language tag="en-GB">en-GB/transportaccounting.sys.ini</language>
+    <language tag="sl-SI">sl-SI/transportaccounting.sys.ini</language>
+  </languages>
   <updateservers>
     <server type="extension" priority="1" name="Transport Accounting Updates">https://shop.topoweryou.com/files/updatesxml/transport-accounting-package.xml</server>
   </updateservers>

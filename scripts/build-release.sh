@@ -47,7 +47,7 @@ suite_zip="${downloads_dir}/${suite_name}"
 
 rm -f -- "$module_zip" "$component_zip" "$plugin_zip" "$suite_zip"
 
-(cd "$module_dir" && zip -q -r "$module_zip" .)
+(cd "$module_dir" && zip -q -r "$module_zip" . -x 'documentation.html')
 (cd "$component_dir" && zip -q -r "$component_zip" .)
 (cd "$plugin_dir" && zip -q -r "$plugin_zip" .)
 
@@ -55,8 +55,9 @@ cp "$module_zip" "${downloads_dir}/${module_name}"
 cp "$component_zip" "${downloads_dir}/${component_name}"
 cp "$plugin_zip" "${downloads_dir}/${plugin_name}"
 
-(cd "$package_dir" && zip -q "$suite_zip" \
+(cd "$package_dir" && zip -q -r "$suite_zip" \
   pkg_transport_accounting.xml \
+  language \
   "packages/${module_name}" \
   "packages/${component_name}" \
   "packages/${plugin_name}")

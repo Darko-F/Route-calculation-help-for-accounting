@@ -26,7 +26,7 @@ See [VERSION_SUMMARY.md](VERSION_SUMMARY.md) for the complete 2.0.0 change summa
 - Full-value Minimax invoice exports that preserve correct receivables for partial-payment reconciliation
 - Configurable company details, country accounts, and a separate additional-cost revenue account
 - Global Minimax country accounts with optional per-Joomla-module overrides merged by ISO country code
-- Selectable invoice issue date and configurable additional-cost treatment, documented in the packaged `documentation.html`
+- Selectable invoice issue date and configurable additional-cost treatment
 - English and Slovenian Joomla language files
 
 ## Demo

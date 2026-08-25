@@ -1,44 +1,632 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Transport Accounting — Release 2.0.0</title>
-  <style>
-    body { max-width: 860px; margin: 2rem auto; padding: 0 1rem; color: #212529; font: 16px/1.55 system-ui, sans-serif; }
-    h1, h2 { line-height: 1.25; }
-    section { margin-top: 2rem; }
-    .note { padding: 1rem; border-left: 4px solid #0d6efd; background: #eef5ff; }
-  </style>
-</head>
-<body>
-  <main>
-    <h1>Transport Accounting — 2.0.0</h1>
-
-    <section>
-      <h2>New extension identity</h2>
-      <p>Version 2.0.0 introduces the Transport Accounting name throughout the Joomla package, module, component, and installer plugin.</p>
-      <p>The new Joomla identifiers are <code>pkg_transport_accounting</code>, <code>mod_transport_accounting</code>, <code>com_transport_accounting</code>, and <code>plg_installer_transportaccountingupdatekey</code>.</p>
-      <div class="note">This is a clean-break release. Existing records under the previous database-table names are not migrated automatically. Back up the database and copy required historical records before removing the previous extension.</div>
-    </section>
-
-    <section>
-      <h2>Invoice dates</h2>
-      <p>The invoice form now provides separate selectors for the issue date, service date, and payment due date. The issue date defaults to the current date and is saved with the invoice, printed on the PDF, and used in Minimax XML.</p>
-      <p>Previously saved invoices without an explicit issue date continue to use their original creation date.</p>
-    </section>
-
-    <section>
-      <h2>Additional costs</h2>
-      <p>The <strong>Add to entered gross price</strong> mode is selected by default. In this mode, the entered gross price is the transport price and additional costs increase the final invoice total.</p>
-      <p>Select <strong>Included in entered gross price</strong> to retain the previous calculation, where additional costs are deducted from the entered gross price before the transport base and VAT are calculated.</p>
-      <div class="note">Invoices saved before this option was introduced automatically retain the previous included-in-gross calculation when restored.</div>
-    </section>
-
-    <section lang="sl">
-      <h2>Opomba v slovenščini</h2>
-      <p>Privzeta možnost <strong>Prištej k vneseni bruto ceni</strong> obravnava vneseno bruto ceno kot ceno prevoza in dodatne stroške prišteje h končnemu znesku računa. Možnost <strong>Vključeni v vneseno bruto ceno</strong> ohrani prejšnji način izračuna.</p>
-    </section>
-  </main>
-</body>
-</html>
+<header class="bg-dark text-white py-5 border-bottom border-primary border-4">
+<div class="container-xl">
+<div class="row align-items-center g-4">
+<div class="col-lg-9"><span class="badge text-bg-primary mb-3">Suite 2.0.0</span>
+<h1 class="display-5 fw-bold">Transport Accounting – Route, Country VAT &amp; Invoice Calculator</h1>
+<p class="lead mb-2">Installation, configuration, daily use, administration, updates and technical reference</p>
+<p class="text-white-50 mb-0">Joomla 6 extension suite · Module 2.0.0 · Component 2.0.0 · Update-key plugin 2.0.0</p>
+</div>
+<div class="col-lg-3 text-lg-end no-print"><button class="btn btn-outline-light" type="button">Print / Save as PDF</button></div>
+</div>
+</div>
+</header><main class="container-xl py-4 py-lg-5">
+<div class="alert alert-warning shadow-sm" role="alert">
+<h2 class="h5 alert-heading">Accounting responsibility</h2>
+<p class="mb-0">This package assists with distance allocation, VAT calculations and exports. Verify tax rates, registrations, invoice wording, account mappings and fiscal-confirmation duties with your accountant or tax adviser before production use. A payment confirmation does not replace any legally required fiscal confirmation.</p>
+</div>
+<div class="row g-4">
+<aside class="col-lg-3 sidebar-column"><nav class="card shadow-sm sticky-lg-top sidebar-nav" style="top: 1rem;" aria-label="Documentation contents">
+<div class="card-header fw-semibold">Contents</div>
+<div class="list-group list-group-flush small"><a class="list-group-item list-group-item-action" href="#overview">1. Overview</a> <a class="list-group-item list-group-item-action" href="#requirements">2. Requirements</a> <a class="list-group-item list-group-item-action" href="#install">3. Install &amp; upgrade</a> <a class="list-group-item list-group-item-action" href="#quick-start">4. Quick start</a> <a class="list-group-item list-group-item-action" href="#configuration">5. Configuration</a> <a class="list-group-item list-group-item-action" href="#calculator">6. Calculator workflow</a> <a class="list-group-item list-group-item-action" href="#documents">7. Documents &amp; customers</a> <a class="list-group-item list-group-item-action" href="#payments">8. Payments</a> <a class="list-group-item list-group-item-action" href="#minimax">9. Minimax XML</a> <a class="list-group-item list-group-item-action" href="#administrator">10. Administrator</a> <a class="list-group-item list-group-item-action" href="#updates">11. Subscriber updates</a> <a class="list-group-item list-group-item-action" href="#security">12. Security &amp; backup</a> <a class="list-group-item list-group-item-action" href="#troubleshooting">13. Troubleshooting</a> <a class="list-group-item list-group-item-action" href="#technical">14. Technical reference</a> <a class="list-group-item list-group-item-action" href="#release">15. Release process</a> <a class="list-group-item list-group-item-action" href="#changelog">16. Current release</a></div>
+</nav></aside>
+<div class="col-lg-9 content-column">
+<section id="overview" class="doc-section mb-5">
+<h2 class="border-bottom pb-2">1. Overview</h2>
+<p>Simplify accounting for your transport business. Transport Accounting is a Joomla 6 package for taxi, cargo and passenger-transfer invoicing. It calculates Google Maps driving routes, estimates kilometres by country, allocates the selling price and VAT, stores customers and documents, applies country-specific tax rules, generates invoice descriptions and Unicode PDFs, and exports accounting data in XML for supported accounting software.</p>
+<div class="row g-3">
+<div class="col-md-4">
+<div class="card h-100 shadow-sm">
+<div class="card-body">
+<h3 class="h5">Site module</h3>
+<p class="mb-0">The working calculator, customer browser, invoice/pro forma workflow, PDF generator and Minimax exporter.</p>
+</div>
+</div>
+</div>
+<div class="col-md-4">
+<div class="card h-100 shadow-sm">
+<div class="card-body">
+<h3 class="h5">Admin component</h3>
+<p class="mb-0">Shared options, filtered document management, bulk deletion, payment recording and payment-confirmation PDFs.</p>
+</div>
+</div>
+</div>
+<div class="col-md-4">
+<div class="card h-100 shadow-sm">
+<div class="card-body">
+<h3 class="h5">Installer plugin</h3>
+<p class="mb-0">Adds the shared subscriber key only to approved package downloads from the configured update server.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="card mt-3 border-primary">
+<div class="card-header text-bg-primary">Supported country data included</div>
+<div class="card-body">
+<p class="mb-0">Slovenia, Italy, Croatia, Austria, Germany and Hungary are selectable as the base country. Boundary data is bundled for those countries. Country names, VAT registration numbers, VAT rates, PDF notes and Minimax account mappings remain editable. Additional countries require suitable border data and configuration.</p>
+</div>
+</div>
+</section>
+<section id="requirements" class="doc-section mb-5">
+<h2 class="border-bottom pb-2">2. Requirements</h2>
+<div class="table-responsive">
+<table class="table table-bordered bg-white align-middle">
+<thead class="table-light">
+<tr>
+<th>Item</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>CMS</th>
+<td>Joomla 6</td>
+</tr>
+<tr>
+<th>Server</th>
+<td>A PHP version supported by Joomla 6; MySQL or MariaDB supported by Joomla 6</td>
+</tr>
+<tr>
+<th>Browser</th>
+<td>A current JavaScript-enabled browser; network access to Google Maps services</td>
+</tr>
+<tr>
+<th>Google Cloud</th>
+<td>A billing-enabled project, restricted API key, Maps JavaScript API, Routes API and Places API. Enable Geocoding API only if the reverse-geocoding split is used.</td>
+</tr>
+<tr>
+<th>Joomla user access</th>
+<td>A restricted frontend menu/module access level is strongly recommended. Administrator users need component ACL rights appropriate to their work.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="alert alert-info mb-0"><strong>Production recommendation:</strong> place the calculator on a menu item visible only to trusted staff. It contains customer, invoice and accounting functions and is not intended as a public fare calculator.</div>
+</section>
+<section id="install" class="doc-section mb-5">
+<h2 class="border-bottom pb-2">3. Installation and upgrade</h2>
+<h3 class="h5 mt-4">New installation</h3>
+<ol class="list-group list-group-numbered mb-4">
+<li class="list-group-item">Back up the Joomla files and database.</li>
+<li class="list-group-item">In Joomla Administrator open <strong>System → Install → Extensions</strong>.</li>
+<li class="list-group-item">Upload <a href="https://shop.topoweryou.com/joomla-extensions/route-calculation-help-accounting"><code>pkg_transport_accounting_v2.0.0.zip</code></a>. Use the combined package ZIP, not an enclosed individual extension ZIP.</li>
+<li class="list-group-item">Open <strong>Components → Transport Accounting → Options</strong> and configure the shared settings.</li>
+<li class="list-group-item">Open <strong>Content → Site Modules</strong>, create or open <em>Transport Accounting</em>, assign a position and restricted access level, then publish it on the intended menu item.</li>
+<li class="list-group-item">If subscribed to updates, enable and configure the installer update-key plugin.</li>
+<li class="list-group-item">Test a domestic and a cross-border route, a PDF, a pro forma conversion, and a Minimax import in a non-production accounting environment.</li>
+</ol>
+<h3 class="h5">Migration from the former extension</h3>
+<div class="alert alert-warning shadow-sm"><strong>Version 2.0.0 has new Joomla identifiers.</strong> Joomla installs it as a new extension rather than upgrading Route Calculation Help for Accounting in place. Back up the database first, install the Transport Accounting package, and manually migrate the historical customers, invoices, draft lines, payments, module instances, and component settings you need. Verify the migrated record counts before removing the former extension.</div>
+<p>Future Transport Accounting releases can be installed through Joomla Update or over the existing Transport Accounting package. Do not update the module, component, or plugin separately: their versions are released as one compatibility set.</p>
+<div class="alert alert-danger"><strong>Uninstallation:</strong> the module manifest includes uninstall SQL that drops the customer, invoice, draft-line and payment tables. Export or back up data before uninstalling the package.</div>
+<h3 class="h5">Post-upgrade checks</h3>
+<ul>
+<li>Clear Joomla and browser caches if the embedded calculator appears stale.</li>
+<li>Confirm the module and global configuration sources still point to the intended values.</li>
+<li>Open an older saved invoice and verify route, stop, country, adjustment and customer restoration.</li>
+<li>Verify the package version under <strong>System → Manage → Extensions</strong>.</li>
+</ul>
+</section>
+<section id="quick-start" class="doc-section mb-5">
+<h2 class="border-bottom pb-2">4. Quick start</h2>
+<div class="row g-3">
+<div class="col-md-6">
+<div class="card h-100">
+<div class="card-body"><span class="badge text-bg-primary mb-2">1</span>
+<h3 class="h5">Configure</h3>
+<p class="mb-0">Add the Google key, legal company identity, PDF branding, base country, VAT data and Minimax accounts in component Options.</p>
+</div>
+</div>
+</div>
+<div class="col-md-6">
+<div class="card h-100">
+<div class="card-body"><span class="badge text-bg-primary mb-2">2</span>
+<h3 class="h5">Calculate</h3>
+<p class="mb-0">Enter pickup, drop-off, optional stops/return, selling price and VAT rate; calculate and review the editable country split.</p>
+</div>
+</div>
+</div>
+<div class="col-md-6">
+<div class="card h-100">
+<div class="card-body"><span class="badge text-bg-primary mb-2">3</span>
+<h3 class="h5">Identify the customer</h3>
+<p class="mb-0">Select an existing customer or enter a new customer, then choose the issue date, service date, and due date. Save reusable customer details.</p>
+</div>
+</div>
+</div>
+<div class="col-md-6">
+<div class="card h-100">
+<div class="card-body"><span class="badge text-bg-primary mb-2">4</span>
+<h3 class="h5">Issue and export</h3>
+<p class="mb-0">Review both invoice-text languages, then create a pro forma or invoice PDF. Export an issued invoice to Minimax after validation.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="configuration" class="doc-section mb-5">
+<h2 class="border-bottom pb-2">5. Configuration reference</h2>
+<p>Global settings live at <strong>Components → Transport Accounting → Options</strong>. Each module independently chooses <strong>Global</strong> or <strong>Module</strong> values for Google Maps, company/PDF, Minimax and countries. This permits shared accounting settings while allowing language-specific modules to override PDF text or other selected groups.</p>
+<div id="configurationAccordion" class="accordion">
+<div class="accordion-item">
+<h3 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#configMaps">Google Maps</button></h3>
+<div id="configMaps" class="accordion-collapse collapse show" data-bs-parent="#configurationAccordion">
+<div class="accordion-body">
+<p><strong>Google Maps API key:</strong> used by the embedded calculator for address completion, route calculation and map display. Restrict the key in Google Cloud to the production HTTPS referrer(s) and only required APIs. Never place a real key in source control.</p>
+<p class="mb-0">The key can come from global component Options or the module instance. A missing key prevents map and route loading.</p>
+</div>
+</div>
+</div>
+<div class="accordion-item">
+<h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#configCompany">Company and PDF</button></h3>
+<div id="configCompany" class="accordion-collapse collapse" data-bs-parent="#configurationAccordion">
+<div class="accordion-body">
+<div class="table-responsive">
+<table class="table table-sm">
+<thead>
+<tr>
+<th>Field</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Company name, address, postcode/city</td>
+<td>Supplier identity printed on generated documents.</td>
+</tr>
+<tr>
+<td>Tax and registration numbers</td>
+<td>Legal/tax identifiers printed in the PDF.</td>
+</tr>
+<tr>
+<td>IBAN, email, phone</td>
+<td>Payment and contact information.</td>
+</tr>
+<tr>
+<td>Issue city</td>
+<td>Place of issue.</td>
+</tr>
+<tr>
+<td>PDF logo</td>
+<td>Joomla Media selection; accepts common Joomla-relative paths and resolved URLs.</td>
+</tr>
+<tr>
+<td>PDF footer text</td>
+<td>Centered footer; useful for legal notices or translated module-specific text.</td>
+</tr>
+<tr>
+<td>Signature image</td>
+<td>Signature/stamp image, defaulting to bundled <code>podpis-transparent.png</code>.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="mb-0">Replace every example value before production. PDF generation uses bundled jsPDF and Noto Sans fonts for Slovenian and other Unicode characters.</p>
+</div>
+</div>
+</div>
+<div class="accordion-item">
+<h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#configCountries">Countries and VAT</button></h3>
+<div id="configCountries" class="accordion-collapse collapse" data-bs-parent="#configurationAccordion">
+<div class="accordion-body">
+<ul>
+<li><strong>Base country:</strong> SI, IT, HR, AT, DE or HU.</li>
+<li><strong>Default foreign passenger VAT rate:</strong> fallback for a foreign country without a row-specific rate; an explicit zero is supported.</li>
+<li><strong>Country rows:</strong> two-letter ISO code, display name, VAT registration number, VAT rate and PDF note.</li>
+<li><strong>PDF note placeholders:</strong> <code>{countryName}</code>, <code>{vatNumber}</code> and <code>{vatRate}</code>.</li>
+</ul>
+<p class="mb-0">Keep rows aligned with actual foreign VAT registrations. A detected unknown country falls back to an editable Other/custom row; review it before issuing a document.</p>
+</div>
+</div>
+</div>
+<div class="accordion-item">
+<h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#configMinimax">Minimax</button></h3>
+<div id="configMinimax" class="accordion-collapse collapse" data-bs-parent="#configurationAccordion">
+<div class="accordion-body">
+<ul class="mb-0">
+<li><strong>Customer receivable account:</strong> receivable/control account for the invoice total.</li>
+<li><strong>Base-country standard-rate VAT account:</strong> VAT liability used for standard-rated additional costs.</li>
+<li><strong>Default foreign revenue account:</strong> fallback foreign passenger-transport revenue account.</li>
+<li><strong>Country account rows:</strong> two-letter country code, revenue account and VAT-liability account. Configure every country that can appear on an export.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="accordion-item">
+<h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#configAcl">Permissions</button></h3>
+<div id="configAcl" class="accordion-collapse collapse" data-bs-parent="#configurationAccordion">
+<div class="accordion-body">
+<p>The administrator component exposes Joomla ACL actions <code>core.manage</code>, <code>core.edit</code>, <code>core.delete</code> and <code>core.admin</code>. Grant only what each staff group needs. <em>Edit</em> controls payment recording; <em>Delete</em> controls document deletion; <em>Admin</em> controls component configuration/permissions.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="calculator" class="doc-section mb-5">
+<h2 class="border-bottom pb-2">6. Calculator workflow</h2>
+<h3 class="h5 mt-4">Route input</h3>
+<ol>
+<li>Enter pickup and drop-off using Google Places suggestions.</li>
+<li>Add up to 25 additional places and arrange them in travel order.</li>
+<li>Select <strong>Return trip to pickup</strong> when appropriate.</li>
+<li>Enter either the transport gross price or net price. The paired value is recalculated.</li>
+<li>Add costs such as parking if needed. Cost rows accept a gross amount and a VAT preset (22% S, 9.5% Z or 0% N). By default they are added on top of the entered gross price. Select <strong>Included in entered gross price</strong> when the costs are already part of that price.</li>
+<li>Choose a country-split method and sampling accuracy, then select <strong>Calculate route and VAT split</strong>.</li>
+</ol>
+<h3 class="h5">Country split methods</h3>
+<div class="table-responsive">
+<table class="table table-striped table-bordered bg-white">
+<thead>
+<tr>
+<th>Method</th>
+<th>Behavior</th>
+<th>Use when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Fast boundary split</strong></td>
+<td>Samples route geometry against bundled country polygons. It does not consume reverse-geocoding requests.</td>
+<td>Normal production use. The default 2 km sample balances detail and speed.</td>
+</tr>
+<tr>
+<td><strong>Google reverse geocoding</strong></td>
+<td>Samples points and asks Google which country contains them. Requires Geocoding API.</td>
+<td>Cross-checking complex border routes when the added API use is acceptable.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="alert alert-secondary">Sampling options range from 10 km (rough) to 0.5 km (high). Shorter intervals can improve border estimates but cost more processing/API work. Always review the route map and editable country kilometres.</div>
+<h3 class="h5">How amounts are allocated</h3>
+<p>The route portion of the selling price is allocated among country rows in proportion to kilometres. Each row’s configured VAT rate determines its net base and VAT. Additional-cost rows are calculated by their own VAT preset. The results show total kilometres, base/foreign kilometres, net price, taxable bases, VAT by country, additional costs, total VAT and final invoice amount.</p>
+<p>After calculation you may edit a country’s kilometres, VAT rate, revenue account and PDF note, then select <strong>Recalculate country VAT split</strong>. The calculator adjusts the remaining country distance to match the route total.</p>
+<div class="alert alert-warning mb-0"><strong>Do not treat an estimate as evidence of actual distance traveled in each tax jurisdiction.</strong> Review routes that follow borders, use ferries, contain sparse samples, or include unsupported countries.</div>
+</section>
+<section id="documents" class="doc-section mb-5">
+<h2 class="border-bottom pb-2">7. Customers, drafts and documents</h2>
+<h3 class="h5 mt-4">Customers</h3>
+<p>Customer records store the name, optional unique customer code, address, postcode, city, two-letter country code, VAT ID and reusable message/configuration details. The name is required. The code can be empty for local storage, but Minimax export requires a current valid code.</p>
+<ul>
+<li>The customer code is unique when non-empty and can be generated from the VAT ID or edited.</li>
+<li>For Minimax, use no more than 10 characters from <code>A–Z</code>, <code>a–z</code>, digits, <code>#</code>, period, underscore and hyphen.</li>
+<li>Use <strong>Customers</strong> to search and paginate saved customers (25/50/100 per page).</li>
+<li>Deleting a customer does not delete historical documents. Document payloads preserve their issued customer snapshot.</li>
+</ul>
+<h3 class="h5">Draft invoice lines</h3>
+<p><strong>Add to draft Invoice</strong> saves the current calculated service as a draft line for a customer/project. Draft lines can combine several transfers into a later invoice. Review service dates, labels and totals before final generation.</p>
+<h3 class="h5">Invoice</h3>
+<ol>
+<li>Calculate and review the route and amounts.</li>
+<li>Select or save the customer; set the issue, service, and due dates.</li>
+<li>Generate the next number or supply an allowed unique number.</li>
+<li>Review/edit English and Slovenian invoice text.</li>
+<li>Select <strong>Generate Invoice PDF / Save</strong>. Saving and PDF generation are one workflow.</li>
+</ol>
+<p>Generated invoice numbers follow <code>TA-YY-NNNN</code>. Allocation retries protect automatic numbering from simultaneous unique-number conflicts.</p>
+<h3 class="h5">Pro forma invoice</h3>
+<p>Use <strong>Generate Pro forma invoice / Save</strong> to create a document numbered <code>PR-TA-YY-NNNN</code>. A pro forma is stored as open, omits the signature/stamp and cannot be exported to Minimax. Use <strong>Create Invoice</strong> to convert it once into a separately numbered invoice. The source and converted document remain linked.</p>
+<h3 class="h5">Load and update</h3>
+<p>The invoice browser filters by number, document type and date. Loading a saved document restores the route, stops, return-trip flag, country rows, kilometres, VAT, Minimax accounts, PDF notes, additional costs, dates, customer and text. It can generate PDF/XML without recalculating. For a correction, load an invoice, change and recalculate it, then use <strong>Update Invoice</strong>; the original invoice number, creation time, conversion links and payments are preserved. Historical records without an explicit issue date fall back to their original creation date, and records created before the additional-cost mode was introduced retain the former included-in-gross calculation.</p>
+<div class="alert alert-warning mb-0">Establish an accounting policy for corrections and audit retention before using Update Invoice. In some jurisdictions an issued invoice must be reversed or credited instead of overwritten.</div>
+</section>
+<section id="payments" class="doc-section mb-5">
+<h2 class="border-bottom pb-2">8. Payment tracking</h2>
+<p>Payments are recorded in the administrator component against issued invoices only. Supported methods are bank transfer, cash, card and other.</p>
+<ol>
+<li>Open <strong>Components → Transport Accounting</strong>.</li>
+<li>Find an invoice with a remaining amount and select <strong>Add payment</strong>.</li>
+<li>Enter a valid date, positive amount, method, optional reference and note.</li>
+<li>Save. The transaction locks the invoice while validating the remaining amount and rejects overpayment.</li>
+</ol>
+<div class="table-responsive">
+<table class="table table-bordered bg-white">
+<thead>
+<tr>
+<th>Status</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="badge text-bg-secondary">Unpaid</span></td>
+<td>No recorded payment.</td>
+</tr>
+<tr>
+<td><span class="badge text-bg-warning">Partially paid</span></td>
+<td>Recorded total is positive and below the invoice total.</td>
+</tr>
+<tr>
+<td><span class="badge text-bg-success">Paid</span></td>
+<td>Recorded total reaches the invoice total (within rounding tolerance).</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>A Unicode payment-confirmation PDF includes supplier/customer information, invoice reference, payment history, paid and remaining totals, footer, signature and a prominent PAID/PLAČANO label when settled. It does not consume an invoice number.</p>
+<div class="alert alert-info mb-0">Minimax XML always contains the full original invoice value. Reconcile recorded or partial payments separately through a Minimax bank statement or journal.</div>
+</section>
+<section id="minimax" class="doc-section mb-5">
+<h2 class="border-bottom pb-2">9. Minimax XML export</h2>
+<p>Only an invoice can be exported. The exporter writes customer master data before journal entries, uses passenger-transport VAT accounting type <code>PP</code>, includes the invoice reference on the receivable line, and separates revenue from VAT liabilities.</p>
+<h3 class="h5">Pre-export checklist</h3>
+<ul class="list-group mb-3">
+<li class="list-group-item d-flex gap-2"><span class="text-success">✓</span>The current saved customer has a Minimax-compatible code of 1–10 supported characters. The current customer record overrides stale values in an older invoice payload.</li>
+<li class="list-group-item d-flex gap-2"><span class="text-success">✓</span>Customer name/address fields fit Minimax limits and the country is a two-letter code.</li>
+<li class="list-group-item d-flex gap-2"><span class="text-success">✓</span>The receivable account and base-country VAT account are configured.</li>
+<li class="list-group-item d-flex gap-2"><span class="text-success">✓</span>Every used country has a VAT rate, revenue account and—when VAT applies—VAT-liability account.</li>
+<li class="list-group-item d-flex gap-2"><span class="text-success">✓</span>Additional costs use supported S (22%), Z (9.5%) or N (0%) treatment.</li>
+<li class="list-group-item d-flex gap-2"><span class="text-success">✓</span>Debit and credit totals balance and the selected base-country/VAT treatment matches the accountant’s instructions.</li>
+</ul>
+<p>Foreign net bases remain outside Slovenian VAT when Slovenia is the base country; foreign VAT posts to the configured foreign liability account. The exporter blocks missing rates/accounts, unsupported customer codes and incompatible VAT mixtures instead of producing a knowingly incomplete file.</p>
+<div class="alert alert-warning mb-0">Import the first file for each configuration into a Minimax test company or controlled period and have the generated journal reviewed before routine use.</div>
+</section>
+<section id="administrator" class="doc-section mb-5">
+<h2 class="border-bottom pb-2">10. Administrator document management</h2>
+<p>The component list is server-side paginated and supports search, document-type/status filters, sortable columns and page sizes of 25, 50 or 100. It displays number, status, customer, total, payment status, date and actions.</p>
+<h3 class="h5">Deletion rules</h3>
+<ul>
+<li>Deletion is administrator-only, POST-only, CSRF protected and requires <code>core.delete</code>.</li>
+<li>A converted pro forma cannot be deleted alone while its linked invoice remains. Select both when deletion is genuinely required.</li>
+<li>Deleting only a converted invoice reopens its source pro forma and clears the conversion link.</li>
+<li>Deleting an invoice also deletes its payment records in the same management transaction.</li>
+<li>Deletion is permanent; take a backup and follow legal document-retention obligations.</li>
+</ul>
+<p class="mb-0">Payment recording requires <code>core.edit</code>. Component access requires <code>core.manage</code>. Configuration and permission changes should be reserved for users with <code>core.admin</code>.</p>
+</section>
+<section id="updates" class="doc-section mb-5">
+<h2 class="border-bottom pb-2">11. Subscriber updates</h2>
+<ol>
+<li>Install the combined package so the installer plugin is present.</li>
+<li>Open <strong>System → Manage → Plugins</strong>.</li>
+<li>Find <strong>Installer – Transport Accounting update key</strong> and enable it.</li>
+<li>Open <strong>Components → Transport Accounting → Options</strong>, enter the shared subscriber update key, and save.</li>
+<li>Use Joomla Update normally. The plugin adds the key only to an approved Transport Accounting package download URL.</li>
+</ol>
+<p>The update feed advertises the combined package and SHA-256 checksum. The server endpoint accepts only approved package filename patterns, compares SHA-256 key hashes with constant-time matching, confines files to the downloads directory and returns ZIP downloads with <code>nosniff</code>.</p>
+<div class="alert alert-secondary mb-0"><strong>Server operators:</strong> provide valid subscriber-key hashes through <code>DOWNLOAD_KEY_HASHES</code> (comma-separated) or an untracked <code>download-keys.local.php</code>. Generate a hash with <code>php -r "echo hash('sha256', 'subscriber-key-here') . PHP_EOL;"</code>. Never store plaintext subscriber keys in the repository.</div>
+</section>
+<section id="security" class="doc-section mb-5">
+<h2 class="border-bottom pb-2">12. Security, privacy and backup</h2>
+<div class="row g-3 mb-3">
+<div class="col-md-6">
+<div class="card h-100 border-danger">
+<div class="card-body">
+<h3 class="h5 text-danger">Restrict frontend access</h3>
+<p class="mb-0">Frontend AJAX writes validate Joomla session tokens, but the calculator is a staff application. Apply a Joomla Registered/Special/custom access level to both its menu item and module. Do not publish it to Guest/Public users.</p>
+</div>
+</div>
+</div>
+<div class="col-md-6">
+<div class="card h-100 border-warning">
+<div class="card-body">
+<h3 class="h5 text-warning-emphasis">Protect personal data</h3>
+<p class="mb-0">Customer identities, addresses, tax IDs, routes, invoice payloads and payments are stored in the Joomla database. Apply privacy, retention, access-control and breach procedures required in your jurisdiction.</p>
+</div>
+</div>
+</div>
+</div>
+<ul>
+<li>Use HTTPS for Joomla and Google Maps referrer restrictions.</li>
+<li>Grant administrator ACL rights by least privilege and review them periodically.</li>
+<li>Do not commit Google API keys, subscriber keys or <code>download-keys.local.php</code>.</li>
+<li>Patch Joomla, PHP, the database and this package promptly; test updates on staging.</li>
+<li>Back up the entire Joomla database and files before upgrades, bulk deletion or uninstall.</li>
+<li>Test restore procedures. The four <code>#__transport_accounting_*</code> tables are the core business data but a full Joomla backup is safer because configuration and extension state live elsewhere.</li>
+<li>Keep PDFs/XML files in controlled storage; browser downloads are outside Joomla’s access control after generation.</li>
+</ul>
+</section>
+<section id="troubleshooting" class="doc-section mb-5">
+<h2 class="border-bottom pb-2">13. Troubleshooting</h2>
+<div class="table-responsive">
+<table class="table table-hover table-bordered bg-white align-middle">
+<thead class="table-light">
+<tr>
+<th>Symptom</th>
+<th>Checks and resolution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Map does not load</td>
+<td>Confirm the selected global/module API key, billing, HTTPS referrer, Maps JavaScript API and Places API. Check the browser console for Google’s specific key error.</td>
+</tr>
+<tr>
+<td>Route calculation fails</td>
+<td>Enable Routes API, verify pickup/drop-off suggestions, reduce stops to 25 or fewer, and confirm the key permits the current hostname.</td>
+</tr>
+<tr>
+<td>Reverse-geocoding split fails</td>
+<td>Enable Geocoding API or return to the fast boundary method. Manually correct country rows and recalculate.</td>
+</tr>
+<tr>
+<td>Country kilometres look wrong</td>
+<td>Inspect the map; choose a smaller sampling interval; try the other method; edit country kilometres. Pay special attention to border-following routes.</td>
+</tr>
+<tr>
+<td>Database request failed</td>
+<td>Confirm the page is rendered by the Joomla module (not opening <code>calculator.html</code> directly), the session has not expired, and Joomla <code>com_ajax</code> is reachable. Re-login and reload.</td>
+</tr>
+<tr>
+<td>Customer will not save</td>
+<td>A name is required. Non-empty codes must be unique and ≤64 characters. Check field limits and use exactly two letters for the country code.</td>
+</tr>
+<tr>
+<td>Minimax export is blocked</td>
+<td>Check the current customer code (≤10 supported characters), receivable/VAT accounts, every used country rate/account, supported additional-cost VAT and invoice—not pro forma—type.</td>
+</tr>
+<tr>
+<td>PDF has missing image/font</td>
+<td>Check the logo/signature path and same-origin/CORS access. Clear caches. Confirm bundled Noto Sans files and jsPDF assets were installed.</td>
+</tr>
+<tr>
+<td>Cannot delete converted pro forma</td>
+<td>Delete the linked invoice at the same time, or retain both. Deleting the invoice alone reopens the pro forma.</td>
+</tr>
+<tr>
+<td>Update download returns 403</td>
+<td>Enable the installer plugin, save a valid subscriber key, verify the update URL/filename and confirm the key hash is configured on the download server.</td>
+</tr>
+<tr>
+<td>Old interface after upgrade</td>
+<td>Clear Joomla cache, CDN/proxy cache and browser cache. Calculator asset URLs use file modification time for cache busting.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="technical" class="doc-section mb-5">
+<h2 class="border-bottom pb-2">14. Technical reference</h2>
+<h3 class="h5 mt-4">Package layout</h3>
+<div class="table-responsive">
+<table class="table table-sm table-bordered bg-white">
+<thead>
+<tr>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>transport-accounting/</code></td>
+<td>Joomla site module, calculator, assets, language files, forms and SQL.</td>
+</tr>
+<tr>
+<td><code>administrator-component-transport-accounting/</code></td>
+<td>Administrator component, ACL, shared settings, document/payment management and migration script.</td>
+</tr>
+<tr>
+<td><code>transport-accounting-update-key-plugin/</code></td>
+<td>Installer plugin for authenticated update URLs.</td>
+</tr>
+<tr>
+<td><code>transport-accounting-package/</code></td>
+<td>Combined package manifest and generated enclosed ZIPs.</td>
+</tr>
+<tr>
+<td><code>updates/</code></td>
+<td>Joomla package update feed with version, download URL and SHA-256.</td>
+</tr>
+<tr>
+<td><code>downloads/</code></td>
+<td>Built release artifacts and protected download endpoint copy.</td>
+</tr>
+<tr>
+<td><code>scripts/build-release.sh</code></td>
+<td>Repeatable package builder and validator.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 class="h5">Runtime architecture</h3>
+<p>The module template embeds <code>media/calculator.html</code> in an iframe, injects translated strings and selected configuration, and supplies a Joomla <code>com_ajax</code> URL plus session token. Google Maps performs route/place work in the browser. PDF and Minimax XML generation also occur in the browser. Customer/document persistence uses JSON POST requests to the module helper.</p>
+<h3 class="h5">Frontend AJAX operations</h3>
+<p><code>saveCustomer</code>, <code>saveInvoice</code>, <code>updateInvoice</code>, <code>nextInvoiceNumber</code>, <code>addDraftLine</code>, <code>listDraftLines</code>, <code>deleteDraftLine</code>, <code>clearDraftLines</code>, <code>loadCustomer</code>, <code>listCustomers</code> and <code>listInvoices</code>. Public/module invoice deletion is intentionally disabled; use the administrator component.</p>
+<h3 class="h5">Database tables</h3>
+<div class="table-responsive">
+<table class="table table-bordered bg-white">
+<thead>
+<tr>
+<th>Table</th>
+<th>Contents / important keys</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>#__transport_accounting_customers</code></td>
+<td>Reusable customer data; primary key <code>id</code>; unique nullable <code>customer_code</code>; audit timestamps/user.</td>
+</tr>
+<tr>
+<td><code>#__transport_accounting_invoices</code></td>
+<td>Invoices and pro formas, monetary summary and full JSON snapshot; unique document number; unique pro-forma source link; conversion links and status.</td>
+</tr>
+<tr>
+<td><code>#__transport_accounting_invoice_draft_lines</code></td>
+<td>Customer/project service lines with dates, labels, totals and payload snapshots.</td>
+</tr>
+<tr>
+<td><code>#__transport_accounting_invoice_payments</code></td>
+<td>Invoice payment date, amount, method, reference, note and audit fields.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Tables use InnoDB, <code>utf8mb4</code> and <code>utf8mb4_unicode_ci</code>. Joomla’s configured database prefix replaces <code>#__</code>. Version 2.0.0 does not automatically copy records from the former table names; migrate required historical data manually after comparing the live table columns.</p>
+<h3 class="h5">Bundled third-party/data assets</h3>
+<ul class="mb-0">
+<li>Bootstrap 5 frontend assets.</li>
+<li>jsPDF for client-side PDFs.</li>
+<li>Noto Sans Regular/Bold for Unicode PDF text.</li>
+<li>Country polygon/GeoJSON boundary data for supported fast splitting.</li>
+<li>Google Maps JavaScript services are loaded externally with the configured key.</li>
+</ul>
+</section>
+<section id="release" class="doc-section mb-5">
+<h2 class="border-bottom pb-2">15. Developer release process</h2>
+<p>Before building, update package, module, component and plugin versions as appropriate, update enclosed filenames in the package manifest, and add a concise entry to <code>VERSION_SUMMARY.md</code>.</p>
+<div class="card bg-dark text-light mb-3">
+<div class="card-body">
+<pre class="mb-0"><code class="text-light">scripts/build-release.sh</code></pre>
+</div>
+</div>
+<p>The script validates semantic manifest versions and package references; creates module, component and plugin ZIPs; assembles the package ZIP; updates the feed download URL and SHA-256; ensures the advertised package ZIP is trackable; and verifies every archive with <code>unzip -t</code>.</p>
+<h3 class="h5">Release verification checklist</h3>
+<ul>
+<li>Install the combined ZIP into a clean Joomla 6 test site and test a future Transport Accounting upgrade separately.</li>
+<li>Verify manual migration from the former identifiers and preserve a copy of the original data.</li>
+<li>Run domestic/cross-border route, PDF, pro forma conversion, invoice update, payment and Minimax test cases.</li>
+<li>Confirm the update XML version, filename and SHA-256 match the generated package ZIP.</li>
+<li>Commit the advertised package ZIP with its update-feed change so deployment never advertises a missing file.</li>
+<li>Never commit local download-key configuration or real Google/subscriber keys.</li>
+</ul>
+</section>
+<section id="changelog" class="doc-section mb-5">
+<h2 class="border-bottom pb-2">16. Current release notes</h2>
+<div class="card shadow-sm">
+<div class="card-header d-flex justify-content-between"><strong>package 2.0.0</strong><span class="badge text-bg-success">Current</span></div>
+<div class="card-body">
+<ul class="mb-0">
+<li>Renamed the complete Joomla suite and all internal identifiers to Transport Accounting.</li>
+<li>Changed new invoice numbers to <code>TA-YY-NNNN</code> and pro forma numbers to <code>PR-TA-YY-NNNN</code>.</li>
+<li>Added a selectable invoice issue date and configurable additional-cost treatment while preserving legacy behavior for migrated records.</li>
+<li>Added JED-recognizable GPL notices to every packaged PHP file reported by the checker.</li>
+<li>Includes package, module, administrator component, and installer update-key plugin version 2.0.0.</li>
+</ul>
+</div>
+</div>
+<p class="mt-3 mb-0">For the complete historical changelog, see <code><a href="https://github.com/Darko-F/Route-calculation-help-for-accounting/blob/main/VERSION_SUMMARY.md">VERSION_SUMMARY.md</a></code> in the source repository.</p>
+</section>
+<section class="doc-section">
+<h2 class="border-bottom pb-2">Support, license and document information</h2>
+<dl class="row">
+<dt class="col-sm-3">Author</dt>
+<dd class="col-sm-9">Darko Fatur / topoweryou.com</dd>
+<dt class="col-sm-3">Contact</dt>
+<dd class="col-sm-9"><a href="mailto:info@topoweryou.com">info@topoweryou.com</a></dd>
+<dt class="col-sm-3">Configuration service</dt>
+<dd class="col-sm-9"><a href="https://topoweryou.com/services">https://topoweryou.com/services</a></dd>
+<dt class="col-sm-3">Demo</dt>
+<dd class="col-sm-9"><a href="https://builder.topoweryou.com/routecalculationhelp/">builder.topoweryou.com/routecalculationhelp/</a></dd>
+<dt class="col-sm-3">GitHub</dt>
+<dd class="col-sm-9"><a href="https://github.com/Darko-F/Route-calculation-help-for-accounting">https://github.com/Darko-F/Route-calculation-help-for-accounting</a></dd>
+<dt class="col-sm-3">License</dt>
+<dd class="col-sm-9">GNU General Public License version 2 or later. See <code><a href="https://github.com/Darko-F/Route-calculation-help-for-accounting/blob/main/LICENSE">LICENSE</a></code> and <code><a href="https://github.com/Darko-F/Route-calculation-help-for-accounting/blob/main/THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a></code>.</dd>
+<dd class="col-sm-9"></dd>
+<dt class="col-sm-3">Documentation basis</dt>
+<dd class="col-sm-9">Source tree and manifests for Transport Accounting 2.0.0, reviewed 25 August 2026.</dd>
+</dl>
+</section>
+</div>
+</div>
+</main><footer class="bg-dark text-white-50 py-4 mt-4">
+<div class="container-xl d-flex flex-column flex-md-row justify-content-between gap-2">Transport Accounting Copyright © 2026 topoweryou.com</div>
+</footer>
