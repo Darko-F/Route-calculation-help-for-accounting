@@ -174,7 +174,7 @@
     <div class="col-lg-7">
       <div class="card shadow-sm mb-4">
         <div class="card-header bg-white d-flex justify-content-between align-items-center"><h2 class="h5 mb-0">MOD_TRANSPORT_ACCOUNTING_CALCULATOR_MAP</h2><span class="badge text-bg-light">MOD_TRANSPORT_ACCOUNTING_CALCULATOR_DRIVING_ROUTE</span></div>
-        <div class="card-body"><div id="map"></div></div>
+        <div class="card-body"><div id="map"></div><div class="small text-muted mt-2"><span>MOD_TRANSPORT_ACCOUNTING_CALCULATOR_SLOVENIA_BOUNDARY_CREDIT</span> <a href="https://www.e-prostor.gov.si/en/access-to-geodetic-data/" target="_blank" rel="noopener">GURS</a>, 24. 11. 2025 · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></div></div>
       </div>
       <div class="mt-3">
         <div class="card border p-3 mb-4">
@@ -271,7 +271,6 @@
             <button class="btn btn-outline-info" onclick="generateProformaPdf()">MOD_TRANSPORT_ACCOUNTING_CALCULATOR_GENERATE_PROFORMA_PDF</button>
             <button class="btn btn-info" onclick="generatePdf()">MOD_TRANSPORT_ACCOUNTING_CALCULATOR_GENERATE_PDF</button>
             <button id="updateInvoiceButton" class="btn btn-warning d-none" onclick="updateLoadedInvoice()">MOD_TRANSPORT_ACCOUNTING_CALCULATOR_UPDATE_INVOICE</button>
-            <button class="btn btn-success" onclick="exportCurrentMinimaxXml()">MOD_TRANSPORT_ACCOUNTING_CALCULATOR_EXPORT_MINIMAX_XML</button>
           </div>
         </div>
       </div>
@@ -358,7 +357,8 @@
     </div>
   </div>
 </div>
-<script src="slovenia_polygon_precise.js"></script>
+<script src="slovenia_boundary_gurs.js?v=20251124"></script>
+<script src="minimax-payments.js?v=8481b73919dc"></script>
 <script>
 function getTransportAccountingFrameConfig() {
   try {
@@ -406,6 +406,7 @@ let currentConvertedInvoiceId = 0;
 let currentPaidAmount = 0;
 let currentRemainingAmount = 0;
 let currentPaymentStatus = 'unpaid';
+let currentAdvanceDocument = null;
 let activeDraftRef = '';
 let activeCustomerId = 0;
 let savedCustomers = [];
@@ -470,10 +471,10 @@ function normalizeGoogleMapsApiKey(value) {
   return match ? match[0] : raw;
 }
 
-const SLOVENIA_POLYGON = typeof SLOVENIA_POLYGON_PRECISE !== 'undefined' ? SLOVENIA_POLYGON_PRECISE : [[45.421,13.375],[45.500,13.530],[45.590,13.620],[45.690,13.780],[45.775,13.930],[45.835,14.120],[45.830,14.310],[45.900,14.520],[45.890,14.760],[45.820,14.950],[45.770,15.130],[45.760,15.310],[45.650,15.450],[45.660,15.650],[45.780,15.700],[45.900,15.650],[46.040,15.720],[46.160,15.900],[46.250,16.080],[46.370,16.270],[46.480,16.520],[46.620,16.390],[46.740,16.160],[46.850,15.950],[46.870,15.650],[46.720,15.400],[46.650,15.150],[46.480,14.980],[46.430,14.740],[46.510,14.550],[46.420,14.300],[46.520,14.050],[46.520,13.830],[46.430,13.620],[46.350,13.430],[46.180,13.540],[46.030,13.500],[45.900,13.420],[45.740,13.520],[45.600,13.430],[45.421,13.375]];
-const SLOVENIA_DOMESTIC_CHECK_POLYGON = SLOVENIA_POLYGON;
+const SLOVENIA_BOUNDARIES = typeof SLOVENIA_GURS_POLYGONS !== 'undefined' ? SLOVENIA_GURS_POLYGONS : [];
+const polygonBoundsCache = new WeakMap();
 const COUNTRY_GEOJSON_FILES = {
-  SI: 'geoBoundaries-SVN-ADM0.geojson',
+  SI: 'gurs-slovenia-boundary.geojson?v=20251124',
   IT: 'geoBoundaries-ITA-ADM0_simplified.geojson',
   HR: 'geoBoundaries-HRV-ADM0_simplified.geojson',
   AT: 'geoBoundaries-AUT-ADM0_simplified.geojson',
@@ -761,6 +762,7 @@ function resetCurrentPaymentState() {
   currentPaidAmount = 0;
   currentRemainingAmount = 0;
   currentPaymentStatus = 'unpaid';
+  currentAdvanceDocument = null;
 }
 
 function setEditableInvoice(invoiceId = 0, documentType = '') {
@@ -2038,6 +2040,15 @@ function documentActionButtonsHtml(document, source, index) {
     `<button class="btn btn-sm btn-outline-info" type="button" onclick="generateSavedInvoicePdf('${source}', ${index})">${xmlEscape(t('PDF'))}</button>`
   ];
   if (document.document_type !== 'proforma') {
+    const hasAdvances = (document.payments || []).some(payment => payment.advance_json);
+    if (!hasAdvances) buttons.push(`<button class="btn btn-sm btn-outline-success" type="button" onclick="exportSavedInvoiceXml('${source}', ${index}, 0, this)">${xmlEscape(t('Invoice XML'))}</button>`);
+    for (const payment of (Array.isArray(document.payments) ? document.payments : [])) {
+      const paymentId = Number(payment.id);
+      if (payment.advance_json && Number.isSafeInteger(paymentId) && paymentId > 0) {
+        buttons.push(`<button class="btn btn-sm btn-outline-info" type="button" onclick="exportSavedInvoiceXml('${source}', ${index}, ${paymentId}, this)">${xmlEscape(t('Avans XML'))} ${TransportAccountingMinimax.paymentNumber(document, paymentId)}</button>`);
+      }
+    }
+    if (hasAdvances) buttons.push(`<button class="btn btn-sm btn-outline-success" type="button" onclick="exportSavedInvoiceXml('${source}', ${index}, 0, this)">${xmlEscape(t('Final XML'))}</button>`);
     if (Number(document.remaining_amount || 0) > 0.004) {
       buttons.push(`<button class="btn btn-sm btn-outline-warning" type="button" onclick="openAdministratorPayment('${source}', ${index})">${xmlEscape(t('Add payment'))}</button>`);
     }
@@ -2055,6 +2066,44 @@ function invoiceFromList(source, index) {
   if (source === 'browser') return invoiceBrowserInvoices[index];
   if (source === 'customer') return allCustomerInvoices[index];
   return JSON.parse(document.getElementById('invoiceHistory')?.dataset.invoices || '[]')[index];
+}
+
+async function exportSavedInvoiceXml(source, index, paymentId = 0, button = null) {
+  const selected = invoiceFromList(source, index);
+  if (!selected || selected.document_type === 'proforma') return;
+  if (button) button.disabled = true;
+  const showMessage = (message, type) => {
+    const statusId = source === 'browser' ? 'invoiceBrowserStatus' : source === 'customer' ? 'customerInvoiceHistoryStatus' : '';
+    const status = statusId ? document.getElementById(statusId) : null;
+    if (status) { status.textContent = t(message); status.className = `alert alert-${type} small`; }
+    else showDatabaseStatus(message, type);
+  };
+  try {
+    const result = await postJoomlaAjax('listInvoices', {
+      customer_id: Number(selected.customer_id), invoice_number: selected.invoice_number, load_all: true
+    });
+    const saved = (result.invoices || []).find(row => Number(row.id) === Number(selected.id));
+    if (!saved) throw new Error('Saved invoice not found. Reload the invoice before exporting.');
+    if (saved.document_type === 'proforma') throw new Error('Predračun cannot be exported to Minimax. Create the invoice first.');
+    const payload = JSON.parse(saved.payload_json || '{}');
+    payload.customer = { ...payload.customer, customer_code: saved.current_customer_code || payload.customer?.customer_code || saved.customer_code };
+    const data = { ...saved, payload, invoice_total: saved.total_amount, payments: saved.payments || [] };
+    const xml = paymentId ? TransportAccountingMinimax.advance(data, paymentId)
+      : TransportAccountingMinimax.invoice(data, MINIMAX_CONFIG, getTodayIsoDate());
+    const url = URL.createObjectURL(new Blob([xml], { type: 'application/xml;charset=utf-8' }));
+    try {
+      const link = document.createElement('a'); link.href = url;
+      const hasAdvances = data.payments.some(payment => payment.advance_json);
+      link.download = paymentId ? `${TransportAccountingMinimax.paymentReference(data, paymentId)}.xml`.replace(/[\\/:*?"<>|]/g, '-') : getInvoiceXmlFileName(saved.invoice_number + (hasAdvances ? '-final' : ''));
+      document.body.appendChild(link); link.click(); link.remove();
+    } finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
+    showMessage(paymentId ? 'Avans XML exported. Import each advance only once in Minimax.'
+      : data.payments.some(payment => payment.advance_json)
+        ? 'Final invoice exported with advances and advance VAT deducted. Reconcile the balance in Minimax.'
+        : 'Minimax XML exported.', 'success');
+  } catch (error) {
+    showMessage(TransportAccountingMinimax.translateError(error, t), 'danger');
+  } finally { if (button) button.disabled = false; }
 }
 
 function openAdministratorPayment(source, index) {
@@ -2389,6 +2438,8 @@ function restoreInvoiceRecord(invoice) {
   invoiceNumberInput.dataset.generated = '0';
   currentDocumentType = invoice.document_type || payload.document_type || (/^PR-TA-/i.test(invoiceNumberInput.value) ? 'proforma' : 'invoice');
   currentDocumentId = Number(invoice.id || 0);
+  currentAdvanceDocument = (invoice.payments || []).some(p => p.advance_json)
+    ? { ...invoice, invoice_total: invoice.total_amount, payload, payments: invoice.payments } : null;
   setEditableInvoice(currentDocumentId, currentDocumentType);
   currentConvertedInvoiceId = Number(invoice.converted_invoice_id || 0);
   currentPaidAmount = Math.max(0, roundMoney(Number(invoice.paid_amount || 0)));
@@ -2980,6 +3031,15 @@ async function exportCurrentMinimaxXml() {
     await exportDraftMinimaxXml();
     return;
   }
+  if (currentDocumentId > 0) {
+    try {
+      const result = await postJoomlaAjax('listInvoices', { customer_id: activeCustomerId, invoice_number: document.getElementById('invoiceNumber').value, load_all: true });
+      const saved = (result.invoices || []).find(row => Number(row.id) === currentDocumentId);
+      if (!saved) throw new Error('Saved invoice not found. Reload the invoice before exporting.');
+      currentAdvanceDocument = (saved.payments || []).some(p => p.advance_json)
+        ? { ...saved, invoice_total: saved.total_amount, payload: JSON.parse(saved.payload_json), payments: saved.payments } : null;
+    } catch (error) { setStatus(error.message, 'danger'); return; }
+  }
   exportMinimaxXml();
 }
 
@@ -3008,6 +3068,16 @@ function getCurrentCustomerCode() {
 }
 
 function exportMinimaxXml() {
+  if (currentAdvanceDocument && currentDocumentType === 'invoice') {
+    try {
+      const xml = TransportAccountingMinimax.invoice(currentAdvanceDocument, MINIMAX_CONFIG, getTodayIsoDate());
+      const url = URL.createObjectURL(new Blob([xml], { type: 'application/xml;charset=utf-8' }));
+      const a = document.createElement('a'); a.href = url; a.download = getInvoiceXmlFileName(currentAdvanceDocument.invoice_number + '-final');
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setStatus('Final invoice exported with advances and advance VAT deducted. Reconcile the balance in Minimax.', 'success');
+      return true;
+    } catch (error) { setStatus(TransportAccountingMinimax.translateError(error, t), 'danger'); return false; }
+  }
   if (currentDocumentType === 'proforma') { setStatus('Predračun cannot be exported to Minimax. Create the invoice first.', 'warning'); return false; }
   if (!lastCalculatedData) { setStatus('Calculate a route first, then export Minimax XML.', 'warning'); return false; }
   const d = lastCalculatedData;
@@ -3267,10 +3337,12 @@ async function loadCountryBoundaries() {
         const response = await fetch(fileName, { cache: 'force-cache' });
         if (!response.ok) throw new Error(response.status + ' ' + response.statusText);
         const geojson = await response.json();
-        countryBoundaryPolygons[countryCode] = extractGeoJsonPolygons(geojson);
+        const polygons = extractGeoJsonPolygons(geojson);
+        if (!polygons.length) throw new Error('Empty country boundary');
+        countryBoundaryPolygons[countryCode] = polygons;
       } catch (error) {
         console.warn('Country boundary failed to load:', countryCode, error);
-        countryBoundaryPolygons[countryCode] = [];
+        countryBoundaryPolygons[countryCode] = countryCode === 'SI' ? SLOVENIA_BOUNDARIES : [];
       }
     })).then(() => countryBoundaryPolygons);
   }
@@ -3287,21 +3359,21 @@ function extractGeoJsonPolygons(geojson) {
   features.forEach(feature => {
     const geometry = feature?.geometry || {};
     if (geometry.type === 'Polygon') {
-      geometry.coordinates.forEach(ring => polygons.push(ring.map(([lng, lat]) => [lat, lng])));
+      polygons.push(geometry.coordinates.map(ring => ring.map(([lng, lat]) => [lat, lng])));
     } else if (geometry.type === 'MultiPolygon') {
       geometry.coordinates.forEach(polygon => {
-        polygon.forEach(ring => polygons.push(ring.map(([lng, lat]) => [lat, lng])));
+        polygons.push(polygon.map(ring => ring.map(([lng, lat]) => [lat, lng])));
       });
     }
   });
 
-  return polygons.filter(polygon => polygon.length >= 3);
+  return polygons.filter(polygon => polygon.length && polygon.every(ring => ring.length >= 3));
 }
 
 function getCountryCodeForPoint(lat, lng) {
   for (const countryCode of ['SI', 'HR', 'AT', 'DE', 'HU', 'IT']) {
     const polygons = countryBoundaryPolygons[countryCode] || [];
-    if (polygons.some(polygon => pointInPolygon(lat, lng, polygon))) return countryCode;
+    if (pointInBoundaryPolygons(lat, lng, polygons)) return countryCode;
   }
 
   return '';
@@ -3338,6 +3410,9 @@ async function estimateCountryMetersFast(path, sampleEveryMeters) {
 }
 
 function estimateSloveniaMetersFast(path, sampleEveryMeters) {
+  if (!countryBoundaryPolygons.SI?.length && !SLOVENIA_BOUNDARIES.length) {
+    throw new Error(t('Slovenia boundary data could not be loaded. Reload the page and try again.'));
+  }
   let sloveniaMeters = 0;
   for (let i = 1; i < path.length; i++) {
     const a = toLatLng(path[i - 1]); const b = toLatLng(path[i]);
@@ -3403,8 +3478,14 @@ function isBaseCountry(country) {
   };
   return (names[getBaseCountryCode()] || []).includes(c);
 }
-function isPointInDomesticSloveniaPolygon(lat, lng) { return pointInPolygon(lat, lng, SLOVENIA_DOMESTIC_CHECK_POLYGON); }
-function isPointInSloveniaPolygon(lat, lng) { return pointInPolygon(lat, lng, SLOVENIA_POLYGON); }
+function isPointInDomesticSloveniaPolygon(lat, lng) { return isPointInSloveniaPolygon(lat, lng); }
+function isPointInSloveniaPolygon(lat, lng) {
+  return pointInBoundaryPolygons(lat, lng, countryBoundaryPolygons.SI?.length ? countryBoundaryPolygons.SI : SLOVENIA_BOUNDARIES);
+}
+function pointInBoundaryPolygons(lat, lng, polygons) {
+  return polygons.some(rings => pointInPolygon(lat, lng, rings[0])
+    && !rings.slice(1).some(hole => pointInPolygon(lat, lng, hole)));
+}
 async function arePointsInsideBaseCountry(startPoint, endPoint) {
   const startLat = getPointLat(startPoint);
   const startLng = getPointLng(startPoint);
@@ -3417,7 +3498,15 @@ async function arePointsInsideBaseCountry(startPoint, endPoint) {
   return getCountryCodeForPoint(startLat, startLng) === getBaseCountryCode()
     && getCountryCodeForPoint(endLat, endLng) === getBaseCountryCode();
 }
-function pointInPolygon(lat, lng, polygon) { let inside = false; for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) { const yi = polygon[i][0], xi = polygon[i][1], yj = polygon[j][0], xj = polygon[j][1]; const intersect = ((yi > lat) !== (yj > lat)) && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi); if (intersect) inside = !inside; } return inside; }
+function pointInPolygon(lat, lng, polygon) {
+  if (!polygon || polygon.length < 3 || !Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  let bounds = polygonBoundsCache.get(polygon);
+  if (!bounds) {
+    bounds = polygon.reduce((b, [y, x]) => [Math.min(b[0], y), Math.min(b[1], x), Math.max(b[2], y), Math.max(b[3], x)], [Infinity, Infinity, -Infinity, -Infinity]);
+    polygonBoundsCache.set(polygon, bounds);
+  }
+  if (lat < bounds[0] || lng < bounds[1] || lat > bounds[2] || lng > bounds[3]) return false;
+  let inside = false; for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) { const yi = polygon[i][0], xi = polygon[i][1], yj = polygon[j][0], xj = polygon[j][1]; const intersect = ((yi > lat) !== (yj > lat)) && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi); if (intersect) inside = !inside; } return inside; }
 async function estimateBaseCountryMetersByGeocoding(path, sampleEveryMeters) {
   let sloveniaMeters = 0;
   for (let i = 1; i < path.length; i++) {

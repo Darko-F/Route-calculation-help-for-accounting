@@ -18,6 +18,12 @@
     <field name="pdf_signature_image_url" type="text" label="COM_TRANSPORT_ACCOUNTING_FIELD_PDF_SIGNATURE_IMAGE_URL_LABEL" description="COM_TRANSPORT_ACCOUNTING_FIELD_PDF_SIGNATURE_IMAGE_URL_DESC" default="podpis-transparent.png" filter="string" />
   </fieldset>
   <fieldset name="minimax" label="COM_TRANSPORT_ACCOUNTING_FIELDSET_MINIMAX">
+    <field name="minimax_advance_account" type="text" label="COM_TRANSPORT_ACCOUNTING_ADVANCE_ACCOUNT" description="COM_TRANSPORT_ACCOUNTING_ADVANCE_ACCOUNT_DESC" default="2308" maxlength="30" />
+    <field name="minimax_advance_vat_account" type="text" label="COM_TRANSPORT_ACCOUNTING_ADVANCE_VAT_ACCOUNT" description="COM_TRANSPORT_ACCOUNTING_ADVANCE_VAT_ACCOUNT_DESC" default="" maxlength="30" />
+    <field name="minimax_advance_vat_clearing_account" type="text" label="COM_TRANSPORT_ACCOUNTING_ADVANCE_CLEARING_ACCOUNT" description="COM_TRANSPORT_ACCOUNTING_ADVANCE_CLEARING_ACCOUNT_DESC" default="" maxlength="30" />
+    <field name="minimax_advance_vat_rate" type="list" label="COM_TRANSPORT_ACCOUNTING_ADVANCE_VAT_RATE" default="9.5">
+      <option value="9.5">9,5 %</option><option value="22">22 %</option><option value="5">5 %</option><option value="0">0 %</option>
+    </field>
     <field name="minimax_receivable_account" type="text" label="COM_TRANSPORT_ACCOUNTING_FIELD_MINIMAX_RECEIVABLE_ACCOUNT_LABEL" default="" />
     <field name="minimax_base_country_standard_vat_account" type="text" label="COM_TRANSPORT_ACCOUNTING_FIELD_MINIMAX_BASE_COUNTRY_STANDARD_VAT_ACCOUNT_LABEL" description="COM_TRANSPORT_ACCOUNTING_FIELD_MINIMAX_BASE_COUNTRY_STANDARD_VAT_ACCOUNT_DESC" default="" />
     <field name="minimax_additional_cost_revenue_account" type="text" label="COM_TRANSPORT_ACCOUNTING_FIELD_MINIMAX_ADDITIONAL_COST_REVENUE_ACCOUNT_LABEL" description="COM_TRANSPORT_ACCOUNTING_FIELD_MINIMAX_ADDITIONAL_COST_REVENUE_ACCOUNT_DESC" default="" />

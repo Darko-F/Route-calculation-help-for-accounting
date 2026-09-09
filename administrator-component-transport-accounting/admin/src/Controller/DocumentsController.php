@@ -14,11 +14,32 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\AdminController;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Response\JsonResponse;
 use Joomla\Utilities\ArrayHelper;
 use Throwable;
 
 class DocumentsController extends AdminController
 {
+    public function minimaxData(): void
+    {
+        try {
+            if (!$this->checkToken('post', false)) {
+                throw new \RuntimeException(Text::_('JINVALID_TOKEN'), 403);
+            }
+            if (!$this->app->getIdentity()->authorise('core.manage', 'com_transport_accounting')) {
+                throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+            }
+            $model = $this->getModel();
+            echo new JsonResponse([
+                'document' => $model->getMinimaxDocument($this->input->post->getInt('invoice_id')),
+                'settings' => $model->getMinimaxSettings(),
+            ]);
+        } catch (Throwable $exception) {
+            echo new JsonResponse(null, $exception->getMessage(), true);
+        }
+        $this->app->close();
+    }
+
     public function getModel($name = 'Documents', $prefix = 'Administrator', $config = ['ignore_request' => false])
     {
         return parent::getModel($name, $prefix, $config);
@@ -72,7 +93,9 @@ class DocumentsController extends AdminController
                 $this->input->post->getFloat('amount'),
                 $this->input->post->getCmd('payment_method', 'bank_transfer'),
                 $this->input->post->getString('payment_reference'),
-                $this->input->post->getString('payment_note')
+                $this->input->post->getString('payment_note'),
+                $this->input->post->getCmd('payment_kind', 'payment'),
+                $this->input->post->getFloat('advance_vat_rate', 9.5)
             );
             $application->enqueueMessage(Text::_('COM_TRANSPORT_ACCOUNTING_PAYMENT_RECORDED'), 'success');
         } catch (Throwable $exception) {

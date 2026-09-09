@@ -22,6 +22,7 @@ class HtmlView extends BaseHtmlView
     public $pagination;
     public $state;
     public $company;
+    public $minimax;
 
     public function display($tpl = null): void
     {
@@ -29,6 +30,7 @@ class HtmlView extends BaseHtmlView
         $this->pagination = $this->get('Pagination');
         $this->state = $this->get('State');
         $this->company = $this->get('CompanyDetails');
+        $this->minimax = $this->get('MinimaxSettings');
 
         if ($errors = $this->get('Errors')) {
             throw new \RuntimeException(implode("\n", $errors));

@@ -84,6 +84,7 @@ return new class implements InstallerScriptInterface {
               " . $db->quoteName('invoice_id') . " int unsigned NOT NULL,
               " . $db->quoteName('payment_date') . " date NOT NULL,
               " . $db->quoteName('amount') . " decimal(12,2) NOT NULL,
+              " . $db->quoteName('advance_json') . " text NULL,
               " . $db->quoteName('payment_method') . " varchar(32) NOT NULL DEFAULT 'bank_transfer',
               " . $db->quoteName('payment_reference') . " varchar(255) NOT NULL DEFAULT '',
               " . $db->quoteName('note') . " text NULL,
@@ -93,6 +94,12 @@ return new class implements InstallerScriptInterface {
               KEY " . $db->quoteName('idx_invoice_id_date') . " (" . $db->quoteName('invoice_id') . ", " . $db->quoteName('payment_date') . ")
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci"
         )->execute();
+
+        $paymentTable = $db->replacePrefix('#__transport_accounting_invoice_payments');
+        $db->setQuery('SHOW COLUMNS FROM ' . $db->quoteName($paymentTable) . ' LIKE ' . $db->quote('advance_json'));
+        if (!$db->loadResult()) {
+            $db->setQuery('ALTER TABLE ' . $db->quoteName($paymentTable) . ' ADD COLUMN ' . $db->quoteName('advance_json') . ' text NULL')->execute();
+        }
 
         $this->migrateModuleSettings($db);
 

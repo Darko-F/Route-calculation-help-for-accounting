@@ -203,6 +203,14 @@ class TransportAccountingHelper
             throw new RuntimeException('The saved invoice to update was not found.');
         }
 
+        $advanceQuery = $db->getQuery(true)
+            ->select('COUNT(*)')->from($db->quoteName('#__transport_accounting_invoice_payments'))
+            ->where($db->quoteName('invoice_id') . ' = ' . $invoiceId)
+            ->where($db->quoteName('advance_json') . ' IS NOT NULL');
+        if ((int) $db->setQuery($advanceQuery)->loadResult() > 0) {
+            throw new RuntimeException('Invoices with recorded advances cannot be edited.');
+        }
+
         $customerPayload = is_array($payload['customer'] ?? null) ? $payload['customer'] : [];
         $data = is_array($payload['calculated_data'] ?? null) ? $payload['calculated_data'] : [];
 
@@ -581,13 +589,15 @@ class TransportAccountingHelper
         $invoiceIds = array_values(array_filter(array_map(static fn ($invoice) => (int) ($invoice['id'] ?? 0), $invoices ?: [])));
         if ($invoiceIds) {
             $paymentQuery = $db->getQuery(true)
-                ->select($db->quoteName(['invoice_id', 'payment_date', 'amount', 'payment_method', 'payment_reference', 'note']))
+                ->select($db->quoteName(['id', 'invoice_id', 'payment_date', 'amount', 'payment_method', 'payment_reference', 'note', 'advance_json']))
                 ->from($db->quoteName('#__transport_accounting_invoice_payments'))
                 ->where($db->quoteName('invoice_id') . ' IN (' . implode(',', $invoiceIds) . ')')
                 ->order($db->quoteName('payment_date') . ' ASC')
                 ->order($db->quoteName('id') . ' ASC');
             foreach ($db->setQuery($paymentQuery)->loadAssocList() ?: [] as $payment) {
                 $paymentsByInvoice[(int) $payment['invoice_id']][] = [
+                    'id' => (int) $payment['id'],
+                    'advance_json' => $payment['advance_json'],
                     'date' => (string) $payment['payment_date'],
                     'amount' => round((float) $payment['amount'], 2),
                     'method' => (string) $payment['payment_method'],
@@ -1002,6 +1012,7 @@ class TransportAccountingHelper
               " . $db->quoteName('invoice_id') . " int unsigned NOT NULL,
               " . $db->quoteName('payment_date') . " date NOT NULL,
               " . $db->quoteName('amount') . " decimal(12,2) NOT NULL,
+              " . $db->quoteName('advance_json') . " text NULL,
               " . $db->quoteName('payment_method') . " varchar(32) NOT NULL DEFAULT 'bank_transfer',
               " . $db->quoteName('payment_reference') . " varchar(255) NOT NULL DEFAULT '',
               " . $db->quoteName('note') . " text NULL,
@@ -1011,6 +1022,12 @@ class TransportAccountingHelper
               KEY " . $db->quoteName('idx_invoice_id_date') . " (" . $db->quoteName('invoice_id') . ", " . $db->quoteName('payment_date') . ")
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci"
         )->execute();
+
+        $paymentTable = $db->replacePrefix('#__transport_accounting_invoice_payments');
+        $db->setQuery('SHOW COLUMNS FROM ' . $db->quoteName($paymentTable) . ' LIKE ' . $db->quote('advance_json'));
+        if (!$db->loadResult()) {
+            $db->setQuery('ALTER TABLE ' . $db->quoteName($paymentTable) . ' ADD COLUMN ' . $db->quoteName('advance_json') . ' text NULL')->execute();
+        }
 
         $longRouteColumns = [
             '#__transport_accounting_invoices' => ['pickup', 'dropoff'],

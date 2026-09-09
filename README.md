@@ -2,6 +2,14 @@
 
 Transport Accounting is a Joomla 6 site module for taxi and passenger transfer invoicing. It calculates route distance, estimates the split between the country of origin and foreign countries, prepares invoice text, and exports invoice data for PDF and accounting programs such as Minimax through XML workflows.
 
+## Version 2.1.0 — Advances, XML exports and Slovenia boundaries
+
+Record received advances in administrator with configurable DDV (default 9.5%) and separate advance, VAT liability and VAT clearing accounts. Each invoice offers `AV XML 1`, `AV XML 2`, etc. for its advances and **Zaključni XML / Final XML** for the remaining invoice accounting. Without advances, **Invoice XML** exports the full invoice. Final export is available before the service date; bank receipts are matched separately in Minimax.
+
+Advance XML names are unified as `TA-26-0007-AV-1.xml`. The frontend and administrator share the exporter, with versioned assets to refresh browser caches. The large bottom XML button is removed. Fast mode and its fallback now use the official GURS Slovenia boundary, including polygon holes and attribution.
+
+Install [the combined 2.1.0 package](downloads/pkg_transport_accounting_v2.1.0.zip) over Transport Accounting 2.0.0. The installer adds saved advance settings to payment records; existing payments remain ordinary payments. See [Minimax setup](docs/MINIMAX_ADVANCES.md), [HTML documentation](transport-accounting/documentation.html), and [release notes](VERSION_SUMMARY.md). Package/module/component are 2.1.0; the unchanged update-key plugin is 2.0.0. Automated tests and XML schema validation pass; live Joomla/Minimax verification is still required.
+
 ## Version 2.0.0 — Transport Accounting rename
 
 **Transport Accounting** is the new name for **Route Calculation Help for Accounting**. The new commercial name describes the extension's three principal functions more clearly: route and distance calculation, country-based VAT calculation, and invoice/accounting preparation.
@@ -23,7 +31,7 @@ See [VERSION_SUMMARY.md](VERSION_SUMMARY.md) for the complete 2.0.0 change summa
 - Separate administrator component for paginated invoice and pro forma management
 - Invoice payment tracking with unpaid, partially paid, and paid statuses
 - Unicode payment-confirmation PDFs with payment history and remaining balance
-- Full-value Minimax invoice exports that preserve correct receivables for partial-payment reconciliation
+- Minimax avans exports with configurable DDV (default 9.5%) and final invoices that deduct advances and their DDV; see [setup and workflow](docs/MINIMAX_ADVANCES.md)
 - Configurable company details, country accounts, and a separate additional-cost revenue account
 - Global Minimax country accounts with optional per-Joomla-module overrides merged by ISO country code
 - Selectable invoice issue date and configurable additional-cost treatment
@@ -86,7 +94,7 @@ For a new installation, install the combined suite ZIP package in Joomla:
 
 1. Go to Joomla Administrator.
 2. Open System -> Install -> Extensions.
-3. Upload `pkg_transport_accounting_v2.0.0.zip`.
+3. Upload `pkg_transport_accounting_v2.1.0.zip`.
 4. Open Content -> Site Modules.
 5. Create or open Transport Accounting.
 6. Open Components -> Transport Accounting -> Options, then enter the shared settings. Each module can independently choose global or module settings for Google Maps, company/PDF, and countries. Minimax can use only global settings or layer optional module overrides over them.

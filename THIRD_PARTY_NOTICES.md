@@ -31,12 +31,22 @@ This project includes or loads the following third-party software, fonts, data, 
 - Source: https://github.com/googlefonts/noto-fonts
 - Notice: The fonts may be bundled, embedded, redistributed, and sold with software under the OFL terms. The fonts must not be sold by themselves, and the OFL copyright and license notice must remain with redistributed copies.
 
+## Slovenia National Boundary — GURS
+
+- Provider: Surveying and Mapping Authority of the Republic of Slovenia (GURS).
+- Dataset: National boundary polygon, land and sea (`državna meja — kopno in morje`), derived by the provider from `DTM_AU_DRZAVNAMEJA_L`.
+- Source database timestamp: 2025-11-24T23:32:18Z. Downloaded: 2026-09-09.
+- Source: https://geohub.gov.si/ags/rest/services/TEMELJNE_VSEBINE/GH_SLO_MEJA/MapServer/1466
+- Terms: https://www.e-prostor.gov.si/en/access-to-geodetic-data/
+- License: Creative Commons Attribution 4.0 International (CC BY 4.0), https://creativecommons.org/licenses/by/4.0/
+- Files: `transport-accounting/media/gurs-slovenia-boundary.geojson` and `transport-accounting/media/slovenia_boundary_gurs.js`.
+- Changes: requested WGS84/EPSG:4326 coordinates from the source service, reduced feature metadata, and reordered coordinates to `[lat, lng]` in the JavaScript fallback. All 31,071 vertices and both interior rings are retained; no simplification or border buffer was applied.
+- Attribution is also embedded in both data files and displayed below the calculator map.
+
 ## geoBoundaries Administrative Boundary Data
 
 - Use: Country boundary polygons used for route/country distance splitting.
 - Files:
-  - `transport-accounting/media/geoBoundaries-SVN-ADM0.geojson`
-  - `transport-accounting/media/slovenia_polygon_precise.js`
   - `transport-accounting/media/geoBoundaries-ITA-ADM0_simplified.geojson`
   - `transport-accounting/media/geoBoundaries-HRV-ADM0_simplified.geojson`
   - `transport-accounting/media/geoBoundaries-AUT-ADM0_simplified.geojson`
@@ -47,7 +57,6 @@ This project includes or loads the following third-party software, fonts, data, 
 
 Country/source license metadata from geoBoundaries should be reviewed when redistributing these files:
 
-- Slovenia: Public Domain. Source metadata: geoBoundaries/Wikipedia, `gbOpen/SVN/ADM0`, boundary ID `SVN-ADM0-8885693`, source metadata URL `https://www.geoboundaries.org/api/current/gbOpen/SVN/ADM0/`.
 - Italy: Creative Commons Attribution 3.0 License.
 - Croatia: Open Data Commons Open Database License 1.0.
 - Austria: Creative Commons Attribution-ShareAlike 2.0.
