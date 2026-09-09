@@ -39,9 +39,49 @@ foreach ([
 ] as $key) {
     $pdfText[$key] = Text::_('COM_TRANSPORT_ACCOUNTING_' . $key);
 }
+$minimaxText = [];
+foreach ([
+    'Invalid money amount.' => 'INVALID_AMOUNT',
+    '{label}: required, maximum {max} characters.' => 'REQUIRED',
+    'Invalid document date.' => 'INVALID_DATE',
+    'Invalid customer code.' => 'INVALID_CUSTOMER',
+    'Invalid customer country.' => 'INVALID_COUNTRY',
+    'Minimax journal is not balanced.' => 'UNBALANCED',
+    'Missing or invalid saved advance settings.' => 'INVALID_SNAPSHOT',
+    'Advance must be positive.' => 'POSITIVE_ADVANCE',
+    'Invalid advance ID.' => 'INVALID_ADVANCE_ID',
+    'Advance, VAT and VAT clearing accounts must differ.' => 'DISTINCT_ACCOUNTS',
+    'Advance not found.' => 'ADVANCE_NOT_FOUND',
+    'Export the final invoice after the service is performed.' => 'AFTER_SERVICE',
+    'Invalid advance total or service date.' => 'INVALID_ADVANCE_TOTAL',
+    'Unsupported Minimax VAT rate.' => 'UNSUPPORTED_RATE',
+    'Mixed base-country VAT rates require separate invoice entries.' => 'MIXED_RATES',
+    'Unsupported additional-cost VAT rate.' => 'UNSUPPORTED_COST_RATE',
+    'Saved invoice lines do not match the invoice total.' => 'TOTAL_MISMATCH',
+    'Missing invoice lines.' => 'MISSING_LINES',
+    'Minimax export data could not be loaded.' => 'LOAD_FAILED',
+    'Saved invoice not found. Reload the invoice before exporting.' => 'RELOAD_INVOICE',
+    'Invoices with recorded advances cannot be edited.' => 'ADVANCE_LOCK',
+    'Customer code' => 'CUSTOMER_CODE',
+    'Customer name' => 'CUSTOMER_NAME',
+    'Customer address' => 'CUSTOMER_ADDRESS',
+    'Customer postcode' => 'CUSTOMER_POSTCODE',
+    'Customer city' => 'CUSTOMER_CITY',
+    'VAT ID' => 'VAT_ID',
+    'Konto' => 'ACCOUNT',
+    'Payment reference' => 'PAYMENT_REFERENCE',
+    'Advance reference' => 'ADVANCE_REFERENCE',
+    'Invoice number' => 'INVOICE_NUMBER',
+    'Advance konto' => 'ADVANCE_KONTO',
+    'Advance VAT konto' => 'ADVANCE_VAT_KONTO',
+    'Advance VAT clearing konto' => 'ADVANCE_CLEARING_KONTO',
+] as $message => $key) {
+    $minimaxText[$message] = Text::_('COM_TRANSPORT_ACCOUNTING_MINIMAX_EXPORT_' . $key);
+}
 $assetBase = rtrim(Uri::root(true), '/') . '/modules/mod_transport_accounting/media';
 ?>
 <form action="<?php echo Route::_('index.php?option=com_transport_accounting&view=documents'); ?>" method="post" name="adminForm" id="adminForm">
+  <div class="alert alert-info"><?php echo Text::_('COM_TRANSPORT_ACCOUNTING_MINIMAX_PAYMENT_NOTE'); ?></div>
   <div class="row g-2 align-items-end mb-3">
     <div class="col-lg-3">
       <label class="form-label" for="filter_search"><?php echo Text::_('JSEARCH_FILTER'); ?></label>
@@ -109,6 +149,8 @@ $assetBase = rtrim(Uri::root(true), '/') . '/modules/mod_transport_accounting/me
             foreach ($item->payments as $payment) {
                 $method = (string) $payment->payment_method;
                 $payments[] = [
+                    'id' => (int) $payment->id,
+                    'advance_json' => $payment->advance_json,
                     'date' => (string) $payment->payment_date,
                     'amount' => round((float) $payment->amount, 2),
                     'method' => $method,
@@ -124,12 +166,15 @@ $assetBase = rtrim(Uri::root(true), '/') . '/modules/mod_transport_accounting/me
                 'customer_address' => (string) $item->customer_address,
                 'customer_postcode_city' => trim((string) $item->customer_postcode . ' ' . (string) $item->customer_city),
                 'invoice_total' => round((float) $item->total_amount, 2),
+                'payload' => json_decode((string) $item->payload_json, true) ?: [],
+                'created_at' => (string) $item->created_at,
                 'paid_amount' => round((float) $item->paid_amount, 2),
                 'remaining_amount' => round((float) $item->remaining_amount, 2),
                 'payment_status' => $paymentStatus,
                 'due_date' => (string) $item->due_date,
                 'payments' => $payments,
             ];
+            usort($payments, static fn ($a, $b) => $a['id'] <=> $b['id']);
             $paymentJson = htmlspecialchars(json_encode($paymentDocument, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8');
         ?>
           <tr>
@@ -151,7 +196,17 @@ $assetBase = rtrim(Uri::root(true), '/') . '/modules/mod_transport_accounting/me
             <td>
               <div class="d-flex flex-wrap gap-1">
                 <?php if (!$isProforma && $canEdit && (float) $item->remaining_amount > 0.004) : ?>
-                  <button type="button" class="btn btn-sm btn-outline-primary" data-payment-document="<?php echo $paymentJson; ?>" onclick="transportAccountingOpenPaymentDialog(this)"><?php echo Text::_('COM_TRANSPORT_ACCOUNTING_ADD_PAYMENT'); ?></button>
+                  <button type="button" class="btn btn-sm" style="background-color: #55ace0; border-color: #55ace0; color: #fff;" data-payment-document="<?php echo $paymentJson; ?>" onclick="transportAccountingOpenPaymentDialog(this)"><?php echo Text::_('COM_TRANSPORT_ACCOUNTING_ADD_PAYMENT'); ?></button>
+                <?php endif; ?>
+                <?php if (!$isProforma && array_filter($payments, static fn ($payment) => !empty($payment['advance_json']))) : ?>
+                  <?php foreach (array_values(array_filter($payments, static fn ($payment) => !empty($payment['advance_json']))) as $paymentIndex => $payment) : ?>
+                    <?php if (!empty($payment['advance_json'])) : ?>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" data-payment-document="<?php echo $paymentJson; ?>" onclick="transportAccountingMinimaxDownload(this, <?php echo (int) $payment['id']; ?>)"><?php echo Text::_('COM_TRANSPORT_ACCOUNTING_EXPORT_ADVANCE') . ' ' . ($paymentIndex + 1); ?></button>
+                    <?php endif; ?>
+                  <?php endforeach; ?>
+                  <button type="button" class="btn btn-sm btn-outline-primary" data-payment-document="<?php echo $paymentJson; ?>" onclick="transportAccountingMinimaxDownload(this)"><?php echo Text::_('COM_TRANSPORT_ACCOUNTING_EXPORT_FINAL'); ?></button>
+                <?php elseif (!$isProforma) : ?>
+                  <button type="button" class="btn btn-sm btn-outline-primary" data-payment-document="<?php echo $paymentJson; ?>" onclick="transportAccountingMinimaxDownload(this)"><?php echo Text::_('COM_TRANSPORT_ACCOUNTING_EXPORT_INVOICE'); ?></button>
                 <?php endif; ?>
                 <?php if (!$isProforma && (float) $item->paid_amount > 0.004) : ?>
                   <button type="button" class="btn btn-sm btn-outline-success" data-payment-document="<?php echo $paymentJson; ?>" onclick="transportAccountingPaymentConfirmationPdf(this)"><?php echo Text::_('COM_TRANSPORT_ACCOUNTING_DOWNLOAD_CONFIRMATION'); ?></button>
@@ -188,6 +243,8 @@ $assetBase = rtrim(Uri::root(true), '/') . '/modules/mod_transport_accounting/me
     <form action="<?php echo Route::_('index.php?option=com_transport_accounting&task=documents.recordPayment'); ?>" method="post" id="transport-accounting-payment-form">
       <input type="hidden" name="invoice_id" id="transport-accounting-payment-invoice-id" value="">
       <div class="row g-3">
+        <div class="col-md-6"><label class="form-label" for="transport-accounting-payment-kind"><?php echo Text::_('COM_TRANSPORT_ACCOUNTING_PAYMENT_KIND'); ?></label><select class="form-select" name="payment_kind" id="transport-accounting-payment-kind" onchange="document.getElementById('transport-accounting-advance-rate-wrap').hidden = this.value !== 'advance'"><option value="payment"><?php echo Text::_('COM_TRANSPORT_ACCOUNTING_PAYMENT_AFTER_SERVICE'); ?></option><option value="advance"><?php echo Text::_('COM_TRANSPORT_ACCOUNTING_PAYMENT_ADVANCE'); ?></option></select></div>
+        <div class="col-md-6" id="transport-accounting-advance-rate-wrap" hidden><label class="form-label" for="transport-accounting-advance-rate"><?php echo Text::_('COM_TRANSPORT_ACCOUNTING_ADVANCE_VAT_RATE'); ?></label><select class="form-select" name="advance_vat_rate" id="transport-accounting-advance-rate"><?php foreach ([9.5, 22, 5, 0] as $rate) : ?><option value="<?php echo $rate; ?>"><?php echo str_replace('.', ',', (string) $rate); ?> %</option><?php endforeach; ?></select></div>
         <div class="col-md-6"><label class="form-label" for="transport-accounting-payment-date"><?php echo Text::_('COM_TRANSPORT_ACCOUNTING_PAYMENT_DATE'); ?></label><input class="form-control" type="date" name="payment_date" id="transport-accounting-payment-date" required></div>
         <div class="col-md-6"><label class="form-label" for="transport-accounting-payment-amount"><?php echo Text::_('COM_TRANSPORT_ACCOUNTING_PAYMENT_AMOUNT'); ?></label><div class="input-group"><input class="form-control" type="number" name="amount" id="transport-accounting-payment-amount" min="0.01" step="0.01" required><span class="input-group-text">EUR</span></div></div>
         <div class="col-md-6"><label class="form-label" for="transport-accounting-payment-method"><?php echo Text::_('COM_TRANSPORT_ACCOUNTING_PAYMENT_METHOD'); ?></label><select class="form-select" name="payment_method" id="transport-accounting-payment-method"><?php foreach ($methodLabels as $value => $label) : ?><option value="<?php echo $value; ?>"><?php echo $this->escape($label); ?></option><?php endforeach; ?></select></div>
@@ -205,11 +262,33 @@ $assetBase = rtrim(Uri::root(true), '/') . '/modules/mod_transport_accounting/me
 </dialog>
 
 <script src="<?php echo htmlspecialchars($assetBase . '/vendor/jspdf/jspdf.umd.min.js', ENT_QUOTES, 'UTF-8'); ?>"></script>
+<script src="<?php echo htmlspecialchars($assetBase . '/minimax-payments.js?v=8481b73919dc', ENT_QUOTES, 'UTF-8'); ?>"></script>
 <script>
+const TRANSPORT_ACCOUNTING_MINIMAX_TEXT = <?php echo json_encode($minimaxText, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+const TRANSPORT_ACCOUNTING_MINIMAX_SETTINGS = <?php echo json_encode($this->minimax, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 const TRANSPORT_ACCOUNTING_PAYMENT_COMPANY = <?php echo json_encode($this->company, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG); ?>;
 const TRANSPORT_ACCOUNTING_PAYMENT_TEXT = <?php echo json_encode($pdfText, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG); ?>;
 const TRANSPORT_ACCOUNTING_PAYMENT_FONT_BASE = <?php echo json_encode($assetBase . '/fonts/'); ?>;
 
+async function transportAccountingMinimaxDownload(button, paymentId = 0) {
+  button.disabled = true;
+  try {
+    const form = new FormData(document.getElementById('adminForm'));
+    form.set('task', 'documents.minimaxData'); form.set('invoice_id', transportAccountingPaymentData(button).id);
+    const response = await fetch(<?php echo json_encode(Route::_('index.php?option=com_transport_accounting&format=json', false)); ?>, { method: 'POST', body: form });
+    const result = await response.json();
+    if (!response.ok || !result.success) throw new Error(result.message || 'Minimax export data could not be loaded.');
+    const data = result.data.document;
+    const now = new Date(), pad = n => String(n).padStart(2, '0');
+    const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const xml = paymentId ? TransportAccountingMinimax.advance(data, paymentId) : TransportAccountingMinimax.invoice(data, result.data.settings, today);
+    const url = URL.createObjectURL(new Blob([xml], { type: 'application/xml;charset=utf-8' }));
+    const link = document.createElement('a'); link.href = url;
+    link.download = `${paymentId ? TransportAccountingMinimax.paymentReference(data, paymentId) : data.invoice_number + (data.payments.some(payment => payment.advance_json) ? '-final' : '')}.xml`.replace(/[\\/:*?"<>|]/g, '-');
+    document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (error) { alert(TransportAccountingMinimax.translateError(error, message => TRANSPORT_ACCOUNTING_MINIMAX_TEXT[message] || message)); }
+  finally { button.disabled = false; }
+}
 function transportAccountingPaymentData(button) {
   try { return JSON.parse(button.dataset.paymentDocument || '{}'); } catch (error) { return {}; }
 }
@@ -230,8 +309,12 @@ function transportAccountingOpenPaymentDialog(button) {
   document.getElementById('transport-accounting-payment-method').value = 'bank_transfer';
   document.getElementById('transport-accounting-payment-reference').value = String(data.invoice_number || '').replace(/[^0-9]/g, '');
   document.getElementById('transport-accounting-payment-note').value = '';
+  const isBeforeService = String(data.payload?.service_date || '') > `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+  document.getElementById('transport-accounting-payment-kind').value = isBeforeService ? 'advance' : 'payment';
+  document.getElementById('transport-accounting-advance-rate-wrap').hidden = !isBeforeService;
+  document.getElementById('transport-accounting-advance-rate').value = String(TRANSPORT_ACCOUNTING_MINIMAX_SETTINGS.advanceVatRate ?? 9.5);
   const payments = Array.isArray(data.payments) ? data.payments : [];
-  document.getElementById('transport-accounting-payment-history').innerHTML = payments.length ? `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>${transportAccountingEscape(TRANSPORT_ACCOUNTING_PAYMENT_TEXT.PAYMENT_DATE)}</th><th>${transportAccountingEscape(TRANSPORT_ACCOUNTING_PAYMENT_TEXT.PAYMENT_METHOD)}</th><th>${transportAccountingEscape(TRANSPORT_ACCOUNTING_PAYMENT_TEXT.PAYMENT_REFERENCE)}</th><th class="text-end">${transportAccountingEscape(TRANSPORT_ACCOUNTING_PAYMENT_TEXT.PAYMENT_AMOUNT)}</th></tr></thead><tbody>${payments.map(payment => `<tr><td>${transportAccountingEscape(transportAccountingDate(payment.date))}</td><td>${transportAccountingEscape(payment.method_label)}</td><td>${transportAccountingEscape(payment.reference)}</td><td class="text-end">${transportAccountingEscape(transportAccountingMoney(payment.amount))}</td></tr>`).join('')}</tbody></table></div>` : `<p class="text-muted">${transportAccountingEscape(<?php echo json_encode(Text::_('COM_TRANSPORT_ACCOUNTING_NO_PAYMENTS')); ?>)}</p>`;
+  document.getElementById('transport-accounting-payment-history').innerHTML = payments.length ? `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>${transportAccountingEscape(TRANSPORT_ACCOUNTING_PAYMENT_TEXT.PAYMENT_DATE)}</th><th>${transportAccountingEscape(TRANSPORT_ACCOUNTING_PAYMENT_TEXT.PAYMENT_METHOD)}</th><th>${transportAccountingEscape(TRANSPORT_ACCOUNTING_PAYMENT_TEXT.PAYMENT_REFERENCE)}</th><th class="text-end">${transportAccountingEscape(TRANSPORT_ACCOUNTING_PAYMENT_TEXT.PAYMENT_AMOUNT)}</th></tr></thead><tbody>${payments.map(payment => `<tr><td>${transportAccountingEscape(transportAccountingDate(payment.date))}</td><td>${transportAccountingEscape((payment.advance_json ? 'Avans AV-' + payment.id + ' — ' : '') + payment.method_label)}</td><td>${transportAccountingEscape(payment.reference)}</td><td class="text-end">${transportAccountingEscape(transportAccountingMoney(payment.amount))}</td></tr>`).join('')}</tbody></table></div>` : `<p class="text-muted">${transportAccountingEscape(<?php echo json_encode(Text::_('COM_TRANSPORT_ACCOUNTING_NO_PAYMENTS')); ?>)}</p>`;
   dialog.showModal();
 }
 async function transportAccountingPdfFont(doc) {

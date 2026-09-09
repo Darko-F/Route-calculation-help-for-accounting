@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS `#__transport_accounting_invoice_payments` (
   `invoice_id` int unsigned NOT NULL,
   `payment_date` date NOT NULL,
   `amount` decimal(12,2) NOT NULL,
+  `advance_json` text NULL,
   `payment_method` varchar(32) NOT NULL DEFAULT 'bank_transfer',
   `payment_reference` varchar(255) NOT NULL DEFAULT '',
   `note` text NULL,

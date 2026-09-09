@@ -1,5 +1,19 @@
 # Version Summary
 
+## Transport Accounting 2.1.0 — 9 September 2026
+
+- Added received advances with a saved account/VAT snapshot for each payment; configurable DDV defaults to 9.5%. Installation adds the nullable `advance_json` column without reclassifying existing payments.
+- Added separate advance VAT journals and final invoice XML that deducts all recorded advances and reverses their advance VAT. Bank receipts are reconciled separately in Minimax.
+- Unified advance headers, documents, line descriptions and filenames as `(invoice number)-AV-(advance sequence)`, such as `TA-26-0007-AV-1.xml`. Numbering is per invoice and excludes ordinary payments.
+- Added `AV XML 1`, `AV XML 2`, etc. and `Zaključni XML` / `Final XML` in administrator and frontend lists. Invoices without advances retain whole-invoice XML. Removed the large bottom XML export button.
+- Allowed final XML export before the service date while retaining saved document/service dates. Downloads reload saved data and use versioned shared JavaScript assets to avoid stale cached export functions.
+- Added specific missing/duplicate account validation, a light-blue Add payment button, and Slovenian/English workflow and error translations. Invoices with recorded advances cannot be edited.
+- Replaced Slovenia's Fast-mode and fallback boundary with the official GURS polygon (31,071 vertices, including holes; source date 24 November 2025), with CC BY 4.0 attribution. Preserved polygon holes in country matching.
+- Added automated accounting, invoice-button, payment-validation and boundary tests. Generated XML fixtures pass the official Minimax XSD; live Joomla/Minimax import and the exact Google route remain unverified.
+- Package, module and administrator component: 2.1.0. Unchanged installer update-key plugin: 2.0.0.
+
+Existing XML imports must not be reimported under the new advance names. See [Minimax setup and workflow](docs/MINIMAX_ADVANCES.md). Upgrade an existing Transport Accounting 2.0.0 installation in place; migration from the former extension identifiers remains manual.
+
 ## Update distribution
 
 - Moved the public Joomla update feed to `https://shop.topoweryou.com/files/updatesxml/transport-accounting-package.xml`.

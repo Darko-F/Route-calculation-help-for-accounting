@@ -115,7 +115,7 @@ class DocumentsModel extends ListModel
         $ids = array_map(static fn ($item) => (int) $item->id, $items);
         $db = $this->getDatabase();
         $query = $db->getQuery(true)
-            ->select($db->quoteName(['id', 'invoice_id', 'payment_date', 'amount', 'payment_method', 'payment_reference', 'note', 'created_at']))
+            ->select($db->quoteName(['id', 'invoice_id', 'payment_date', 'amount', 'payment_method', 'payment_reference', 'note', 'created_at', 'advance_json']))
             ->from($db->quoteName('#__transport_accounting_invoice_payments'))
             ->where($db->quoteName('invoice_id') . ' IN (' . implode(',', $ids) . ')')
             ->order($db->quoteName('payment_date') . ' ASC')
@@ -141,6 +141,56 @@ class DocumentsModel extends ListModel
         }
 
         return $items;
+    }
+
+    public function getMinimaxSettings(): array
+    {
+        $params = ComponentHelper::getParams('com_transport_accounting');
+        $countries = json_decode(json_encode($params->get('minimax_country_accounts', [])), true) ?: [];
+        $accounts = [];
+        foreach ($countries as $row) {
+            $row = $row['minimax_account'] ?? $row;
+            $key = strtoupper(trim((string) ($row['country_code'] ?? '')));
+            if ($key !== '') {
+                $accounts[$key] = [
+                    'revenueAccount' => trim((string) ($row['revenue_account'] ?? '')),
+                    'vatAccount' => trim((string) ($row['vat_account'] ?? '')),
+                ];
+            }
+        }
+        return [
+            'baseCountry' => (string) $params->get('base_country', 'SI'),
+            'receivableAccount' => (string) $params->get('minimax_receivable_account', ''),
+            'baseCountryStandardVatAccount' => (string) $params->get('minimax_base_country_standard_vat_account', ''),
+            'additionalCostRevenueAccount' => (string) $params->get('minimax_additional_cost_revenue_account', ''),
+            'defaultForeignRevenueAccount' => (string) $params->get('minimax_default_foreign_revenue_account', ''),
+            'advanceVatRate' => (float) $params->get('minimax_advance_vat_rate', 9.5),
+            'countryAccounts' => $accounts,
+        ];
+    }
+
+    public function getMinimaxDocument(int $invoiceId): array
+    {
+        $db = $this->getDatabase();
+        $query = $db->getQuery(true)->select($db->quoteName(['id', 'invoice_number', 'document_type', 'customer_code', 'total_amount', 'payload_json', 'created_at']))
+            ->from($db->quoteName('#__transport_accounting_invoices'))
+            ->where($db->quoteName('id') . ' = ' . $invoiceId);
+        $invoice = $db->setQuery($query)->loadAssoc();
+        if (!$invoice || $invoice['document_type'] !== 'invoice') {
+            throw new RuntimeException(Text::_('COM_TRANSPORT_ACCOUNTING_PAYMENT_INVOICE_ONLY'));
+        }
+        $query = $db->getQuery(true)->select($db->quoteName(['id', 'payment_date', 'amount', 'advance_json']))
+            ->from($db->quoteName('#__transport_accounting_invoice_payments'))
+            ->where($db->quoteName('invoice_id') . ' = ' . $invoiceId)
+            ->order($db->quoteName('id') . ' ASC');
+        return [
+            'invoice_number' => $invoice['invoice_number'],
+            'customer_code' => $invoice['customer_code'],
+            'invoice_total' => $invoice['total_amount'],
+            'created_at' => $invoice['created_at'],
+            'payload' => json_decode($invoice['payload_json'], true, 512, JSON_THROW_ON_ERROR),
+            'payments' => $db->setQuery($query)->loadAssocList() ?: [],
+        ];
     }
 
     public function getCompanyDetails(): array
@@ -172,7 +222,7 @@ class DocumentsModel extends ListModel
         ];
     }
 
-    public function recordPayment(int $invoiceId, string $paymentDate, float $amount, string $method, string $reference, string $note): int
+    public function recordPayment(int $invoiceId, string $paymentDate, float $amount, string $method, string $reference, string $note, string $kind = 'payment', ?float $advanceRate = null): int
     {
         if ($invoiceId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $paymentDate)) {
             throw new RuntimeException(Text::_('COM_TRANSPORT_ACCOUNTING_PAYMENT_INVALID'));
@@ -186,7 +236,7 @@ class DocumentsModel extends ListModel
         $reference = mb_substr(trim($reference), 0, 255);
         $note = mb_substr(trim($note), 0, 2000);
         $amount = round($amount, 2);
-        if ($amount <= 0) {
+        if (!is_finite($amount) || $amount <= 0) {
             throw new RuntimeException(Text::_('COM_TRANSPORT_ACCOUNTING_PAYMENT_AMOUNT_INVALID'));
         }
 
@@ -194,12 +244,61 @@ class DocumentsModel extends ListModel
         $db->transactionStart();
         try {
             $query = $db->getQuery(true)
-                ->select($db->quoteName(['id', 'document_type', 'total_amount']))
+                ->select($db->quoteName(['id', 'document_type', 'total_amount', 'payload_json']))
                 ->from($db->quoteName('#__transport_accounting_invoices'))
                 ->where($db->quoteName('id') . ' = ' . $invoiceId);
             $invoice = $db->setQuery((string) $query . ' FOR UPDATE')->loadAssoc();
             if (!$invoice || ($invoice['document_type'] ?? '') !== 'invoice') {
                 throw new RuntimeException(Text::_('COM_TRANSPORT_ACCOUNTING_PAYMENT_INVOICE_ONLY'));
+            }
+
+            $advanceJson = null;
+            if (!in_array($kind, ['payment', 'advance'], true)) {
+                throw new RuntimeException(Text::_('COM_TRANSPORT_ACCOUNTING_PAYMENT_INVALID'));
+            }
+            if ($kind === 'advance') {
+                $params = ComponentHelper::getParams('com_transport_accounting');
+                $rate = $advanceRate ?? (float) $params->get('minimax_advance_vat_rate', 9.5);
+                if (!in_array($rate, [0.0, 5.0, 9.5, 22.0], true)) {
+                    throw new RuntimeException(Text::_('COM_TRANSPORT_ACCOUNTING_ADVANCE_RATE_INVALID'));
+                }
+                $snapshot = [
+                    'rate' => $rate,
+                    'advanceAccount' => trim((string) $params->get('minimax_advance_account', '2308')),
+                    'vatAccount' => trim((string) $params->get('minimax_advance_vat_account', '')),
+                    'clearingAccount' => trim((string) $params->get('minimax_advance_vat_clearing_account', '')),
+                ];
+                $accountLabels = [
+                    'advanceAccount' => Text::_('COM_TRANSPORT_ACCOUNTING_ADVANCE_ACCOUNT'),
+                    'vatAccount' => Text::_('COM_TRANSPORT_ACCOUNTING_ADVANCE_VAT_ACCOUNT'),
+                    'clearingAccount' => Text::_('COM_TRANSPORT_ACCOUNTING_ADVANCE_CLEARING_ACCOUNT'),
+                ];
+                $requiredAccounts = ['advanceAccount', ...($rate > 0 ? ['vatAccount', 'clearingAccount'] : [])];
+                foreach ($requiredAccounts as $key) {
+                    if ($snapshot[$key] === '') {
+                        throw new RuntimeException(Text::sprintf('COM_TRANSPORT_ACCOUNTING_ADVANCE_ACCOUNT_MISSING', $accountLabels[$key]));
+                    }
+                    if (mb_strlen($snapshot[$key]) > 30) {
+                        throw new RuntimeException(Text::sprintf('COM_TRANSPORT_ACCOUNTING_ADVANCE_ACCOUNT_TOO_LONG', $accountLabels[$key]));
+                    }
+                    foreach ($requiredAccounts as $otherKey) {
+                        if ($key !== $otherKey && $snapshot[$key] === $snapshot[$otherKey]) {
+                            throw new RuntimeException(Text::sprintf('COM_TRANSPORT_ACCOUNTING_ADVANCE_ACCOUNT_DUPLICATE', $accountLabels[$key], $accountLabels[$otherKey]));
+                        }
+                    }
+                }
+                $payload = json_decode((string) $invoice['payload_json'], true) ?: [];
+                $dates = array_filter(array_column($payload['calculated_data']['countrySegments'] ?? [], 'serviceDate'));
+                if (!$dates) {
+                    $dates[] = $payload['service_date'] ?? '';
+                }
+                $dates = array_values(array_filter($dates));
+                sort($dates);
+                $serviceDate = substr((string) ($dates[0] ?? ''), 0, 10);
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $serviceDate) || $paymentDate > $serviceDate || $paymentDate > Factory::getDate()->format('Y-m-d')) {
+                    throw new RuntimeException(Text::_('COM_TRANSPORT_ACCOUNTING_ADVANCE_DATE_INVALID'));
+                }
+                $advanceJson = json_encode($snapshot, JSON_THROW_ON_ERROR);
             }
 
             $query = $db->getQuery(true)
@@ -220,7 +319,7 @@ class DocumentsModel extends ListModel
 
             $query = $db->getQuery(true)
                 ->insert($db->quoteName('#__transport_accounting_invoice_payments'))
-                ->columns($db->quoteName(['invoice_id', 'payment_date', 'amount', 'payment_method', 'payment_reference', 'note', 'created_by', 'created_at']))
+                ->columns($db->quoteName(['invoice_id', 'payment_date', 'amount', 'payment_method', 'payment_reference', 'note', 'created_by', 'created_at', 'advance_json']))
                 ->values(implode(',', [
                     $invoiceId,
                     $db->quote($paymentDate),
@@ -230,6 +329,7 @@ class DocumentsModel extends ListModel
                     $db->quote($note),
                     (int) Factory::getApplication()->getIdentity()->id,
                     $db->quote(Factory::getDate()->toSql()),
+                    $advanceJson === null ? 'NULL' : $db->quote($advanceJson),
                 ]));
             $db->setQuery($query)->execute();
             $paymentId = (int) $db->insertid();

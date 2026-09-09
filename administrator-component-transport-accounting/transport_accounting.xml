@@ -2,12 +2,12 @@
 <extension type="component" method="upgrade">
   <name>Transport Accounting</name>
   <author>Darko Fatur</author>
-  <creationDate>2026-08-25</creationDate>
+  <creationDate>2026-09-09</creationDate>
   <copyright>Copyright (C) 2026 topoweryou.com</copyright>
   <license>GNU General Public License version 2 or later</license>
   <authorEmail>info@topoweryou.com</authorEmail>
   <authorUrl>https://topoweryou.com</authorUrl>
-  <version>2.0.0</version>
+  <version>2.1.0</version>
   <description>COM_TRANSPORT_ACCOUNTING_XML_DESCRIPTION</description>
   <element>com_transport_accounting</element>
   <namespace path="src">Topoweryou\Component\TransportAccounting</namespace>

@@ -1,10 +1,10 @@
 <header class="bg-dark text-white py-5 border-bottom border-primary border-4">
 <div class="container-xl">
 <div class="row align-items-center g-4">
-<div class="col-lg-9"><span class="badge text-bg-primary mb-3">Suite 2.0.0</span>
+<div class="col-lg-9"><span class="badge text-bg-primary mb-3">Suite 2.1.0</span>
 <h1 class="display-5 fw-bold">Transport Accounting – Route, Country VAT &amp; Invoice Calculator</h1>
 <p class="lead mb-2">Installation, configuration, daily use, administration, updates and technical reference</p>
-<p class="text-white-50 mb-0">Joomla 6 extension suite · Module 2.0.0 · Component 2.0.0 · Update-key plugin 2.0.0</p>
+<p class="text-white-50 mb-0">Joomla 6 extension suite · Module 2.1.0 · Component 2.1.0 · Update-key plugin 2.0.0</p>
 </div>
 <div class="col-lg-3 text-lg-end no-print"><button class="btn btn-outline-light" type="button">Print / Save as PDF</button></div>
 </div>
@@ -98,7 +98,7 @@
 <ol class="list-group list-group-numbered mb-4">
 <li class="list-group-item">Back up the Joomla files and database.</li>
 <li class="list-group-item">In Joomla Administrator open <strong>System → Install → Extensions</strong>.</li>
-<li class="list-group-item">Upload <a href="https://shop.topoweryou.com/joomla-extensions/route-calculation-help-accounting"><code>pkg_transport_accounting_v2.0.0.zip</code></a>. Use the combined package ZIP, not an enclosed individual extension ZIP.</li>
+<li class="list-group-item">Upload <a href="https://shop.topoweryou.com/joomla-extensions/route-calculation-help-accounting"><code>pkg_transport_accounting_v2.1.0.zip</code></a>. Use the combined package ZIP, not an enclosed individual extension ZIP.</li>
 <li class="list-group-item">Open <strong>Components → Transport Accounting → Options</strong> and configure the shared settings.</li>
 <li class="list-group-item">Open <strong>Content → Site Modules</strong>, create or open <em>Transport Accounting</em>, assign a position and restricted access level, then publish it on the intended menu item.</li>
 <li class="list-group-item">If subscribed to updates, enable and configure the installer update-key plugin.</li>
@@ -252,7 +252,7 @@
 </div>
 </section>
 <section id="calculator" class="doc-section mb-5">
-<h2 class="border-bottom pb-2">6. Calculator workflow</h2>
+<h2 class="border-bottom pb-2">6. Calculator workflow</h2><p>Fast mode and its fallback use the official GURS Slovenia boundary dated 24 November 2025: 31,071 vertices including polygon holes. Attribution and CC BY 4.0 links appear below the map and in THIRD_PARTY_NOTICES.md. Tests cover Koper and a sampled Ljubljana–Koper corridor; the exact live Google route still needs verification.</p>
 <h3 class="h5 mt-4">Route input</h3>
 <ol>
 <li>Enter pickup and drop-off using Google Places suggestions.</li>
@@ -353,11 +353,18 @@
 </table>
 </div>
 <p>A Unicode payment-confirmation PDF includes supplier/customer information, invoice reference, payment history, paid and remaining totals, footer, signature and a prominent PAID/PLAČANO label when settled. It does not consume an invoice number.</p>
-<div class="alert alert-info mb-0">Minimax XML always contains the full original invoice value. Reconcile recorded or partial payments separately through a Minimax bank statement or journal.</div>
+<div class="alert alert-info mb-0">Without advances, Invoice XML contains the full invoice value. With advances, each AV XML exports its advance VAT and the Final XML deducts all advances and their VAT. Bank receipts are reconciled separately in Minimax.</div>
 </section>
 <section id="minimax" class="doc-section mb-5">
 <h2 class="border-bottom pb-2">9. Minimax XML export</h2>
 <p>Only an invoice can be exported. The exporter writes customer master data before journal entries, uses passenger-transport VAT accounting type <code>PP</code>, includes the invoice reference on the receivable line, and separates revenue from VAT liabilities.</p>
+<h3 class="h5">Advances and final invoices (2.1.0)</h3>
+<p>In component Options configure the received-advance account (default 2308), advance VAT liability account, and a separate advance VAT clearing account. For nonzero VAT all three must be distinct. The DDV rate defaults to 9.5%; choose the applicable rate when recording an advance. Settings are saved with each payment.</p>
+<p>Use the light-blue <strong>Add payment</strong> button and choose <strong>Avans</strong> for payments received before service. Existing payment records are not automatically reclassified. Invoices containing advances cannot be edited.</p>
+<ul><li>No advances: <strong>Invoice XML</strong> exports the whole invoice.</li><li>One advance: <strong>AV XML 1</strong> and <strong>Zaključni XML / Final XML</strong>.</li><li>Multiple advances: <strong>AV XML 1</strong>, <strong>AV XML 2</strong>, etc. and one final export.</li></ul>
+<p>These buttons appear in administrator and all frontend invoice lists. The large bottom XML button has been removed. Advance numbering follows insertion order within each invoice, excluding ordinary payments. Header, Listina, both advance VAT line descriptions and filename share a name such as <code>TA-26-0007-AV-1</code> (file extension <code>.xml</code>). Matching references cannot exceed 30 characters.</p>
+<p>The advance journal posts advance VAT only, with the advance base and VAT in the DDV records. Record the gross bank receipt separately against the advance account and use the same advance reference. The final journal recognizes full service revenue, deducts gross advances from the receivable and reverses advance VAT/clearing postings. Its net DDV is the remaining VAT. Final export is allowed before service, retaining the saved service/posting dates. Ordinary balance payments do not generate additional AV XML files.</p>
+<p>Import each advance and final XML once. Renaming a previously imported advance does not make it a new transaction; do not reimport it under the new name. Shared XML scripts carry a version identifier to refresh cached browser copies.</p>
 <h3 class="h5">Pre-export checklist</h3>
 <ul class="list-group mb-3">
 <li class="list-group-item d-flex gap-2"><span class="text-success">✓</span>The current saved customer has a Minimax-compatible code of 1–10 supported characters. The current customer record overrides stale values in an older invoice payload.</li>
@@ -555,7 +562,7 @@
 </tr>
 <tr>
 <td><code>#__transport_accounting_invoice_payments</code></td>
-<td>Invoice payment date, amount, method, reference, note and audit fields.</td>
+<td>Invoice payment date, amount, method, reference, note, audit fields and nullable advance_json account/VAT snapshot (added automatically when upgrading).</td>
 </tr>
 </tbody>
 </table>
@@ -592,17 +599,15 @@
 <section id="changelog" class="doc-section mb-5">
 <h2 class="border-bottom pb-2">16. Current release notes</h2>
 <div class="card shadow-sm">
-<div class="card-header d-flex justify-content-between"><strong>package 2.0.0</strong><span class="badge text-bg-success">Current</span></div>
-<div class="card-body">
-<ul class="mb-0">
-<li>Renamed the complete Joomla suite and all internal identifiers to Transport Accounting.</li>
-<li>Changed new invoice numbers to <code>TA-YY-NNNN</code> and pro forma numbers to <code>PR-TA-YY-NNNN</code>.</li>
-<li>Added a selectable invoice issue date and configurable additional-cost treatment while preserving legacy behavior for migrated records.</li>
-<li>Added JED-recognizable GPL notices to every packaged PHP file reported by the checker.</li>
-<li>Includes package, module, administrator component, and installer update-key plugin version 2.0.0.</li>
-</ul>
-</div>
-</div>
+<div class="card-header d-flex justify-content-between"><strong>package 2.1.0 — 9 September 2026</strong><span class="badge text-bg-success">Current</span></div>
+<div class="card-body"><ul class="mb-0">
+<li>Added saved advances, configurable DDV, invoice-local AV XML names and final invoice deductions.</li>
+<li>Added per-invoice XML actions in administrator and frontend, specific account errors, Slovenian translations and versioned export scripts.</li>
+<li>Allowed final exports before service and removed the large bottom XML button.</li>
+<li>Updated Slovenia Fast/fallback boundaries to official GURS data with holes and attribution.</li>
+<li>Package, module and component 2.1.0; unchanged installer update-key plugin 2.0.0. Upgrade 2.0.0 in place; old pre-rename identifiers still require manual migration.</li>
+<li>Automated export, payment and boundary checks plus Minimax XSD validation pass. Live Joomla and Minimax import remain unverified.</li>
+</ul></div></div>
 <p class="mt-3 mb-0">For the complete historical changelog, see <code><a href="https://github.com/Darko-F/Route-calculation-help-for-accounting/blob/main/VERSION_SUMMARY.md">VERSION_SUMMARY.md</a></code> in the source repository.</p>
 </section>
 <section class="doc-section">
@@ -622,7 +627,7 @@
 <dd class="col-sm-9">GNU General Public License version 2 or later. See <code><a href="https://github.com/Darko-F/Route-calculation-help-for-accounting/blob/main/LICENSE">LICENSE</a></code> and <code><a href="https://github.com/Darko-F/Route-calculation-help-for-accounting/blob/main/THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a></code>.</dd>
 <dd class="col-sm-9"></dd>
 <dt class="col-sm-3">Documentation basis</dt>
-<dd class="col-sm-9">Source tree and manifests for Transport Accounting 2.0.0, reviewed 25 August 2026.</dd>
+<dd class="col-sm-9">Source tree and manifests for Transport Accounting 2.1.0, reviewed 9 September 2026.</dd>
 </dl>
 </section>
 </div>
